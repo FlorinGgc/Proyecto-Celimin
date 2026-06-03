@@ -1,3 +1,7 @@
+// =============================================================================
+// CORE.JS — Módulo Central (datos compartidos, navegación, dashboard, etc.)
+// =============================================================================
+
 // Funciones de utilidad para persistencia segura
 const storage = {
     get: (key, fallback) => {
@@ -153,7 +157,9 @@ if (isFirstRun) {
     saveData();
 }
 
-// Navegación
+// =============================================================================
+// NAVEGACIÓN
+// =============================================================================
 function switchView(viewId) {
     let viewElementId = `${viewId}-view`;
     
@@ -266,7 +272,9 @@ function switchView(viewId) {
     if (viewId === 'plano') initPlano();
 }
 
+// =============================================================================
 // RELOJ EN VIVO
+// =============================================================================
 function updateClock() {
     const clockDate = document.getElementById('clock-date');
     const clockTime = document.getElementById('clock-time');
@@ -278,9 +286,11 @@ function updateClock() {
     clockTime.innerText = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 }
 
-setInterval(updateClock, 1000); // Actualizar cada segundo
+setInterval(updateClock, 1000);
 
+// =============================================================================
 // GENERADOR DE CALENDARIO
+// =============================================================================
 function renderCalendar() {
     const container = document.getElementById('full-year-calendar');
     if (!container) return;
@@ -301,7 +311,6 @@ function renderCalendar() {
         let html = `<div class="month-name">${month} ${year}</div>`;
         html += '<div class="days-grid">';
         
-        // Cabecera de días
         ['D', 'L', 'M', 'M', 'J', 'V', 'S'].forEach(d => {
             html += `<div class="day-name">${d}</div>`;
         });
@@ -309,17 +318,14 @@ function renderCalendar() {
         const firstDay = new Date(year, index, 1).getDay();
         const daysInMonth = new Date(year, index + 1, 0).getDate();
  
-        // Espacios vacíos antes del primer día
         for (let i = 0; i < firstDay; i++) {
             html += '<div class="day-number empty"></div>';
         }
  
-        // Días del mes
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${(index + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
             const isToday = now.getFullYear() === year && now.getMonth() === index && now.getDate() === day;
             
-            // Buscar eventos para este día
             const dayEvents = [];
             agendaTrabajosData.forEach(t => { 
                 if(t.fecha === dateStr) {
@@ -352,6 +358,9 @@ function renderCalendar() {
     });
 }
 
+// =============================================================================
+// LABORATORIOS (SEDES)
+// =============================================================================
 function renderLabs() {
     const tbody = document.getElementById('labs-table-body');
     if (!tbody) return;
@@ -373,12 +382,7 @@ function renderLabs() {
         </tr>
     `).join('');
 
-    // Actualizar selectores de labs en otros modales y filtros
     updateLabSelections();
-
-    // Actualizar tablas que dependen de los nombres/datos de laboratorios
-    if (typeof renderInventoryTable === 'function') renderInventoryTable();
-    if (typeof renderEspacios === 'function') renderEspacios();
 }
 
 window.editLab = (index) => {
@@ -405,7 +409,6 @@ function deleteLab(index) {
 }
 
 function updateLabSelections() {
-    // 1. Actualizar Checkboxes en Modales
     const containers = [
         document.getElementById('item-labs-selection'),
         document.getElementById('edit-item-labs-selection')
@@ -421,21 +424,21 @@ function updateLabSelections() {
         `).join('');
     });
 
-    // 2. Actualizar Dropdown de Filtro en Inventario
     const filterSelect = document.getElementById('lab-filter');
     if (filterSelect) {
         const currentValue = filterSelect.value;
         filterSelect.innerHTML = '<option value="all">Todos los Laboratorios</option>' + 
             labsData.map(lab => `<option value="${lab.id}">${lab.name} (${lab.location})</option>`).join('');
         
-        // Mantener la selección previa si aún existe
         if ([...filterSelect.options].some(opt => opt.value === currentValue)) {
             filterSelect.value = currentValue;
         }
     }
 }
 
+// =============================================================================
 // BÚSQUEDA Y FILTRADO
+// =============================================================================
 function applyFilters() {
     const searchTerm = document.getElementById('inventory-search')?.value.toLowerCase() || '';
     const labFilter = document.getElementById('lab-filter')?.value || 'all';
@@ -455,7 +458,10 @@ function applyFilters() {
 
 document.getElementById('inventory-search')?.addEventListener('input', applyFilters);
 document.getElementById('lab-filter')?.addEventListener('change', applyFilters);
+
+// =============================================================================
 // OPERACIONES DE STOCK
+// =============================================================================
 window.openMovementModal = (index, type) => {
     const item = inventoryData[index];
     document.getElementById('mv-item-index').value = index;
@@ -482,7 +488,6 @@ function handleMovement(e) {
     if (type === 'Ingreso') item.stockActual += qty;
     else item.stockActual -= qty;
 
-    // Actualizar estado basado en nuevo stock
     if (item.stockActual <= 0) item.status = 'out';
     else if (item.stockActual <= item.stockMin) item.status = 'low';
     else item.status = 'ok';
@@ -507,7 +512,9 @@ function handleMovement(e) {
     document.getElementById('form-movement').reset();
 }
 
+// =============================================================================
 // GESTIÓN DE SOLICITUDES
+// =============================================================================
 function renderRequests() {
     const tbody = document.getElementById('requests-table-body');
     if (!tbody) return;
@@ -571,98 +578,10 @@ window.rejectRequest = (index) => {
     saveData();
     renderRequests();
 };
-// Renders
-function renderInventoryTable(data = inventoryData) {
-    const tbody = document.getElementById('inventory-table-body');
-    if (!tbody) return;
-    const session = storage.get(STORAGE_KEYS.SESSION);
-    const canModify = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
-    tbody.innerHTML = data.map((item, index) => {
-        const realIndex = inventoryData.indexOf(item);
-        const itemLabs = (item.labs || []).map(labId => {
-            const lab = labsData.find(l => l.id === labId);
-            return `<span class="lab-badge" title="${lab ? lab.location : ''}">${lab ? lab.name : labId}</span>`;
-        }).join('');
 
-        return `
-        <tr>
-            <td><strong>${item.code || 'N/A'}</strong></td>
-            <td>
-                <strong>${item.name}</strong>
-                ${item.category === 'Reactivos' ? `<br><small class="status-badge" style="background:var(--surface-hover); color:var(--primary); border:1px solid var(--primary); padding:1px 4px; font-size:0.65rem;">${item.state || 'Nuevo'}</small>` : ''}
-            </td>
-            <td>${item.category}</td>
-            <td class="${item.stockActual <= item.stockMin ? 'danger-text' : 'stable-text'}">${item.stockActual}</td>
-            <td>${item.format && item.unit && item.format !== item.unit ? `${item.format} (${item.unit})` : (item.format || item.unit || 'N/A')}</td>
-            <td>${item.expiryDate || '-'}</td>
-            <td><div class="lab-badges-container">${itemLabs}</div></td>
-            <td>
-                <span class="status-badge status-${item.status}">${(item.status || 'ok').toUpperCase()}</span>
-                ${item.comments ? `<i class="fas fa-comment-dots text-muted" title="${item.comments}" style="margin-left: 5px; cursor: help;"></i>` : ''}
-            </td>
-            <td style="text-align: right;">
-                <div style="display: flex; gap: 0.35rem; justify-content: flex-end;">
-                    <button class="btn-action view" onclick="viewItem(${realIndex})" title="Ver detalles"><i class="fas fa-eye"></i></button>
-                    ${canModify ? `
-                    <button class="btn-action edit" onclick="editItem(${realIndex})" title="Editar"><i class="fas fa-edit"></i></button>
-                    <button class="btn-action success-btn" onclick="openMovementModal(${realIndex}, 'Ingreso')" title="Ingreso Stock"><i class="fas fa-plus-circle"></i></button>
-                    <button class="btn-action danger-btn" onclick="openMovementModal(${realIndex}, 'Salida')" title="Salida Stock"><i class="fas fa-minus-circle"></i></button>
-                    <button class="btn-action delete" onclick="deleteItem(${realIndex})" title="Eliminar"><i class="fas fa-trash"></i></button>
-                    ` : ''}
-                </div>
-            </td>
-        </tr>
-    `;}).join('');
-}
-
-function renderUsers() {
-    const tbody = document.getElementById('users-table-body');
-    if (!tbody) return;
-    const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
-    const canEdit = session && session.role === 'Administrador General';
-    tbody.innerHTML = usersData.map((user, index) => `
-        <tr>
-            <td><div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:30px;height:30px;background:#eee;border-radius:50%;display:grid;place-items:center;">${user.name[0]}</div>${user.name}</div></td>
-            <td>${user.role}</td>
-            <td>${user.lastAccess}</td>
-            <td><code>${user.permissions || 'Estándar'}</code></td>
-            <td><span class="status-badge status-ok">ACTIVO</span></td>
-            <td style="text-align: right;">
-                <div style="display: flex; gap: 0.35rem; justify-content: flex-end;">
-                    ${canEdit ? `<button class="btn-action edit" onclick="editUser(${index})" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
-                    ${canDelete ? `<button class="btn-action delete" onclick="deleteUser(${index})" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
-                    ${!canEdit && !canDelete ? '<span class="text-muted" style="font-size: 0.75rem;">—</span>' : ''}
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-window.editUser = (index) => {
-    const user = usersData[index];
-    document.getElementById('edit-user-index').value = index;
-    document.getElementById('edit-user-name').value = user.name;
-    document.getElementById('edit-user-role').value = user.role;
-    document.getElementById('edit-user-permissions').value = user.permissions || 'Estándar';
-    document.getElementById('modal-edit-user').classList.remove('hidden');
-};
-
-window.deleteUser = (index) => {
-    const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
-    if (!canDelete) {
-        alert('No tiene permisos para eliminar.');
-        return;
-    }
-    const user = usersData[index];
-    if (confirm(`¿Está seguro de eliminar al usuario "${user.name}" (${user.role})?`)) {
-        usersData.splice(index, 1);
-        saveData();
-        renderUsers();
-    }
-};
-
+// =============================================================================
+// MOVIMIENTOS
+// =============================================================================
 function renderMovements() {
     const tbody = document.getElementById('movements-table-body');
     if (!tbody) return;
@@ -678,6 +597,9 @@ function renderMovements() {
     `).join('');
 }
 
+// =============================================================================
+// DASHBOARD
+// =============================================================================
 function renderDashboard() {
     const tbody = document.getElementById('recent-activity-body');
     if (!tbody) return;
@@ -728,10 +650,7 @@ window.forceUpdateDashboard = function() {
 }
 
 window.masterSync = function() {
-    // 1. Persistencia segura (intenta guardar pero no bloquea si falla)
     saveData();
-    
-    // 2. Refresco total de la interfaz usando datos en memoria RAM
     renderInventory();
     renderLabs();
     if (typeof window.renderAgendaTrabajos === 'function') window.renderAgendaTrabajos();
@@ -747,139 +666,15 @@ function renderInventory(data = inventoryData) {
     }
 }
 
-let currentEquipmentFilter = 'all';
-
-window.toggleEquipmentStatus = function(index) {
-    // Cambio inmediato en memoria
-    inventoryData[index].inUse = !inventoryData[index].inUse;
-    
-    // Sincronización total
-    window.masterSync();
-};
-
-function renderEquipmentStatus(filter = 'all') {
-    currentEquipmentFilter = filter;
-    const tbody = document.getElementById('equipment-status-body');
-    if (!tbody) return;
-
-    let equipments = inventoryData.filter((item, index) => {
-        item.originalIndex = index;
-        return item.category === 'Equipos';
-    });
-
-    if (filter === 'available') {
-        equipments = equipments.filter(eq => !eq.inUse);
-    } else if (filter === 'in-use') {
-        equipments = equipments.filter(eq => eq.inUse);
-    }
-
-    tbody.innerHTML = equipments.map(eq => `
-        <tr>
-            <td><strong>${eq.name || 'Sin Nombre'}</strong><br><small>${eq.code || 'S/C'}</small></td>
-            <td>${eq.locationDetail || 'No especificada'}</td>
-            <td>
-                <span class="status-badge" style="background-color: ${eq.inUse ? '#ef4444' : '#10b981'}; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
-                    ${eq.inUse ? 'EN USO' : 'DISPONIBLE'}
-                </span>
-            </td>
-            <td style="text-align: right;">
-                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    <button class="btn btn-sm" onclick="window.toggleEquipmentStatus(${eq.originalIndex})" 
-                            style="background: ${eq.inUse ? '#fee2e2' : '#dcfce7'}; 
-                                   border: 1px solid ${eq.inUse ? '#f87171' : '#4ade80'}; 
-                                   color: ${eq.inUse ? '#991b1b' : '#166534'}; 
-                                   font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 8px; font-weight: 600;">
-                        <i class="fas ${eq.inUse ? 'fa-unlock' : 'fa-lock'}"></i> ${eq.inUse ? 'Liberar' : 'Ocupar'}
-                    </button>
-                    <button class="btn-action edit" onclick="window.editEquipmentDetails(${eq.originalIndex})" 
-                            style="background: ${eq.inUse ? '#ef4444' : '#10b981'}; color: white; border: none;"
-                            title="Editar Detalles">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-window.editEquipmentDetails = function(index) {
-    const eq = inventoryData[index];
-    if (!eq) return;
-    
-    Swal.fire({
-        title: '<i class="fas fa-microscope" style="color:var(--primary)"></i> Gestión de Equipo',
-        html: `
-            <div style="text-align: left; padding: 10px;">
-                <div style="margin-bottom: 1rem;">
-                    <label style="display:block; margin-bottom: 0.3rem; font-weight: 700; font-size: 0.85rem;">Nombre del Equipo</label>
-                    <input id="swal-eq-name" class="swal2-input" value="${eq.name}" style="width: 100%; margin: 0; border-radius: 8px;">
-                </div>
-
-                <div style="margin-bottom: 1rem;">
-                    <label style="display:block; margin-bottom: 0.3rem; font-weight: 700; font-size: 0.85rem;">Código de Inventario</label>
-                    <input id="swal-eq-code" class="swal2-input" value="${eq.code || ''}" style="width: 100%; margin: 0; border-radius: 8px;">
-                </div>
-                
-                <div style="margin-bottom: 1rem;">
-                    <label style="display:block; margin-bottom: 0.3rem; font-weight: 700; font-size: 0.85rem;">Ubicación en Laboratorio</label>
-                    <input id="swal-eq-loc" class="swal2-input" value="${eq.locationDetail || ''}" style="width: 100%; margin: 0; border-radius: 8px;">
-                </div>
-                
-                <div style="margin-bottom: 0.5rem;">
-                    <label style="display:block; margin-bottom: 0.3rem; font-weight: 700; font-size: 0.85rem;">Estado y Acción</label>
-                    <select id="swal-eq-use" class="swal2-select" style="width: 100%; margin: 0; border-radius: 8px; height: 45px;">
-                        <option value="false" ${!eq.inUse ? 'selected' : ''}>✅ Disponible (Botón Ocupar)</option>
-                        <option value="true" ${eq.inUse ? 'selected' : ''}>⚠️ En Uso (Botón Liberar)</option>
-                    </select>
-                </div>
-            </div>
-        `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'Guardar Cambios',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: 'var(--primary)',
-        preConfirm: () => {
-            const name = document.getElementById('swal-eq-name').value;
-            const code = document.getElementById('swal-eq-code').value;
-            const location = document.getElementById('swal-eq-loc').value;
-            const inUse = document.getElementById('swal-eq-use').value === 'true';
-            
-            if (!name) {
-                Swal.showValidationMessage('El nombre es obligatorio');
-                return false;
-            }
-            return { name, code, location, inUse };
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Inmediatez total en memoria RAM (Array Maestro)
-            inventoryData[index].name = result.value.name;
-            inventoryData[index].code = result.value.code;
-            inventoryData[index].locationDetail = result.value.location;
-            inventoryData[index].inUse = result.value.inUse;
-            
-            // Sincronización maestra de todas las tablas
-            window.masterSync();
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Sincronización Exitosa',
-                text: 'Los datos se han actualizado en memoria y en todas las vistas.',
-                timer: 1000,
-                showConfirmButton: false
-            });
-        }
-    });
-};
-
+// =============================================================================
+// AGENDA DE TRABAJOS
+// =============================================================================
 window.renderAgendaTrabajos = function() {
     const tbody = document.getElementById('agendar-trabajos-table-body');
     if (!tbody) return;
 
     const combinedData = [];
     
-    // Función segura para mapear y capturar errores de datos
     const safeMap = (arr, mapper) => {
         if (!Array.isArray(arr)) return [];
         return arr.map(mapper);
@@ -895,8 +690,6 @@ window.renderAgendaTrabajos = function() {
         source: 'agenda' 
     })));
 
-
-
     combinedData.push(...safeMap(planificacionData, (p, index) => ({
         titulo: `Planificación: ${p.item || 'Item'} (${p.usuario || 'Sist'})`,
         fecha: p.fecha || '',
@@ -908,7 +701,6 @@ window.renderAgendaTrabajos = function() {
         source: 'planificacion'
     })));
 
-    // Ordenar por fecha descendente (más reciente primero) de forma segura
     combinedData.sort((a, b) => {
         const dA = (a.fecha || '0000-00-00');
         const dB = (b.fecha || '0000-00-00');
@@ -953,7 +745,6 @@ function renderInsumosUso() {
     const today = new Date().toISOString().split('T')[0];
     const insumosSet = new Set();
     
-    // Obtener insumos de trabajos de hoy
     agendaTrabajosData.forEach(t => {
         if (t.fecha === today && t.insumos) {
             t.insumos.split(',').forEach(i => insumosSet.add(i.trim()));
@@ -988,14 +779,11 @@ window.editActivity = function(source, index) {
     
     if (!activity) return;
 
-    // Guardar el índice y fuente que estamos editando
     window.currentEditingActivityIndex = index;
     window.currentEditingActivitySource = source;
 
-    // Poblar modal
     document.getElementById('agenda-type').value = activity.type || 'Trabajo';
     
-    // Cambiar texto del botón y visibilidad de campos
     const agendaTypeSelect = document.getElementById('agenda-type');
     if (agendaTypeSelect) {
         agendaTypeSelect.dispatchEvent(new Event('change'));
@@ -1007,7 +795,6 @@ window.editActivity = function(source, index) {
     document.getElementById('agenda-equipo').value = activity.equipo || '';
     document.getElementById('agenda-responsable').value = activity.responsable || '';
 
-    // Poblar horas
     if (activity.horaInicio) {
         document.getElementById('agenda-hora-inicio').value = activity.horaInicio;
     } else if (activity.hora && activity.hora.includes(' - ')) {
@@ -1026,7 +813,6 @@ window.editActivity = function(source, index) {
         document.getElementById('agenda-hora-fin').value = '';
     }
     
-    // Abrir modal
     document.getElementById('modal-agendar').classList.remove('hidden');
 }
 
@@ -1037,17 +823,14 @@ window.deleteActivity = function(source, index) {
         alert('No tiene permisos para eliminar.');
         return;
     }
-    // Eliminación inmediata en memoria
     if (source === 'agenda') agendaTrabajosData.splice(index, 1);
     else if (source === 'movements') movementsData.splice(index, 1);
     else if (source === 'requests') requestsData.splice(index, 1);
     else if (source === 'planificacion') planificacionData.splice(index, 1);
     
-    // Refresco inmediato de la UI
     if (typeof window.renderAgendaTrabajos === 'function') window.renderAgendaTrabajos();
     if (typeof window.renderCalendar === 'function') window.renderCalendar();
     
-    // Refrescar el modal de día si está abierto
     const dayModal = document.getElementById('modal-calendar-day');
     if (dayModal && !dayModal.classList.contains('hidden')) {
         const titleText = document.getElementById('calendar-day-title').textContent;
@@ -1060,7 +843,6 @@ window.deleteActivity = function(source, index) {
         }
     }
 
-    // Persistencia opcional/en segundo plano
     saveData();
     
     Swal.fire({
@@ -1131,6 +913,9 @@ window.showDayDetails = function(dateStr) {
     modal.classList.remove('hidden');
 }
 
+// =============================================================================
+// TURNOS, AUDITORÍA, PLANIFICACIÓN, MANTENIMIENTO, ESPACIOS
+// =============================================================================
 function renderTurnos() {
     const tbody = document.getElementById('turnos-table-body');
     if (!tbody) return;
@@ -1178,7 +963,6 @@ window.toggleUsoCheck = (index) => {
     }
     usosData[index].checked = !usosData[index].checked;
     saveData();
-    // No es estrictamente necesario re-renderizar si solo cambia el checkbox y el visual feedback es suficiente
 };
 
 window.viewUsoDetail = (index) => {
@@ -1339,7 +1123,6 @@ window.openEspacioModal = (index) => {
     document.getElementById('espacio-item-name').innerText = item.name;
     document.getElementById('espacio-location-detail').value = item.locationDetail || '';
     
-    // Marcar checkboxes de labs
     const checkboxes = document.querySelectorAll('input[name="espacio-labs"]');
     checkboxes.forEach(cb => {
         cb.checked = item.labs && item.labs.includes(cb.value);
@@ -1348,443 +1131,139 @@ window.openEspacioModal = (index) => {
     document.getElementById('modal-espacio').classList.remove('hidden');
 };
 
-// FUNCIONES DE ACCIÓN (CRUD)
-window.viewItem = (index) => {
-    const item = inventoryData[index];
-    const content = document.getElementById('item-details-content');
-    const itemLabs = (item.labs || []).map(labId => {
-        const lab = labsData.find(l => l.id === labId);
-        return `<span class="lab-badge">${lab ? lab.name + ' (' + lab.location + ')' : labId}</span>`;
-    }).join(' ');
+// =============================================================================
+// UTILIDADES
+// =============================================================================
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
-    content.innerHTML = `
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;" class="details-view">
-            <p><strong>Código:</strong> ${item.code}</p>
-            <p><strong>Nombre:</strong> ${item.name}</p>
-            <p><strong>Categoría:</strong> ${item.category}</p>
-            <p><strong>Formato / Unidad:</strong> ${item.format && item.unit && item.format !== item.unit ? `${item.format} (${item.unit})` : (item.format || item.unit || 'N/A')}</p>
-            <p><strong>Stock Actual:</strong> ${item.stockActual}</p>
-            <p><strong>Stock Mínimo:</strong> ${item.stockMin}</p>
-            <p><strong>Vencimiento:</strong> ${item.expiryDate || 'N/A'}</p>
-            <p><strong>Ubicación:</strong> ${item.locationDetail || 'N/A'}</p>
-            <p><strong>Proveedor:</strong> ${item.supplier || 'N/A'}</p>
-            <p><strong>Responsable:</strong> ${item.responsible || 'N/A'}</p>
-            <p><strong>Disponibilidad:</strong> <span class="status-badge status-${item.status}">${item.status.toUpperCase()}</span></p>
-            ${item.category === 'Reactivos' ? `
-                <p><strong>Estado Reactivo:</strong> ${item.state || 'N/A'}</p>
-                <p><strong>Fecha Control:</strong> ${item.reactDate || 'N/A'}</p>
-                <p style="grid-column: span 2;"><strong>Comentarios:</strong> ${item.comments || 'N/A'}</p>
-            ` : ''}
-            <div><strong>Sedes:</strong> <div class="lab-badges-container">${itemLabs}</div></div>
-        </div>
-    `;
-    document.getElementById('modal-view-item').classList.remove('hidden');
-};
+// =============================================================================
+// BIBLIOTECA DE DOCUMENTOS
+// =============================================================================
+window.renderLibrary = function() {
+    const grid = document.getElementById('library-docs-grid');
+    if (!grid) return;
 
-window.editItem = (index) => {
-    const item = inventoryData[index];
-    document.getElementById('edit-item-index').value = index;
-    document.getElementById('edit-item-name').value = item.name;
-    document.getElementById('edit-item-category').value = item.category;
-    document.getElementById('edit-item-stock-actual').value = item.stockActual;
-    document.getElementById('edit-item-stock-min').value = item.stockMin;
-    const formatUnitVal = item.format && item.unit && item.format !== item.unit ? `${item.format} (${item.unit})` : (item.format || item.unit || '');
-    document.getElementById('edit-item-format-unit').value = formatUnitVal;
-    document.getElementById('edit-item-location-detail').value = item.locationDetail || '';
-    document.getElementById('edit-item-expiry').value = item.expiryDate || '';
-    document.getElementById('edit-item-supplier').value = item.supplier || '';
-    document.getElementById('edit-item-responsible').value = item.responsible || '';
-
-    
-    // Marcar checkboxes de labs
-    const checkboxes = document.querySelectorAll('input[name="edit-labs"]');
-    checkboxes.forEach(cb => {
-        cb.checked = item.labs && item.labs.includes(cb.value);
-    });
-    document.getElementById('edit-item-state').value = item.state || 'Nuevo';
-    document.getElementById('edit-item-react-date').value = item.reactDate || '';
-    document.getElementById('edit-item-comments').value = item.comments || '';
-    
-    // Mostrar/ocultar campos de reactivos
-    const reagentFields = document.getElementById('edit-reagent-only-fields');
-    if (item.category === 'Reactivos') reagentFields.classList.remove('hidden');
-    else reagentFields.classList.add('hidden');
-
-    // Mostrar/ocultar vencimiento si es Equipos
-    const editExpiryGroup = document.getElementById('edit-item-expiry-group');
-    if (editExpiryGroup) {
-        if (item.category === 'Equipos') editExpiryGroup.classList.add('hidden');
-        else editExpiryGroup.classList.remove('hidden');
+    if (!libraryDocsData || libraryDocsData.length === 0) {
+        grid.innerHTML = `
+            <div class="info-placeholder" style="grid-column: 1 / -1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; background: #fff; border-radius: 16px; border: 1px dashed var(--border);">
+                <i class="fas fa-book-open fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
+                <p style="color: var(--text-muted); font-size: 1rem; margin: 0;">No hay documentos en la biblioteca. ¡Sube tu primer PDF!</p>
+            </div>
+        `;
+        return;
     }
 
-    document.getElementById('modal-edit-item').classList.remove('hidden');
+    const session = storage.get(STORAGE_KEYS.SESSION);
+    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+
+    grid.innerHTML = libraryDocsData.map((doc) => `
+        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease; position: relative; overflow: hidden; border: 1px solid var(--border);">
+            <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem;">
+                <div style="background: #fef2f2; padding: 0.75rem; border-radius: 12px;">
+                    <i class="fas fa-file-pdf" style="font-size: 2.5rem; color: #ef4444;"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <h4 style="margin: 0 0 0.25rem 0; font-size: 1.1rem; font-weight: 600; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${doc.title}">${doc.title}</h4>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${doc.fileName}">${doc.fileName}</span>
+                </div>
+            </div>
+            
+            <p style="font-size: 0.85rem; color: #475569; margin: 0 0 1.25rem 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.5rem; line-height: 1.25rem;">
+                ${doc.desc || 'Sin descripción disponible.'}
+            </p>
+
+            <div style="background: #f8fafc; padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Subido por:</span>
+                    <strong style="color: var(--text-dark);">${doc.user}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Fecha:</span>
+                    <strong>${doc.date}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Tamaño:</span>
+                    <strong>${doc.size}</strong>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; width: 100%;">
+                <button class="btn btn-primary" onclick="downloadDocument('${doc.id}')" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem;">
+                    <i class="fas fa-download"></i> Descargar
+                </button>
+                ${canDelete ? `
+                    <button class="btn" onclick="deleteDocument('${doc.id}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; padding: 0.6rem; border-radius: 12px; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
 };
 
-window.deleteItem = (index) => {
+window.downloadDocument = function(id) {
+    const doc = libraryDocsData.find(d => d.id === id);
+    if (!doc) return;
+
+    const link = document.createElement('a');
+    link.href = doc.fileData;
+    link.download = doc.fileName || `${doc.title}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+window.deleteDocument = function(id) {
     const session = storage.get(STORAGE_KEYS.SESSION);
     const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
     if (!canDelete) {
-        alert('No tiene permisos para eliminar.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Acceso Denegado',
+            text: 'No tienes permisos para eliminar documentos de la biblioteca.'
+        });
         return;
     }
-    if (confirm(`¿Está seguro de eliminar "${inventoryData[index].name}"?`)) {
-        inventoryData.splice(index, 1);
-        saveData();
-        renderInventory();
-        renderDashboard();
-    }
+
+    const doc = libraryDocsData.find(d => d.id === id);
+    if (!doc) return;
+
+    Swal.fire({
+        title: '¿Eliminar Documento?',
+        text: `¿Estás seguro de que deseas eliminar "${doc.title}" de la biblioteca?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            libraryDocsData = libraryDocsData.filter(d => d.id !== id);
+            saveData();
+            renderLibrary();
+            Swal.fire({
+                icon: 'success',
+                title: 'Documento Eliminado',
+                text: 'El documento se ha retirado de la biblioteca.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    });
 };
 
-function downloadInventory() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    // Configuración del documento
-    const title = "CELIMIN - Reporte de Inventario";
-    const date = new Date().toLocaleDateString();
-    
-    // Encabezado del PDF
-    doc.setFontSize(18);
-    doc.setTextColor(40);
-    doc.text(title, 14, 22);
-    
-    doc.setFontSize(11);
-    doc.setTextColor(100);
-    doc.text(`Fecha de generación: ${date}`, 14, 30);
-    
-    // Definir las columnas y filas para AutoTable
-    const columns = [
-        { header: 'Código', dataKey: 'code' },
-        { header: 'Nombre', dataKey: 'name' },
-        { header: 'Categoría', dataKey: 'category' },
-        { header: 'Stock', dataKey: 'stock' },
-        { header: 'Laboratorios', dataKey: 'labs' },
-        { header: 'Estado', dataKey: 'status' }
-    ];
-
-    const data = inventoryData.map(item => {
-        const itemLabs = (item.labs || []).map(labId => {
-            const lab = labsData.find(l => l.id === labId);
-            return lab ? lab.name : labId;
-        }).join(', ');
-
-        return {
-            code: item.code || 'N/A',
-            name: item.name,
-            category: item.category,
-            stock: item.stock,
-            labs: itemLabs,
-            status: (item.status || 'ok').toUpperCase()
-        };
-    });
-
-    // Generar la tabla
-    doc.autoTable({
-        columns: columns,
-        body: data,
-        startY: 40,
-        styles: { fontSize: 9, cellPadding: 3 },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-        alternateRowStyles: { fillColor: [245, 245, 245] },
-        margin: { top: 40 }
-    });
-
-    // Guardar el archivo directamente
-    doc.save(`inventario_celimin_${new Date().getTime()}.pdf`);
-}
-
-// Inicialización
+// =============================================================================
+// INICIALIZACIÓN — DOMContentLoaded (core)
+// =============================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Referencias DOM
-    const loginScreen = document.getElementById('login-screen');
-    const appContainer = document.getElementById('app-container');
-    const loginForm = document.getElementById('login-form');
-    const btnLogout = document.getElementById('btn-logout');
-
-    // Función para aplicar sesión
-    const applySession = (session) => {
-        if (!session) return;
-        const nameEl = document.getElementById('current-user-name');
-        const roleEl = document.getElementById('current-user-role');
-        const avatarEl = document.getElementById('user-avatar');
-        
-        if (nameEl) nameEl.innerText = session.user;
-        if (roleEl) roleEl.innerText = session.role;
-        if (avatarEl) avatarEl.innerText = session.user[0].toUpperCase();
-
-        // Control de acceso por roles para el botón "Nuevo Registro" (Inventario)
-        const allowedRolesInventory = [
-            'Administrador General', 
-            'Encargada de Inventario'
-        ];
-        
-        // Control de acceso por roles para el botón "Registrar Usuario" (Personal)
-        const allowedRolesUsers = [
-            'Administrador General'
-        ];
-
-        const btnNewItem = document.getElementById('btn-new-item');
-        if (btnNewItem) {
-            btnNewItem.style.display = allowedRolesInventory.includes(session.role) ? 'inline-flex' : 'none';
-        }
-
-        const btnClearInventory = document.getElementById('btn-clear-inventory');
-        if (btnClearInventory) {
-            btnClearInventory.style.display = allowedRolesInventory.includes(session.role) ? 'inline-flex' : 'none';
-        }
-
-        const btnNewUser = document.getElementById('btn-new-user');
-        if (btnNewUser) {
-            btnNewUser.style.display = allowedRolesUsers.includes(session.role) ? 'inline-flex' : 'none';
-        }
-
-        // Control "Ver todo": Ocultar ciertos menús si no es admin
-        const isAdmin = session.role === 'Administrador General';
-        document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
-            const link = item.querySelector('.nav-link');
-            if (link && link.getAttribute('data-view')) {
-                const view = link.getAttribute('data-view');
-                if (!isAdmin && (view === 'users' || view === 'movements')) {
-                    item.style.display = 'none';
-                } else {
-                    item.style.display = '';
-                }
-            }
-        });
-
-        if (loginScreen) loginScreen.classList.add('hidden');
-        if (appContainer) appContainer.classList.remove('hidden');
-        document.body.classList.remove('login-active');
-        switchView('dashboard');
-    };
-
-    // Verificar sesión existente
-    const existingSession = storage.get(STORAGE_KEYS.SESSION, null);
-    if (existingSession) {
-        applySession(existingSession);
-    }
-
-    // Login Event
-    if (loginForm) {
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const userInput = document.getElementById('login-user').value.trim();
-            
-            // Buscar primero en usersData, luego en initialUsers como respaldo
-            let foundUser = usersData.find(u => u.name.toLowerCase() === userInput.toLowerCase());
-            if (!foundUser) {
-                foundUser = initialUsers.find(u => u.name.toLowerCase() === userInput.toLowerCase());
-            }
-            
-            // Asignar rol del usuario seleccionado
-            const user = foundUser ? foundUser.name : userInput;
-            const role = foundUser ? foundUser.role : 'Usuario';
-            
-            const session = { user, role };
-            storage.set(STORAGE_KEYS.SESSION, session);
-            applySession(session);
-        });
-    }
-
-    // Logout Event
-    if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
-            if (confirm('¿Cerrar sesión?')) {
-                storage.remove(STORAGE_KEYS.SESSION);
-                location.reload(); // Forma más limpia de resetear el estado
-            }
-        });
-    }
-
-    // Modal Logic
-    const modalItem = document.getElementById('modal-item');
-    const btnNewItem = document.getElementById('btn-new-item');
-    const closeBtn = document.getElementById('close-modal-item');
-    const cancelBtn = document.getElementById('btn-cancel-item');
-    const formNewItem = document.getElementById('form-new-item');
-
-    const toggleModal = (show) => {
-        if (show) modalItem.classList.remove('hidden');
-        else modalItem.classList.add('hidden');
-    };
-
-    if (btnNewItem) {
-        btnNewItem.addEventListener('click', () => {
-            if (formNewItem) formNewItem.reset();
-            const reagentOnly = document.getElementById('reagent-only-fields');
-            if (reagentOnly) reagentOnly.classList.add('hidden');
-            const itemExpiryGroup = document.getElementById('item-expiry-group');
-            if (itemExpiryGroup) itemExpiryGroup.classList.remove('hidden');
-            toggleModal(true);
-        });
-    }
-    if (closeBtn) closeBtn.addEventListener('click', () => toggleModal(false));
-    if (cancelBtn) cancelBtn.addEventListener('click', () => toggleModal(false));
-
-    if (formNewItem) {
-        formNewItem.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const selectedLabs = Array.from(document.querySelectorAll('input[name="labs"]:checked')).map(cb => cb.value);
-            
-            const newItem = {
-                code: `INS-${Math.floor(100 + Math.random() * 900)}`,
-                name: document.getElementById('item-name').value,
-                category: document.getElementById('item-category').value,
-                stockActual: parseInt(document.getElementById('item-stock-actual').value),
-                stockMin: parseInt(document.getElementById('item-stock-min').value),
-                unit: document.getElementById('item-format-unit').value,
-                locationDetail: document.getElementById('item-location-detail').value,
-                expiryDate: document.getElementById('item-expiry').value,
-                format: document.getElementById('item-format-unit').value,
-                state: document.getElementById('item-category').value === 'Reactivos' ? document.getElementById('item-state').value : 'N/A',
-                reactDate: document.getElementById('item-category').value === 'Reactivos' ? document.getElementById('item-react-date').value : '',
-                comments: document.getElementById('item-category').value === 'Reactivos' ? document.getElementById('item-comments').value : '',
-                supplier: document.getElementById('item-supplier').value,
-                responsible: document.getElementById('item-responsible').value,
-                status: parseInt(document.getElementById('item-stock-actual').value) <= 0 ? 'out' : (parseInt(document.getElementById('item-stock-actual').value) <= parseInt(document.getElementById('item-stock-min').value) ? 'low' : 'ok'),
-                labs: selectedLabs
-            };
-
-            inventoryData.push(newItem);
-            
-            // Registrar movimiento
-            const session = storage.get(STORAGE_KEYS.SESSION);
-            const now = new Date();
-            const movement = {
-                id: `TRX-${Date.now().toString().slice(-6)}`,
-                type: 'Ingreso',
-                item: newItem.name,
-                qty: `${newItem.stockActual} ${newItem.unit}`,
-                user: session ? session.user : 'Sistema',
-                target: 'Inventario General',
-                date: now.toISOString().split('T')[0],
-                time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-            };
-            movementsData.push(movement);
-
-            saveData();
-            renderInventory();
-            renderDashboard();
-            if (typeof renderEspacios === 'function') renderEspacios();
-            
-            formNewItem.reset();
-            toggleModal(false);
-            alert('Registro de ítem guardado con éxito');
-        });
-    }
-
-    // Edit Item Logic
-    const formEditItem = document.getElementById('form-edit-item');
-    if (formEditItem) {
-        formEditItem.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const index = document.getElementById('edit-item-index').value;
-            
-            const selectedLabs = Array.from(document.querySelectorAll('input[name="edit-labs"]:checked')).map(cb => cb.value);
-
-            inventoryData[index] = {
-                ...inventoryData[index],
-                name: document.getElementById('edit-item-name').value,
-                category: document.getElementById('edit-item-category').value,
-                stockActual: parseInt(document.getElementById('edit-item-stock-actual').value),
-                stockMin: parseInt(document.getElementById('edit-item-stock-min').value),
-                unit: document.getElementById('edit-item-format-unit').value,
-                locationDetail: document.getElementById('edit-item-location-detail').value,
-                expiryDate: document.getElementById('edit-item-expiry').value,
-                format: document.getElementById('edit-item-format-unit').value,
-                state: document.getElementById('edit-item-category').value === 'Reactivos' ? document.getElementById('edit-item-state').value : 'N/A',
-                reactDate: document.getElementById('edit-item-category').value === 'Reactivos' ? document.getElementById('edit-item-react-date').value : '',
-                comments: document.getElementById('edit-item-category').value === 'Reactivos' ? document.getElementById('edit-item-comments').value : '',
-                supplier: document.getElementById('edit-item-supplier').value,
-                responsible: document.getElementById('edit-item-responsible').value,
-                status: parseInt(document.getElementById('edit-item-stock-actual').value) <= 0 ? 'out' : (parseInt(document.getElementById('edit-item-stock-actual').value) <= parseInt(document.getElementById('edit-item-stock-min').value) ? 'low' : 'ok'),
-                labs: selectedLabs
-            };
-
-            saveData();
-            renderInventory();
-            if (typeof renderDashboard === 'function') renderDashboard();
-            if (typeof renderEspacios === 'function') renderEspacios();
-            document.getElementById('modal-edit-item').classList.add('hidden');
-            alert('Cambios guardados con éxito');
-        });
-    }
-
-    // Modal Close Logic (View & Edit)
-    document.getElementById('close-modal-view')?.addEventListener('click', () => document.getElementById('modal-view-item').classList.add('hidden'));
-    document.getElementById('btn-close-view')?.addEventListener('click', () => document.getElementById('modal-view-item').classList.add('hidden'));
-    document.getElementById('close-modal-edit')?.addEventListener('click', () => document.getElementById('modal-edit-item').classList.add('hidden'));
-    document.getElementById('btn-cancel-edit')?.addEventListener('click', () => document.getElementById('modal-edit-item').classList.add('hidden'));
-
-    // Export Logic
-    document.getElementById('btn-export-inventory')?.addEventListener('click', downloadInventory);
-
-    // User Modal Logic
-    const modalUser = document.getElementById('modal-user');
-    const btnNewUser = document.getElementById('btn-new-user');
-    const closeUserBtn = document.getElementById('close-modal-user');
-    const cancelUserBtn = document.getElementById('btn-cancel-user');
-    const formNewUser = document.getElementById('form-new-user');
-
-    const toggleUserModal = (show) => {
-        if (show) modalUser.classList.remove('hidden');
-        else modalUser.classList.add('hidden');
-    };
-
-    if (btnNewUser) btnNewUser.addEventListener('click', () => toggleUserModal(true));
-    if (closeUserBtn) closeUserBtn.addEventListener('click', () => toggleUserModal(false));
-    if (cancelUserBtn) cancelUserBtn.addEventListener('click', () => toggleUserModal(false));
-
-    if (formNewUser) {
-        formNewUser.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const newUser = {
-                name: document.getElementById('user-full-name').value,
-                role: document.getElementById('user-new-role').value,
-                lastAccess: 'Nunca',
-                permissions: document.getElementById('user-permissions').value || 'Estándar',
-                active: true
-            };
-
-            usersData.push(newUser);
-            saveData();
-            renderUsers();
-            
-            formNewUser.reset();
-            toggleUserModal(false);
-            alert(`Usuario ${newUser.name} registrado con éxito`);
-        });
-    }
-
-    // Edit User Modal Logic
-    const modalEditUser = document.getElementById('modal-edit-user');
-    const closeEditUserBtn = document.getElementById('close-modal-edit-user');
-    const cancelEditUserBtn = document.getElementById('btn-cancel-edit-user');
-    const formEditUser = document.getElementById('form-edit-user');
-
-    if (closeEditUserBtn) closeEditUserBtn.addEventListener('click', () => modalEditUser.classList.add('hidden'));
-    if (cancelEditUserBtn) cancelEditUserBtn.addEventListener('click', () => modalEditUser.classList.add('hidden'));
-
-    if (formEditUser) {
-        formEditUser.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const index = document.getElementById('edit-user-index').value;
-            
-            usersData[index] = {
-                ...usersData[index],
-                name: document.getElementById('edit-user-name').value,
-                role: document.getElementById('edit-user-role').value,
-                permissions: document.getElementById('edit-user-permissions').value || 'Estándar'
-            };
-
-            saveData();
-            renderUsers();
-            modalEditUser.classList.add('hidden');
-            alert('Usuario actualizado con éxito.');
-        });
-    }
 
     // Nav Links
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -1902,63 +1381,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Laboratorio actualizado con éxito.');
         });
     }
-
-    // LOGIN EXTRA ACTIONS (Forgot & Signup)
-    const modalForgot = document.getElementById('modal-forgot');
-    const modalSignup = document.getElementById('modal-signup');
-    const linkForgot = document.getElementById('link-forgot-password');
-    const linkSignup = document.getElementById('link-create-account');
-
-    if (linkForgot) {
-        linkForgot.addEventListener('click', (e) => {
-            e.preventDefault();
-            modalForgot.classList.remove('hidden');
-        });
-    }
-
-    if (linkSignup) {
-        linkSignup.addEventListener('click', (e) => {
-            e.preventDefault();
-            modalSignup.classList.remove('hidden');
-        });
-    }
-
-    document.getElementById('close-modal-forgot')?.addEventListener('click', () => modalForgot.classList.add('hidden'));
-    document.getElementById('close-modal-signup')?.addEventListener('click', () => modalSignup.classList.add('hidden'));
-    document.getElementById('btn-cancel-forgot')?.addEventListener('click', () => modalForgot.classList.add('hidden'));
-    document.getElementById('btn-cancel-signup')?.addEventListener('click', () => modalSignup.classList.add('hidden'));
-
-    document.getElementById('form-forgot')?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const btn = e.target.querySelector('button[type="submit"]');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-        btn.disabled = true;
-
-        setTimeout(() => {
-            alert('Se ha enviado un correo de recuperación a su casilla institucional.');
-            modalForgot.classList.add('hidden');
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            e.target.reset();
-        }, 1500);
-    });
-
-    document.getElementById('form-signup')?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const btn = e.target.querySelector('button[type="submit"]');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-        btn.disabled = true;
-
-        setTimeout(() => {
-            alert('Su solicitud ha sido enviada. El administrador revisará sus datos y activará su cuenta en las próximas 24 horas.');
-            modalSignup.classList.add('hidden');
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            e.target.reset();
-        }, 1500);
-    });
 
     // Submenú Institucional
     const btnInstitucional = document.getElementById('btn-institucional');
@@ -2093,7 +1515,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderAgendaTrabajos();
                 renderCalendar();
                 
-                // Limpiar estado de edición
                 window.currentEditingActivityIndex = undefined;
                 const btnSubmit = formAgendar.querySelector('button[type="submit"]');
                 btnSubmit.textContent = 'Agendar Trabajo';
@@ -2108,7 +1529,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 500);
         });
 
-        // Cambiar etiquetas del modal según el tipo
         const agendaTypeSelect = document.getElementById('agenda-type');
         if (agendaTypeSelect) {
             agendaTypeSelect.addEventListener('change', () => {
@@ -2316,114 +1736,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     updateEspacioLabs();
     
-    // Y parcheamos updateLabSelections original para incluir el nuevo contenedor
     const oldUpdateLabSelections = window.updateLabSelections || updateLabSelections;
     window.updateLabSelections = function() {
         if(typeof oldUpdateLabSelections === 'function') oldUpdateLabSelections();
         updateEspacioLabs();
     };
 
-    // Lógica para mostrar/ocultar campos de reactivos/equipos en tiempo real
-    const catSelect = document.getElementById('item-category');
-    const reagentOnly = document.getElementById('reagent-only-fields');
-    const itemExpiryGroup = document.getElementById('item-expiry-group');
-    if (catSelect && reagentOnly) {
-        catSelect.addEventListener('change', () => {
-            if (catSelect.value === 'Reactivos') reagentOnly.classList.remove('hidden');
-            else reagentOnly.classList.add('hidden');
-
-            if (catSelect.value === 'Equipos') {
-                if (itemExpiryGroup) itemExpiryGroup.classList.add('hidden');
-            } else {
-                if (itemExpiryGroup) itemExpiryGroup.classList.remove('hidden');
-            }
-        });
-    }
-
-    const editCatSelect = document.getElementById('edit-item-category');
-    const editReagentOnly = document.getElementById('edit-reagent-only-fields');
-    const editItemExpiryGroup = document.getElementById('edit-item-expiry-group');
-    if (editCatSelect && editReagentOnly) {
-        editCatSelect.addEventListener('change', () => {
-            if (editCatSelect.value === 'Reactivos') editReagentOnly.classList.remove('hidden');
-            else editReagentOnly.classList.add('hidden');
-
-            if (editCatSelect.value === 'Equipos') {
-                if (editItemExpiryGroup) editItemExpiryGroup.classList.add('hidden');
-            } else {
-                if (editItemExpiryGroup) editItemExpiryGroup.classList.remove('hidden');
-            }
-        });
-    }
-
-    // Listeners para filtros de estado en inventario
-    document.querySelectorAll('.status-filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.status-filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderEquipmentStatus(btn.dataset.status);
-        });
-    });
-
-    // Listeners para botones de actualización manual
-    const refreshInvBtn = document.getElementById('btn-refresh-inventory');
-    if (refreshInvBtn) {
-        refreshInvBtn.addEventListener('click', () => {
-            const icon = refreshInvBtn.querySelector('i');
-            icon.classList.add('fa-spin');
-            window.masterSync();
-            setTimeout(() => {
-                icon.classList.remove('fa-spin');
-                Swal.fire({ icon: 'success', title: 'Sistema Sincronizado', timer: 800, showConfirmButton: false });
-            }, 500);
-        });
-    }
-
-    const refreshEqBtn = document.getElementById('btn-refresh-equipments');
-    if (refreshEqBtn) {
-        refreshEqBtn.addEventListener('click', () => {
-            const icon = refreshEqBtn.querySelector('i');
-            icon.classList.add('fa-spin');
-            window.masterSync();
-            setTimeout(() => {
-                icon.classList.remove('fa-spin');
-                Swal.fire({ icon: 'success', title: 'Equipos Actualizados', timer: 800, showConfirmButton: false });
-            }, 500);
-        });
-    }
-
-    // Listeners para vaciar datos (Eliminar Todo)
-    const clearInvBtn = document.getElementById('btn-clear-inventory');
-    if (clearInvBtn) {
-        clearInvBtn.addEventListener('click', () => {
-            Swal.fire({
-                title: '¿Eliminar todo el inventario?',
-                text: 'Esta acción borrará todos los registros de insumos y reactivos. ¡No podrás revertir esto!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#4f46e5',
-                confirmButtonText: 'Sí, eliminar todo',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    inventoryData = [];
-                    saveData();
-                    renderInventory();
-                    if (typeof renderDashboard === 'function') renderDashboard();
-                    if (typeof renderEspacios === 'function') renderEspacios();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Inventario Vaciado',
-                        text: 'Se han eliminado todos los registros del inventario.',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                }
-            });
-        });
-    }
-
+    // Limpiar Agenda
     const clearAgendaBtn = document.getElementById('btn-clear-agenda');
     if (clearAgendaBtn) {
         clearAgendaBtn.addEventListener('click', () => {
@@ -2521,7 +1840,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Validar tamaño: 1.5MB max (1.5 * 1024 * 1024 bytes)
             if (file.size > 1.5 * 1024 * 1024) {
                 Swal.fire({
                     icon: 'error',
@@ -2572,378 +1890,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-// Utilidad para formatear bytes
-function formatBytes(bytes, decimals = 2) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-// Renderizado de Biblioteca
-window.renderLibrary = function() {
-    const grid = document.getElementById('library-docs-grid');
-    if (!grid) return;
-
-    if (!libraryDocsData || libraryDocsData.length === 0) {
-        grid.innerHTML = `
-            <div class="info-placeholder" style="grid-column: 1 / -1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; background: #fff; border-radius: 16px; border: 1px dashed var(--border);">
-                <i class="fas fa-book-open fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
-                <p style="color: var(--text-muted); font-size: 1rem; margin: 0;">No hay documentos en la biblioteca. ¡Sube tu primer PDF!</p>
-            </div>
-        `;
-        return;
-    }
-
-    const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
-
-    grid.innerHTML = libraryDocsData.map((doc) => `
-        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease; position: relative; overflow: hidden; border: 1px solid var(--border);">
-            <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem;">
-                <div style="background: #fef2f2; padding: 0.75rem; border-radius: 12px;">
-                    <i class="fas fa-file-pdf" style="font-size: 2.5rem; color: #ef4444;"></i>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                    <h4 style="margin: 0 0 0.25rem 0; font-size: 1.1rem; font-weight: 600; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${doc.title}">${doc.title}</h4>
-                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${doc.fileName}">${doc.fileName}</span>
-                </div>
-            </div>
-            
-            <p style="font-size: 0.85rem; color: #475569; margin: 0 0 1.25rem 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.5rem; line-height: 1.25rem;">
-                ${doc.desc || 'Sin descripción disponible.'}
-            </p>
-
-            <div style="background: #f8fafc; padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
-                <div style="display: flex; justify-content: space-between;">
-                    <span>Subido por:</span>
-                    <strong style="color: var(--text-dark);">${doc.user}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>Fecha:</span>
-                    <strong>${doc.date}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>Tamaño:</span>
-                    <strong>${doc.size}</strong>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 0.5rem; width: 100%;">
-                <button class="btn btn-primary" onclick="downloadDocument('${doc.id}')" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem;">
-                    <i class="fas fa-download"></i> Descargar
-                </button>
-                ${canDelete ? `
-                    <button class="btn" onclick="deleteDocument('${doc.id}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; padding: 0.6rem; border-radius: 12px; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                ` : ''}
-            </div>
-        </div>
-    `).join('');
-};
-
-// Descargar Documento
-window.downloadDocument = function(id) {
-    const doc = libraryDocsData.find(d => d.id === id);
-    if (!doc) return;
-
-    // Crear un enlace temporal para descargar el archivo base64
-    const link = document.createElement('a');
-    link.href = doc.fileData;
-    link.download = doc.fileName || `${doc.title}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
-
-// Eliminar Documento
-window.deleteDocument = function(id) {
-    const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
-    if (!canDelete) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Acceso Denegado',
-            text: 'No tienes permisos para eliminar documentos de la biblioteca.'
-        });
-        return;
-    }
-
-    const doc = libraryDocsData.find(d => d.id === id);
-    if (!doc) return;
-
-    Swal.fire({
-        title: '¿Eliminar Documento?',
-        text: `¿Estás seguro de que deseas eliminar "${doc.title}" de la biblioteca?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            libraryDocsData = libraryDocsData.filter(d => d.id !== id);
-            saveData();
-            renderLibrary();
-            Swal.fire({
-                icon: 'success',
-                title: 'Documento Eliminado',
-                text: 'El documento se ha retirado de la biblioteca.',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        }
-    });
-};
-
-// Lógica del Plano Interactivo
-let selectedPlanoZone = null;
-
-const planoZones = {
-    'analisis-gases': {
-        name: 'Módulo de Análisis de Gases',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Área aislada para el monitoreo de emisiones gaseosas, campanas de flujo controlado y sensores de reactividad.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('gases') || item.locationDetail?.toLowerCase().includes('contaminación')
-    },
-    'baterias-almacen': {
-        name: 'Almacén de Material y Equipos',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Bodega de almacenamiento de celdas de litio, consumibles, guantes y componentes de recambio.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('bodega') || item.locationDetail?.toLowerCase().includes('almacén') || item.locationDetail?.toLowerCase().includes('almacen') || item.locationDetail?.toLowerCase().includes('supply')
-    },
-    'procesos-mesa-lat': {
-        name: 'Mesón Lateral Izquierdo',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Mesón principal para soporte de equipos ópticos, balanzas analíticas y microscopios de procesos.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('mesón 4') || item.locationDetail?.toLowerCase().includes('mesa lateral') || item.locationDetail?.toLowerCase().includes('lateral izquierdo') || item.locationDetail?.toLowerCase().includes('mesa 4')
-    },
-    'procesos-estanteria-sup': {
-        name: 'Estantería Superior Izquierda',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Estante elevado para reactivos químicos sellados, sales de litio y ácidos orgánicos.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('estante a1') || item.locationDetail?.toLowerCase().includes('estante') || item.locationDetail?.toLowerCase().includes('estantería')
-    },
-    'procesos-mesa-central': {
-        name: 'Mesón Central de Procesos',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Mesa de trabajo central multifuncional para la mezcla de disoluciones e instrumentación general.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('mesón central') || (item.locationDetail?.toLowerCase().includes('central') && item.labs?.includes('L1'))
-    },
-    'procesos-lavaplatos': {
-        name: 'Lavaplatos Doble (Procesos)',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Zona húmeda de lavado de material de vidrio de laboratorio (buretas, precipitados, matraces).',
-        match: (item) => item.locationDetail?.toLowerCase().includes('lavaplatos') || item.locationDetail?.toLowerCase().includes('lavadero')
-    },
-    'procesos-campana': {
-        name: 'Campana Extractora (Procesos)',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Extractor de vapores ácidos y solventes volátiles orgánicos para manipulación segura de reactivos.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('campana') || item.locationDetail?.toLowerCase().includes('extractora')
-    },
-    'procesos-estanteria-inf': {
-        name: 'Estantería de Procesos (G2)',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Gabinete inferior cerrado para almacenamiento de vidriería de repuesto y consumibles secos.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('gabinete g2') || item.locationDetail?.toLowerCase().includes('gabinete') || item.locationDetail?.toLowerCase().includes('almacenaje inferior')
-    },
-    'baterias-lavaplatos': {
-        name: 'Lavaplatos de Baterías',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Lavadero secundario para lavado y secado rápido de componentes inertes.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('lavaplatos baterías') || item.locationDetail?.toLowerCase().includes('lavaplatos baterias')
-    },
-    'baterias-mesa-central-sup': {
-        name: 'Mesón Central Superior',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Área destinada a la preparación de electrolitos, pesaje de ánodos/cátodos y ensamblaje inicial.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('mesa central superior') || item.locationDetail?.toLowerCase().includes('mesón superior')
-    },
-    'baterias-mesa-central-inf': {
-        name: 'Mesón Central Inferior',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Espacio de trabajo para montaje de celdas de moneda (coin cells) y conexión de multímetros.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('mesa central inferior') || item.locationDetail?.toLowerCase().includes('mesón inferior')
-    },
-    'baterias-mesa-lat': {
-        name: 'Mesón Lateral Derecho',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Mesón de instrumentación para espectrómetros, equipos analíticos avanzados y hornos de secado.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('lab 2 - central') || item.locationDetail?.toLowerCase().includes('lateral derecho') || item.locationDetail?.toLowerCase().includes('mesón lateral')
-    },
-    'baterias-equipos-inf': {
-        name: 'Módulo de Equipos de Ciclos',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Estaciones de ciclado y carga/descarga de celdas de ion litio conectadas a sistemas de control computarizado.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('equipos') || item.locationDetail?.toLowerCase().includes('ciclado') || item.name?.toLowerCase().includes('espectrómetro') || item.name?.toLowerCase().includes('microscopio')
-    }
-};
-
-window.initPlano = function() {
-    const svg = document.getElementById('labs-map-svg');
-    if (!svg) return;
-    
-    // Configurar click listeners en los polígonos/rectángulos del plano
-    const zones = svg.querySelectorAll('.map-interactive-zone');
-    zones.forEach(zone => {
-        zone.onclick = function() {
-            zones.forEach(z => z.classList.remove('active'));
-            zone.classList.add('active');
-            
-            const zoneId = zone.getAttribute('data-zone');
-            selectedPlanoZone = zoneId;
-            renderPlanoSidebar(zoneId);
-        };
-    });
-
-    // Configurar modal de plano
-    const modal = document.getElementById('modal-plano-details');
-    const closeBtn = document.getElementById('close-modal-plano-details');
-    const cancelBtn = document.getElementById('btn-close-plano-details');
-    const fullDetailsBtn = document.getElementById('btn-plano-full-details');
-    const searchInput = document.getElementById('plano-details-search');
-
-    if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
-    if (cancelBtn) cancelBtn.onclick = () => modal.classList.add('hidden');
-    
-    if (fullDetailsBtn) {
-        fullDetailsBtn.onclick = () => {
-            if (!selectedPlanoZone) return;
-            const zoneInfo = planoZones[selectedPlanoZone];
-            if (!zoneInfo) return;
-            
-            document.getElementById('plano-details-title').innerText = `Inventario Completo - ${zoneInfo.name}`;
-            document.getElementById('plano-details-subtitle').innerText = zoneInfo.desc;
-            
-            // Cargar y filtrar
-            const matchingItems = inventoryData.filter(item => zoneInfo.match(item));
-            renderPlanoModalTable(matchingItems);
-            
-            modal.classList.remove('hidden');
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.oninput = () => {
-                    const term = searchInput.value.toLowerCase().trim();
-                    const filtered = matchingItems.filter(item => 
-                        item.name.toLowerCase().includes(term) ||
-                        item.code.toLowerCase().includes(term) ||
-                        item.category.toLowerCase().includes(term) ||
-                        item.locationDetail?.toLowerCase().includes(term)
-                    );
-                    renderPlanoModalTable(filtered);
-                };
-            }
-        };
-    }
-};
-
-function renderPlanoSidebar(zoneId) {
-    const placeholder = document.getElementById('plano-sidebar-placeholder');
-    const content = document.getElementById('plano-sidebar-content');
-    const fullDetailsBtn = document.getElementById('btn-plano-full-details');
-    const itemsList = document.getElementById('plano-items-list');
-
-    const zoneInfo = planoZones[zoneId];
-    if (!zoneInfo) {
-        if (placeholder) placeholder.classList.remove('hidden');
-        if (content) content.classList.add('hidden');
-        if (fullDetailsBtn) fullDetailsBtn.disabled = true;
-        return;
-    }
-
-    if (placeholder) placeholder.classList.add('hidden');
-    if (content) content.classList.remove('hidden');
-    if (fullDetailsBtn) fullDetailsBtn.disabled = false;
-
-    document.getElementById('plano-area-name').innerText = zoneInfo.name;
-    document.getElementById('plano-area-desc').innerText = zoneInfo.desc;
-    
-    const labBadge = document.getElementById('plano-area-lab');
-    if (labBadge) {
-        labBadge.innerText = zoneInfo.lab;
-        labBadge.className = `status-badge ${zoneInfo.lab.includes('Procesos') ? 'status-ok' : 'status-pendiente'}`;
-    }
-
-    const matchingItems = inventoryData.filter(item => zoneInfo.match(item));
-    
-    if (matchingItems.length === 0) {
-        itemsList.innerHTML = `
-            <div style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem;">
-                <i class="fas fa-box-open" style="margin-bottom: 0.5rem; display: block; font-size: 1.5rem;"></i>
-                No hay insumos o reactivos registrados en esta ubicación.
-            </div>
-        `;
-        return;
-    }
-
-    itemsList.innerHTML = matchingItems.map(item => {
-        let iconClass = 'fa-box';
-        if (item.category === 'Reactivos') iconClass = 'fa-flask';
-        else if (item.category === 'Equipos') iconClass = 'fa-microscope';
-        else if (item.category === 'Vidriería') iconClass = 'fa-wine-glass-alt';
-        else if (item.category === 'Consumibles') iconClass = 'fa-vials';
-
-        const statusColor = item.status === 'ok' ? '#10b981' : (item.status === 'low' ? '#f59e0b' : '#ef4444');
-
-        return `
-            <div class="plano-item-row">
-                <div style="display: flex; gap: 0.75rem; align-items: center; min-width: 0;">
-                    <i class="fas ${iconClass}" style="color: var(--text-muted); font-size: 1.1rem; width: 20px; text-align: center;"></i>
-                    <div style="min-width: 0;">
-                        <span style="font-weight: 600; font-size: 0.85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main);">${item.name}</span>
-                        <span style="font-size: 0.7rem; color: var(--text-muted);">${item.code} | ${item.category}</span>
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
-                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-main);">${item.stockActual} ${item.unit}</span>
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; display: inline-block;" title="Estado: ${item.status}"></span>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function renderPlanoModalTable(items) {
-    const tbody = document.getElementById('plano-details-table-body');
-    const counter = document.getElementById('plano-details-counter');
-    if (!tbody) return;
-
-    if (counter) {
-        counter.innerText = `Mostrando ${items.length} elemento${items.length === 1 ? '' : 's'}`;
-    }
-
-    if (items.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                    <i class="fas fa-search fa-2x" style="margin-bottom: 0.5rem; display: block;"></i>
-                    Ningún elemento coincide con los criterios.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    tbody.innerHTML = items.map(item => {
-        const statusBadge = `<span class="status-badge status-${item.status}">${item.status.toUpperCase()}</span>`;
-        return `
-            <tr>
-                <td><code>${item.code}</code></td>
-                <td><strong>${item.name}</strong></td>
-                <td>${item.category}</td>
-                <td style="text-align: center; font-weight: 600;">${item.stockActual} ${item.unit}</td>
-                <td>${item.responsible || '—'}</td>
-                <td>${item.locationDetail || 'General'}</td>
-                <td style="text-align: center;">${statusBadge}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
-
