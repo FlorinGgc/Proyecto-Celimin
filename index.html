@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CELIMIN | Sistema de Gestión de Laboratorio</title>
+    
+    <!-- Fuentes: Inter y Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Iconos: FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Estilos Personalizados -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="login-active">
+
+    <!-- PANTALLA DE ACCESO (LOGIN) -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-card">
+            <header class="login-header">
+                <img src="logo.png" alt="CELIMIN Logo" class="login-logo" onerror="this.src='https://via.placeholder.com/90?text=CELIMIN'">
+                <h2>CELIMIN</h2>
+                <p>Centro de Investigación Avanzada del Litio y minerales industriales</p>
+            </header>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-user">Usuario</label>
+                    <select id="login-user" name="username" required style="width:100%; padding:0.75rem 1rem; border:1px solid var(--border-color); border-radius:0.5rem; font-size:0.95rem; background:var(--surface-color); color:var(--text-color); cursor:pointer;">
+                        <option value="" disabled>— Seleccione su usuario —</option>
+                        <option value="aegonzalez" selected>aegonzalez — Administrador General</option>
+                        <option value="crojas">crojas — Encargada de Inventario</option>
+                        <option value="mfernandez">mfernandez — Supervisor de Laboratorio</option>
+                        <option value="jmorales">jmorales — Técnico en Laboratorio</option>
+                        <option value="rvega">rvega — Técnico de Apoyo</option>
+                        <option value="pherrera">pherrera — Investigadora</option>
+                        <option value="scortes">scortes — Docente</option>
+                        <option value="vsoto">vsoto — Tesista</option>
+                        <option value="daraya">daraya — Ayudante</option>
+                        <option value="amunoz">amunoz — Compras y Abastecimiento</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                        <label for="login-pass" style="margin-bottom: 0;">Contraseña</label>
+                        <a href="#" id="link-forgot-password" class="small-link">¿Olvidó su contraseña?</a>
+                    </div>
+                    <input type="password" id="login-pass" placeholder="••••••••" required value="123456">
+                </div>
+                <button type="submit" class="btn btn-primary login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Ingresar al Sistema
+                </button>
+                
+                <div class="login-extra-actions">
+                    <span>¿No tiene una cuenta?</span>
+                    <a href="#" id="link-create-account">Solicitar acceso</a>
+                </div>
+            </form>
+
+            <footer class="login-footer">
+                <p>&copy; 2026 CELIMIN - Sistema de Gestión de Activos</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL (DASHBOARD) -->
+    <div id="app-container" class="app-layout hidden">
+        
+        <!-- BARRA LATERAL (SIDEBAR) -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <img src="logo.png" alt="Logo" class="logo-img" onerror="this.src='https://via.placeholder.com/44?text=C'">
+                <div class="logo-text">
+                    <span class="logo-main">CELIMIN</span>
+                    <span class="logo-sub">Centro de Investigación Avanzada del Litio y minerales industriales</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul class="nav-links">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-view="dashboard">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link submenu-toggle" id="btn-inventario-menu">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <i class="fas fa-vials"></i>
+                                <span>Inventario</span>
+                            </div>
+                            <i class="fas fa-chevron-down submenu-icon"></i>
+                        </a>
+                        <ul class="submenu hidden" id="submenu-inventario-list">
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="inventory">
+                                    <i class="fas fa-list"></i>
+                                    <span>Ver Inventario</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="agendar-trabajos" style="color: var(--success);">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    <span>Agendar Trabajo</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="users">
+                            <i class="fas fa-users-gear"></i>
+                            <span>Usuarios</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="movements">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Movimientos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="labs">
+                            <i class="fas fa-flask"></i>
+                            <span>Laboratorio (Sedes)</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="turnos">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Orden y Aseo</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="auditoria">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Checkeo General</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="library">
+                            <i class="fas fa-book-open"></i>
+                            <span>Biblioteca</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="plano">
+                            <i class="fas fa-map"></i>
+                            <span>Plano Interactivo</span>
+                        </a>
+                    </li>
+                    <li class="nav-divider"></li>
+                    <li class="nav-header">Consultas</li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="low-stock">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Stock Bajo</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="expiry-alerts">
+                            <i class="fas fa-hourglass-half"></i>
+                            <span>Vencimientos</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-header">Operaciones</li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="requests">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Solicitudes</span>
+                        </a>
+                    </li>
+                    <li class="nav-divider"></li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="mantenimiento">
+                            <i class="fas fa-broom"></i>
+                            <span>Limpieza y Equipos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-view="espacios">
+                            <i class="fas fa-boxes"></i>
+                            <span>Orden y Espacios</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link submenu-toggle" id="btn-institucional">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <i class="fas fa-building-columns"></i>
+                                <span>Institucional</span>
+                            </div>
+                            <i class="fas fa-chevron-down submenu-icon"></i>
+                        </a>
+                        <ul class="submenu hidden" id="submenu-institucional">
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="somos">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>SOMOS</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="calendar">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>Calendario Anual</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="linea-trabajo">
+                                    <i class="fas fa-microscope"></i>
+                                    <span>Línea de Trabajo</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="asesorias">
+                                    <i class="fas fa-handshake"></i>
+                                    <span>Asesorías</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="proyectos">
+                                    <i class="fas fa-project-diagram"></i>
+                                    <span>Proyectos</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="publicaciones">
+                                    <i class="fas fa-book"></i>
+                                    <span>Publicaciones</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="infraestructura">
+                                    <i class="fas fa-building"></i>
+                                    <span>Infraestructura</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="capital-humano">
+                                    <i class="fas fa-user-graduate"></i>
+                                    <span>Capital Humano</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="novedades">
+                                    <i class="fas fa-newspaper"></i>
+                                    <span>Novedades</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="congreso">
+                                    <i class="fas fa-users-rectangle"></i>
+                                    <span>Congreso</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-view="contactos">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>Contactos</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+
+            <footer class="sidebar-footer">
+                <!-- Se llena desde app.js (SISTEMA RESTABLECIDO) -->
+            </footer>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="main-content">
+            
+            <!-- CABECERA DE LA VISTA -->
+            <header class="content-header">
+                <div class="header-title">
+                    <h1 id="view-title">Dashboard General</h1>
+                    <p class="text-muted">Resumen del estado del laboratorio</p>
+                </div>
+                
+                <div class="header-right">
+                    <div id="live-clock" class="clock-display">
+                        <span id="clock-date">--/--/----</span>
+                        <span id="clock-time">00:00:00</span>
+                    </div>
+                    <div class="user-profile">
+                        <div class="user-info">
+                            <h4 id="current-user-name">Usuario</h4>
+                            <p id="current-user-role">Rol del Sistema</p>
+                        </div>
+                        <div id="user-avatar" class="avatar">U</div>
+                        <button id="btn-logout" class="btn-close" title="Cerrar Sesión">
+                            <i class="fas fa-power-off"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- SECCIÓN: DASHBOARD -->
+            <section id="dashboard-view" class="view-section">
+                <div class="action-bar" style="margin-bottom: 1.5rem;">
+                    <h3>Panel de Resumen</h3>
+                </div>
+                <div class="stats-grid">
+                    <article class="card">
+                        <p class="card-title">Ítems Totales</p>
+                        <p class="card-value" id="stat-items-total">1,284</p>
+                    </article>
+                    <article class="card">
+                        <p class="card-title">Alertas Stock</p>
+                        <p class="card-value danger-text" id="stat-alerts">12</p>
+                    </article>
+                    <article class="card">
+                        <p class="card-title">Movimientos Hoy</p>
+                        <p class="card-value" id="stat-movements">45</p>
+                    </article>
+                </div>
+
+                <div class="section-container mt-lg">
+                    <header class="section-header">
+                        <h3>Actividad Reciente</h3>
+                    </header>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Usuario</th>
+                                    <th>Acción</th>
+                                    <th>Ítem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-activity-body">
+                                <!-- Datos dinámicos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: INVENTARIO -->
+            <section id="inventory-view" class="view-section hidden">
+                <div id="inventory-alert-container"></div>
+                <div class="action-bar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Buscar en el inventario..." id="inventory-search">
+                    </div>
+                    <div class="filter-box">
+                        <select id="lab-filter" class="form-select">
+                            <option value="all">Todos los Laboratorios</option>
+                            <!-- Generado dinámicamente -->
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn" id="btn-refresh-inventory" title="Actualizar Datos">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                        <button class="btn" id="btn-export-inventory" title="Exportar a PDF">
+                            <i class="fas fa-file-pdf"></i> Descargar PDF
+                        </button>
+                        <button class="btn btn-danger" id="btn-clear-inventory" title="Eliminar Todo el Inventario">
+                            <i class="fas fa-trash-alt"></i> Eliminar Todo
+                        </button>
+                        <button class="btn btn-primary" id="btn-new-item">
+                            <i class="fas fa-plus"></i> Nuevo Registro
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Stock Actual</th>
+                                <th>Formato / Unidad</th>
+                                <th>Vencimiento</th>
+                                <th>Laboratorios</th>
+                                <th>Estado</th>
+                                <th style="text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body">
+                            <!-- Datos dinámicos -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: SOLICITUDES -->
+            <section id="requests-view" class="view-section hidden">
+                <div id="requests-alert-container"></div>
+                <div class="action-bar">
+                    <h3>Gestión de Solicitudes de Insumos</h3>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" id="btn-new-request">
+                            <i class="fas fa-plus"></i> Nueva Solicitud
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Solicitante</th>
+                                <th>Ítem</th>
+                                <th>Cant.</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th style="text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requests-table-body">
+                            <!-- Datos dinámicos -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <section id="users-view" class="view-section hidden">
+                <div class="action-bar">
+                    <h3>Gestión de Personal</h3>
+                    <button class="btn btn-primary" id="btn-new-user">
+                        <i class="fas fa-user-plus"></i> Registrar Usuario
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre Completo</th>
+                                <th>Rol</th>
+                                <th>Último Acceso</th>
+                                <th>Permisos</th>
+                                <th>Estado</th>
+                                <th style="text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Datos dinámicos -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: MOVIMIENTOS -->
+            <section id="movements-view" class="view-section hidden">
+                <div class="action-bar">
+                    <h3>Historial de Movimientos</h3>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tipo</th>
+                                <th>Ítem</th>
+                                <th>Cantidad</th>
+                                <th>Usuario</th>
+                                <th>Destino</th>
+                            </tr>
+                        </thead>
+                        <tbody id="movements-table-body">
+                            <!-- Datos dinámicos -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: LABORATORIOS -->
+            <section id="labs-view" class="view-section hidden">
+                <div class="action-bar">
+                    <h3>Gestión de Espacios Físicos</h3>
+                    <button class="btn btn-primary" id="btn-new-lab">
+                        <i class="fas fa-plus-circle"></i> Nuevo Laboratorio
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Ubicación</th>
+                                <th style="text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="labs-table-body">
+                            <!-- Datos dinámicos -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: MANTENIMIENTO DE EQUIPOS -->
+            <section id="mantenimiento-view" class="view-section hidden">
+                <div class="action-bar">
+                    <h3>Registro de Limpieza y Mantenimiento</h3>
+                    <button class="btn btn-primary" id="btn-new-limpieza">
+                        <i class="fas fa-broom"></i> Registrar Limpieza
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Equipo</th>
+                                <th>Fecha y Hora</th>
+                                <th>Tipo</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mantenimiento-table-body">
+                            <!-- Datos dinámicos -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: GESTIÓN DE ESPACIOS -->
+            <section id="espacios-view" class="view-section hidden">
+                <div class="action-bar">
+                    <h3>Orden y Ubicación de Insumos</h3>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Insumo/Equipo</th>
+                                <th>Laboratorios</th>
+                                <th>Ubicación Específica</th>
+                                <th style="text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="espacios-table-body">
+                            <!-- Datos dinámicos -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: TRABAJOS AGENDADOS -->
+            <section id="agendar-trabajos-view" class="view-section hidden">
+                <div class="action-bar">
+                    <h3>Trabajos Agendados</h3>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn btn-danger" id="btn-clear-agenda" title="Eliminar Todos los Trabajos">
+                            <i class="fas fa-trash-alt"></i> Eliminar Todo
+                        </button>
+                        <button class="btn success-btn" id="btn-new-agendar" style="border: none;">
+                            <i class="fas fa-calendar-plus"></i> Nuevo Trabajo
+                        </button>
+                    </div>
+                </div>
+        
+        <!-- TABLA DE ACTIVIDADES UNIFICADA -->
+        <div class="card" style="margin-top: 2rem;">
+            <header class="card-header">
+                <div class="header-info">
+                    <i class="fas fa-list-check" style="color: var(--primary);"></i>
+                    <div>
+                        <h2 class="card-title">Panel de Actividades Unificado</h2>
+                        <p class="card-subtitle">Gestión de trabajos, movimientos y solicitudes</p>
+                    </div>
+                </div>
+            </header>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tipo / Título</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Insumos / Detalle</th>
+                            <th>Equipo / Responsable</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agendar-trabajos-table-body">
+                        <!-- Generado por JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VERIFICACIÓN DE INSUMOS EN USO -->
+        <div class="card" style="margin-top: 2rem;">
+            <header class="card-header">
+                <div class="header-info">
+                    <i class="fas fa-vial" style="color: var(--primary);"></i>
+                    <div>
+                        <h2 class="card-title">Verificación de Insumos en Uso</h2>
+                        <p class="card-subtitle">Listado de reactivos y consumibles asignados a trabajos hoy</p>
+                    </div>
+                </div>
+            </header>
+            <div id="insumos-uso-list" style="padding: 1rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                <!-- Generado por JS -->
+            </div>
+        </div>
+
+
+    </section>
+
+            <!-- SECCIÓN: TURNOS Y JEFATURAS -->
+            <section id="turnos-view" class="view-section hidden">
+                <div class="action-bar">
+                    <h3>Planificación de Orden y Aseo por Laboratorio</h3>
+                    <button class="btn btn-primary" id="btn-new-turno" style="border: none;">
+                        <i class="fas fa-user-clock"></i> Asignar Responsable
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="text-align: center;">Laboratorio</th>
+                                <th style="text-align: center;">Responsable</th>
+                                <th style="text-align: center;">Semana</th>
+                                <th style="text-align: center;">Mes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="turnos-table-body">
+                            <!-- Datos dinámicos -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: CHECKEO GENERAL (AUDITORIA) -->
+            <section id="auditoria-view" class="view-section hidden">
+                <div class="action-bar">
+                    <h3>Checkeo General ( Insumos/Reactivos/Equipos)</h3>
+                    <button class="btn btn-primary" id="btn-new-uso" style="border: none;">
+                        <i class="fas fa-check-square"></i> Registrar Uso
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="text-align: center;">Insumo / Reactivo / Equipo</th>
+                                <th style="text-align: center;">Usuario (Quién lo usó)</th>
+                                <th style="text-align: center;">Cantidad</th>
+                                <th style="text-align: center;">Fecha</th>
+                                <th style="text-align: center;">Comentario</th>
+                                <th style="text-align: center;">Checkeo Revisión</th>
+                                <th style="text-align: center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditoria-table-body">
+                            <!-- Datos dinámicos -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: BIBLIOTECA -->
+            <section id="library-view" class="view-section hidden">
+                <div class="action-bar">
+                    <h3>Biblioteca de Documentos</h3>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" id="btn-new-doc">
+                            <i class="fas fa-plus"></i> Subir Documento
+                        </button>
+                    </div>
+                </div>
+                <div class="stats-grid" id="library-docs-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                    <!-- Cargado por JS -->
+                </div>
+            </section>
+ 
+            <!-- SECCIÓN: PLANO INTERACTIVO -->
+            <section id="plano-view" class="view-section hidden">
+                <style>
+                    .plano-container {
+                        display: grid;
+                        grid-template-columns: 1fr 350px;
+                        gap: 2rem;
+                        margin-top: 1.5rem;
+                        height: calc(100vh - 200px);
+                    }
+                    .plano-map-card {
+                        background: var(--card-bg);
+                        border-radius: var(--radius);
+                        border: 1px solid var(--border);
+                        box-shadow: var(--shadow);
+                        padding: 1.5rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        overflow: auto;
+                    }
+                    .plano-details-card {
+                        background: var(--card-bg);
+                        border-radius: var(--radius);
+                        border: 1px solid var(--border);
+                        box-shadow: var(--shadow);
+                        padding: 1.5rem;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        overflow-y: auto;
+                    }
+                    .map-svg-element {
+                        width: 100%;
+                        max-width: 750px;
+                        height: auto;
+                        border-radius: 8px;
+                    }
+                    .map-interactive-zone {
+                        fill: #f8fafc;
+                        stroke: #cbd5e1;
+                        stroke-width: 1.5;
+                        cursor: pointer;
+                        transition: all 0.25s ease;
+                    }
+                    .map-interactive-zone:hover {
+                        fill: rgba(0, 207, 193, 0.12);
+                        stroke: var(--accent);
+                        stroke-width: 2.5;
+                        filter: drop-shadow(0 0 6px rgba(0, 207, 193, 0.5));
+                    }
+                    .map-interactive-zone.active {
+                        fill: rgba(0, 207, 193, 0.25);
+                        stroke: var(--accent);
+                        stroke-width: 3;
+                        filter: drop-shadow(0 0 8px rgba(0, 207, 193, 0.8));
+                    }
+                    .map-text-label {
+                        font-family: 'Outfit', sans-serif;
+                        font-size: 11px;
+                        font-weight: 600;
+                        fill: #64748b;
+                        pointer-events: none;
+                        text-anchor: middle;
+                    }
+                    .map-title-label {
+                        font-family: 'Outfit', sans-serif;
+                        font-size: 14px;
+                        font-weight: 700;
+                        fill: #1e293b;
+                        pointer-events: none;
+                        text-anchor: middle;
+                    }
+                    .plano-item-row {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 0.75rem;
+                        border-radius: 10px;
+                        border: 1px solid var(--border);
+                        margin-bottom: 0.5rem;
+                        background: #f8fafc;
+                        transition: transform 0.15s ease;
+                    }
+                    .plano-item-row:hover {
+                        transform: translateX(4px);
+                        border-color: #cbd5e1;
+                    }
+                </style>
+                <div class="action-bar">
+                    <div>
+                        <h3>Plano Interactivo de Laboratorios</h3>
+                        <p class="text-muted" style="margin: 0.25rem 0 0 0; font-size: 0.9rem;">Selecciona cualquier zona/cuadrado del mapa para ver los insumos y reactivos ubicados allí.</p>
+                    </div>
+                </div>
+                
+                <div class="plano-container">
+                    <!-- Mapa SVG interactivo -->
+                    <div class="plano-map-card">
+                        <svg viewBox="0 0 800 600" class="map-svg-element" id="labs-map-svg">
+                            <!-- Fondo y Paredes Exteriores -->
+                            <rect x="10" y="90" width="780" height="500" rx="8" fill="#ffffff" stroke="#1e293b" stroke-width="4" />
+                            
+                            <!-- Pared Divisoria Central -->
+                            <line x1="400" y1="90" x2="400" y2="590" stroke="#1e293b" stroke-width="4" />
+                            
+                            <!-- Puertas (Arco de apertura) -->
+                            <path d="M 330 590 A 60 60 0 0 0 390 590" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="4,4" />
+                            <line x1="330" y1="590" x2="330" y2="530" stroke="#1e293b" stroke-width="3" />
+                            
+                            <path d="M 470 590 A 60 60 0 0 0 410 590" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="4,4" />
+                            <line x1="470" y1="590" x2="470" y2="530" stroke="#1e293b" stroke-width="3" />
+                            
+                            <!-- ANEXO TOP-LEFT: Análisis de Gases -->
+                            <rect x="25" y="10" width="150" height="80" rx="4" fill="#ffffff" stroke="#1e293b" stroke-width="3" />
+                            <rect class="map-interactive-zone" id="zone-analisis-gases" x="35" y="20" width="130" height="60" rx="4" data-zone="analisis-gases" />
+                            <text class="map-text-label" x="100" y="45">Análisis de Gases</text>
+                            <text class="map-text-label" x="100" y="60" style="font-size: 9px; opacity: 0.85;">y Contaminación</text>
+                            
+                            <!-- ANEXO TOP-RIGHT: Almacén de Materiales -->
+                            <rect x="625" y="10" width="150" height="80" rx="4" fill="#ffffff" stroke="#1e293b" stroke-width="3" />
+                            <rect class="map-interactive-zone" id="zone-baterias-almacen" x="635" y="20" width="130" height="60" rx="4" data-zone="baterias-almacen" />
+                            <text class="map-text-label" x="700" y="45">Almacén de Material</text>
+                            <text class="map-text-label" x="700" y="60" style="font-size: 9px; opacity: 0.85;">y Equipos</text>
+
+                            <!-- Títulos de Laboratorios -->
+                            <text class="map-title-label" x="200" y="130">LABORATORIO DE PROCESOS</text>
+                            <text class="map-title-label" x="600" y="130">LABORATORIO DE BATERÍAS</text>
+                            <text class="map-text-label" x="600" y="150" style="font-size: 11px;">DE ION LITIO</text>
+
+                            <!-- ZONAS INTERACTIVAS: LABORATORIO DE PROCESOS (LEFT) -->
+                            
+                            <!-- Mesón Lateral Izquierdo -->
+                            <rect class="map-interactive-zone" id="zone-procesos-mesa-lat" x="25" y="160" width="50" height="300" rx="4" data-zone="procesos-mesa-lat" />
+                            <text class="map-text-label" x="50" y="310" transform="rotate(-90, 50, 310)">Mesón Lateral Izquierdo</text>
+
+                            <!-- Estantería Superior Izquierda -->
+                            <rect class="map-interactive-zone" id="zone-procesos-estanteria-sup" x="100" y="160" width="180" height="45" rx="4" data-zone="procesos-estanteria-sup" />
+                            <text class="map-text-label" x="190" y="187">Estantería Superior</text>
+
+                            <!-- Mesón Central de Procesos -->
+                            <rect class="map-interactive-zone" id="zone-procesos-mesa-central" x="315" y="170" width="65" height="190" rx="4" data-zone="procesos-mesa-central" />
+                            <text class="map-text-label" x="347" y="265" transform="rotate(-90, 347, 265)">Mesón Central de Procesos</text>
+
+                            <!-- Lavaplatos Doble (Procesos) -->
+                            <rect class="map-interactive-zone" id="zone-procesos-lavaplatos" x="315" y="380" width="65" height="60" rx="4" data-zone="procesos-lavaplatos" />
+                            <text class="map-text-label" x="347" y="415">Lavaplatos</text>
+
+                            <!-- Campana Extractora (Procesos) -->
+                            <rect class="map-interactive-zone" id="zone-procesos-campana" x="315" y="460" width="65" height="70" rx="4" data-zone="procesos-campana" />
+                            <text class="map-text-label" x="347" y="495">Campana Ext.</text>
+                            <line x1="315" y1="460" x2="380" y2="530" stroke="#cbd5e1" stroke-width="1" style="pointer-events: none;" />
+                            <line x1="380" y1="460" x2="315" y2="530" stroke="#cbd5e1" stroke-width="1" style="pointer-events: none;" />
+
+                            <!-- Estantería/Almacenaje Inferior de Procesos -->
+                            <rect class="map-interactive-zone" id="zone-procesos-estanteria-inf" x="100" y="480" width="180" height="50" rx="4" data-zone="procesos-estanteria-inf" />
+                            <text class="map-text-label" x="190" y="510">Estantería Inferior (G2)</text>
+
+
+                            <!-- ZONAS INTERACTIVAS: LABORATORIO DE BATERÍAS (RIGHT) -->
+
+                            <!-- Lavaplatos Baterías -->
+                            <rect class="map-interactive-zone" id="zone-baterias-lavaplatos" x="420" y="170" width="60" height="60" rx="4" data-zone="baterias-lavaplatos" />
+                            <text class="map-text-label" x="450" y="205">Lavaplatos</text>
+
+                            <!-- Mesón Central Superior -->
+                            <rect class="map-interactive-zone" id="zone-baterias-mesa-central-sup" x="510" y="170" width="80" height="150" rx="4" data-zone="baterias-mesa-central-sup" />
+                            <text class="map-text-label" x="550" y="245">Mesón Central</text>
+                            <text class="map-text-label" x="550" y="260" style="font-size: 9px; opacity: 0.8;">Superior</text>
+
+                            <!-- Mesón Central Inferior -->
+                            <rect class="map-interactive-zone" id="zone-baterias-mesa-central-inf" x="510" y="340" width="80" height="150" rx="4" data-zone="baterias-mesa-central-inf" />
+                            <text class="map-text-label" x="550" y="415">Mesón Central</text>
+                            <text class="map-text-label" x="550" y="430" style="font-size: 9px; opacity: 0.8;">Inferior</text>
+
+                            <!-- Mesón Lateral Derecho -->
+                            <rect class="map-interactive-zone" id="zone-baterias-mesa-lat" x="725" y="170" width="50" height="280" rx="4" data-zone="baterias-mesa-lat" />
+                            <text class="map-text-label" x="750" y="310" transform="rotate(90, 750, 310)">Mesón Lateral Derecho</text>
+
+                            <!-- Equipos de Baterías Inferiores -->
+                            <rect class="map-interactive-zone" id="zone-baterias-equipos-inf" x="725" y="470" width="50" height="80" rx="4" data-zone="baterias-equipos-inf" />
+                            <text class="map-text-label" x="750" y="515" style="font-size: 9px;">Equipos</text>
+                        </svg>
+                    </div>
+
+                    <!-- Panel de detalles lateral -->
+                    <div class="plano-details-card" id="plano-info-sidebar">
+                        <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                            <div style="text-align: center; padding: 1.5rem 0; border-bottom: 1px solid var(--border);" id="plano-sidebar-placeholder">
+                                <i class="fas fa-hand-pointer fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
+                                <h4 style="margin: 0; color: var(--text-main);">Sin Selección</h4>
+                                <p class="text-muted" style="font-size: 0.85rem; margin: 0.5rem 0 0 0;">Haz click en cualquier cuadrado del plano para ver el inventario disponible.</p>
+                            </div>
+                            
+                            <div id="plano-sidebar-content" class="hidden" style="display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 1rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <span id="plano-area-lab" class="status-badge status-ok" style="font-size: 0.7rem; text-transform: uppercase;">Laboratorio</span>
+                                    <h4 id="plano-area-name" style="margin: 0.25rem 0 0.5rem 0; font-size: 1.25rem; font-weight: 700; color: var(--primary-light);">Nombre de Zona</h4>
+                                    <p id="plano-area-desc" class="text-muted" style="font-size: 0.85rem; margin: 0;"></p>
+                                </div>
+                                
+                                <h5 style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem;">Elementos Detectados:</h5>
+                                <div id="plano-items-list" style="flex: 1; overflow-y: auto; padding-right: 0.25rem;">
+                                    <!-- Insumos y Reactivos -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+                            <button id="btn-plano-full-details" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" disabled>
+                                <i class="fas fa-list-ul"></i> Ver detalles completos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+ 
+ 
+ 
+            <!-- MODAL: DETALLES COMPLETOS DE ZONA EN PLANO -->
+            <div id="modal-plano-details" class="modal hidden">
+                <div class="modal-content" style="width: 850px; max-width: 95%;">
+                    <header class="modal-header">
+                        <div>
+                            <h3 id="plano-details-title">Detalles de la Zona</h3>
+                            <p class="text-muted" id="plano-details-subtitle" style="margin: 0.2rem 0 0 0; font-size: 0.85rem;"></p>
+                        </div>
+                        <button class="btn-close" id="close-modal-plano-details">&times;</button>
+                    </header>
+                    <div style="margin: 1rem 0; display: flex; gap: 1rem; align-items: center; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid var(--border);">
+                        <i class="fas fa-search text-muted"></i>
+                        <input type="text" id="plano-details-search" placeholder="Filtrar por nombre, categoría o código..." style="flex: 1; border: none; background: transparent; outline: none; font-family: inherit; font-size: 0.9rem;">
+                    </div>
+                    <div class="table-container" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th style="text-align: center;">Stock</th>
+                                    <th>Responsable</th>
+                                    <th>Ubicación Específica</th>
+                                    <th style="text-align: center;">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="plano-details-table-body">
+                                <!-- Filas de datos cargados por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 1.5rem; text-align: right; display: flex; justify-content: space-between; align-items: center;">
+                        <span id="plano-details-counter" class="text-muted" style="font-size: 0.85rem;">Mostrando 0 elementos</span>
+                        <button class="btn" id="btn-close-plano-details">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- NUEVAS SECCIONES INSTITUCIONALES -->
+            <section id="somos-view" class="view-section hidden">
+                <div class="hero-card">
+                    <h2>¿Quiénes Somos?</h2>
+                    <p>Somos el Centro de Investigación Avanzada del Litio y minerales industriales (CELIMIN), dedicados a la excelencia científica y tecnológica en el corazón de la minería.</p>
+                </div>
+            </section>
+
+            <section id="calendar-view" class="view-section hidden">
+                <div class="action-bar">
+                    <h3>Calendario Institucional 2026</h3>
+                    <div class="calendar-legend">
+                        <span class="legend-item"><span class="dot dot-work"></span> Trabajos</span>
+                    </div>
+                </div>
+                <div class="calendar-grid" id="full-year-calendar">
+                    <!-- Generado por JS -->
+                </div>
+            </section>
+
+            <section id="linea-trabajo-view" class="view-section hidden">
+                <div class="action-bar"><h3>Líneas de Trabajo</h3></div>
+                <div class="stats-grid">
+                    <div class="card"><h4>Procesos Químicos</h4><p>Optimización de la extracción de litio.</p></div>
+                    <div class="card"><h4>Materiales Avanzados</h4><p>Desarrollo de baterías de nueva generación.</p></div>
+                    <div class="card"><h4>Sustentabilidad</h4><p>Gestión hídrica en procesos mineros.</p></div>
+                </div>
+            </section>
+
+            <section id="asesorias-view" class="view-section hidden">
+                <div class="action-bar"><h3>Asesorías Técnicas</h3></div>
+                <div class="info-placeholder">
+                    <i class="fas fa-briefcase fa-3x"></i>
+                    <p>Servicios de consultoría experta para la industria minera y energética.</p>
+                </div>
+            </section>
+
+            <section id="proyectos-view" class="view-section hidden">
+                <div class="action-bar"><h3>Proyectos en Curso</h3></div>
+                <div class="stats-grid">
+                    <div class="card"><h4>Proyecto FONDEF 2026</h4><p>Estado: 75% completado</p></div>
+                    <div class="card"><h4>Alianza Estratégica SQM</h4><p>Estado: Iniciado</p></div>
+                </div>
+            </section>
+
+            <section id="publicaciones-view" class="view-section hidden">
+                <div class="action-bar"><h3>Publicaciones Científicas</h3></div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Año</th><th>Título</th><th>Revista</th><th>Impacto</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>2026</td><td>Lithium Extraction Trends</td><td>Nature Energy</td><td>High</td></tr>
+                            <tr><td>2025</td><td>Solid State Batteries</td><td>Advanced Materials</td><td>High</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="infraestructura-view" class="view-section hidden">
+                <div class="action-bar"><h3>Infraestructura Laboratorial</h3></div>
+                <div class="info-placeholder">
+                    <i class="fas fa-microscope fa-3x"></i>
+                    <p>Contamos con 3 laboratorios de alta tecnología y equipamiento de última generación.</p>
+                </div>
+            </section>
+
+            <section id="capital-humano-view" class="view-section hidden">
+                <div class="action-bar"><h3>Capital Humano</h3></div>
+                <div class="stats-grid">
+                    <div class="card"><p class="card-title">Investigadores</p><p class="card-value">12</p></div>
+                    <div class="card"><p class="card-title">Doctorandos</p><p class="card-value">5</p></div>
+                    <div class="card"><p class="card-title">Técnicos</p><p class="card-value">8</p></div>
+                </div>
+            </section>
+
+            <section id="novedades-view" class="view-section hidden">
+                <div class="action-bar"><h3>Novedades y Noticias</h3></div>
+                <div class="stats-grid">
+                    <article class="card">
+                        <p class="card-title">24 de Abril, 2026</p>
+                        <h4>Nuevo Equipamiento</h4>
+                        <p>Se ha recibido el nuevo espectrómetro de masas.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section id="congreso-view" class="view-section hidden">
+                <div class="hero-card" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white;">
+                    <h2>I Congreso Internacional del Litio</h2>
+                    <p>Antofagasta, Octubre 2026. Próximamente más información sobre el envío de resúmenes.</p>
+                </div>
+            </section>
+
+            <section id="contactos-view" class="view-section hidden">
+                <div class="action-bar"><h3>Contacto</h3></div>
+                <div class="card" style="max-width: 500px;">
+                    <p><i class="fas fa-envelope"></i> contacto@celimin.cl</p>
+                    <p><i class="fas fa-phone"></i> +56 55 2 123456</p>
+                    <p><i class="fas fa-location-dot"></i> Av. Angamos 610, Antofagasta, Chile</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL: NUEVO REGISTRO -->
+    <div id="modal-item" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Nuevo Registro de Inventario</h3>
+                <button class="btn-close" id="close-modal-item">&times;</button>
+            </header>
+            <form id="form-new-item">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="item-name">Nombre del Ítem</label>
+                        <input type="text" id="item-name" placeholder="Ej: Alcohol Isopropílico" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-category">Categoría</label>
+                        <select id="item-category" required>
+                            <option value="Reactivos">Reactivos</option>
+                            <option value="Equipos">Equipos</option>
+                            <option value="Consumibles">Consumibles</option>
+                            <option value="Vidriería">Vidriería</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="item-stock-actual">Stock Actual</label>
+                        <input type="number" id="item-stock-actual" placeholder="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-stock-min">Stock Mínimo</label>
+                        <input type="number" id="item-stock-min" placeholder="0" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="item-format-unit">Formato / Unidad</label>
+                        <input type="text" id="item-format-unit" placeholder="Ej: Botella 1L, Caja 100u, L, Kg" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="item-location-detail">Ubicación Específica</label>
+                        <input type="text" id="item-location-detail" placeholder="Ej: Estante B, Cajón 2">
+                    </div>
+                    <div class="form-group" id="item-expiry-group">
+                        <label for="item-expiry">Fecha de Vencimiento</label>
+                        <input type="date" id="item-expiry">
+                    </div>
+                </div>
+
+                <!-- Campos Solo para Reactivos -->
+                <div id="reagent-only-fields" class="hidden" style="background: var(--surface-hover); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary);">
+                    <p style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--primary);">Información de Reactivo</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="item-state">Estado del Reactivo</label>
+                            <select id="item-state">
+                                <option value="Nuevo">Nuevo</option>
+                                <option value="Usado">Usado</option>
+                                <option value="Abierto">Abierto</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="item-react-date">Fecha de Ingreso/Control</label>
+                            <input type="date" id="item-react-date">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="item-comments">Comentarios / Observaciones</label>
+                        <textarea id="item-comments" rows="2" placeholder="Notas adicionales del reactivo en inventario..." style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: inherit;"></textarea>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="item-supplier">Proveedor</label>
+                        <input type="text" id="item-supplier" placeholder="Nombre del proveedor">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-responsible">Responsable</label>
+                        <input type="text" id="item-responsible" placeholder="Persona a cargo">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Laboratorio (Sedes)</label>
+                    <div class="checkbox-group" id="item-labs-selection">
+                        <!-- Generado dinámicamente -->
+                    </div>
+                </div>
+
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-item" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVO USUARIO -->
+    <div id="modal-user" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Registrar Nuevo Personal</h3>
+                <button class="btn-close" id="close-modal-user">&times;</button>
+            </header>
+            <form id="form-new-user">
+                <div class="form-group">
+                    <label for="user-full-name">Nombre Completo</label>
+                    <input type="text" id="user-full-name" placeholder="Ej: Dr. Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-new-role">Rol en el Sistema</label>
+                    <select id="user-new-role" required>
+                        <option value="Administrador General">Administrador General</option>
+                        <option value="Encargada de Inventario">Encargada de Inventario</option>
+                        <option value="Supervisor de Laboratorio">Supervisor de Laboratorio</option>
+                        <option value="Técnico en Laboratorio">Técnico en Laboratorio</option>
+                        <option value="Técnico de Apoyo">Técnico de Apoyo</option>
+                        <option value="Investigadora">Investigadora</option>
+                        <option value="Docente">Docente</option>
+                        <option value="Tesista">Tesista</option>
+                        <option value="Ayudante">Ayudante</option>
+                        <option value="Compras y Abastecimiento">Compras y Abastecimiento</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="user-permissions">Permisos Especiales</label>
+                    <input type="text" id="user-permissions" placeholder="Ej: Lectura/Escritura" value="Estándar">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-user" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR USUARIO -->
+    <div id="modal-edit-user" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Editar Usuario</h3>
+                <button class="btn-close" id="close-modal-edit-user">&times;</button>
+            </header>
+            <form id="form-edit-user">
+                <input type="hidden" id="edit-user-index">
+                <div class="form-group">
+                    <label for="edit-user-name">Nombre de Usuario</label>
+                    <input type="text" id="edit-user-name" placeholder="Nombre de usuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-role">Rol en el Sistema</label>
+                    <select id="edit-user-role" required>
+                        <option value="Administrador General">Administrador General</option>
+                        <option value="Encargada de Inventario">Encargada de Inventario</option>
+                        <option value="Supervisor de Laboratorio">Supervisor de Laboratorio</option>
+                        <option value="Técnico en Laboratorio">Técnico en Laboratorio</option>
+                        <option value="Técnico de Apoyo">Técnico de Apoyo</option>
+                        <option value="Investigadora">Investigadora</option>
+                        <option value="Docente">Docente</option>
+                        <option value="Tesista">Tesista</option>
+                        <option value="Ayudante">Ayudante</option>
+                        <option value="Compras y Abastecimiento">Compras y Abastecimiento</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-permissions">Permisos</label>
+                    <input type="text" id="edit-user-permissions" placeholder="Ej: Lectura/Escritura">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-edit-user" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: VER DETALLES -->
+    <div id="modal-view-item" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Detalles del Ítem</h3>
+                <button class="btn-close" id="close-modal-view">&times;</button>
+            </header>
+            <div id="item-details-content" class="details-view">
+                <!-- Se llena desde JS -->
+            </div>
+            <div style="margin-top: 2rem;">
+                <button class="btn btn-primary" id="btn-close-view" style="width: 100%;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR REGISTRO (Reutiliza estructura) -->
+    <div id="modal-edit-item" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Editar Registro</h3>
+                <button class="btn-close" id="close-modal-edit">&times;</button>
+            </header>
+            <form id="form-edit-item">
+                <input type="hidden" id="edit-item-index">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="edit-item-name">Nombre del Ítem</label>
+                        <input type="text" id="edit-item-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-item-category">Categoría</label>
+                        <select id="edit-item-category" required>
+                            <option value="Reactivos">Reactivos</option>
+                            <option value="Equipos">Equipos</option>
+                            <option value="Consumibles">Consumibles</option>
+                            <option value="Vidriería">Vidriería</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="edit-item-stock-actual">Stock Actual</label>
+                        <input type="number" id="edit-item-stock-actual" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-item-stock-min">Stock Mínimo</label>
+                        <input type="number" id="edit-item-stock-min" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="edit-item-format-unit">Formato / Unidad</label>
+                        <input type="text" id="edit-item-format-unit" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="edit-item-location-detail">Ubicación Específica</label>
+                        <input type="text" id="edit-item-location-detail">
+                    </div>
+                    <div class="form-group" id="edit-item-expiry-group">
+                        <label for="edit-item-expiry">Fecha de Vencimiento</label>
+                        <input type="date" id="edit-item-expiry">
+                    </div>
+                </div>
+
+                <!-- Campos Solo para Reactivos Edición -->
+                <div id="edit-reagent-only-fields" class="hidden" style="background: var(--surface-hover); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary);">
+                    <p style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--primary);">Información de Reactivo</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="edit-item-state">Estado del Reactivo</label>
+                            <select id="edit-item-state">
+                                <option value="Nuevo">Nuevo</option>
+                                <option value="Usado">Usado</option>
+                                <option value="Abierto">Abierto</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-item-react-date">Fecha de Ingreso/Control</label>
+                            <input type="date" id="edit-item-react-date">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="edit-item-comments">Comentarios / Observaciones</label>
+                        <textarea id="edit-item-comments" rows="2" style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: inherit;"></textarea>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="edit-item-supplier">Proveedor</label>
+                        <input type="text" id="edit-item-supplier">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-item-responsible">Responsable</label>
+                        <input type="text" id="edit-item-responsible">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Laboratorio (Sedes)</label>
+                    <div class="checkbox-group" id="edit-item-labs-selection">
+                        <!-- Generado dinámicamente -->
+                    </div>
+                </div>
+
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-edit" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVO LABORATORIO -->
+    <div id="modal-lab" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Registrar Nuevo Laboratorio</h3>
+                <button class="btn-close" id="close-modal-lab">&times;</button>
+            </header>
+            <form id="form-new-lab">
+                <div class="form-group">
+                    <label for="lab-id">Identificador (ID)</label>
+                    <input type="text" id="lab-id" placeholder="Ej: L4" required>
+                </div>
+                <div class="form-group">
+                    <label for="lab-name">Nombre del Laboratorio</label>
+                    <input type="text" id="lab-name" placeholder="Ej: Laboratorio de Análisis Químico" required>
+                </div>
+                <div class="form-group">
+                    <label for="lab-location">Ubicación / Piso</label>
+                    <input type="text" id="lab-location" placeholder="Ej: Piso 3 - Ala Este" required>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-lab" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Registrar Lab</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR LABORATORIO -->
+    <div id="modal-edit-lab" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Editar Laboratorio</h3>
+                <button class="btn-close" id="close-modal-edit-lab">&times;</button>
+            </header>
+            <form id="form-edit-lab">
+                <input type="hidden" id="edit-lab-index">
+                <div class="form-group">
+                    <label for="edit-lab-id">Identificador (ID)</label>
+                    <input type="text" id="edit-lab-id" placeholder="Ej: L4" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-lab-name">Nombre del Laboratorio</label>
+                    <input type="text" id="edit-lab-name" placeholder="Ej: Laboratorio de Análisis Químico" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-lab-location">Ubicación / Piso</label>
+                    <input type="text" id="edit-lab-location" placeholder="Ej: Piso 3 - Ala Este" required>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-edit-lab" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- MODAL: OLVIDÉ CONTRASEÑA -->
+    <div id="modal-forgot" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Recuperar Acceso</h3>
+                <button class="btn-close" id="close-modal-forgot">&times;</button>
+            </header>
+            <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Ingrese su correo electrónico institucional para recibir las instrucciones de recuperación.</p>
+            <form id="form-forgot">
+                <div class="form-group">
+                    <label for="forgot-email">Correo Electrónico</label>
+                    <input type="email" id="forgot-email" placeholder="usuario@celimin.cl" required>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn" id="btn-cancel-forgot" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 2;">Enviar Instrucciones</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CREAR CUENTA -->
+    <div id="modal-signup" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Solicitud de Acceso</h3>
+                <button class="btn-close" id="close-modal-signup">&times;</button>
+            </header>
+            <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Complete sus datos para solicitar una cuenta al administrador.</p>
+            <form id="form-signup">
+                <div class="form-group">
+                    <label for="signup-name">Nombre Completo</label>
+                    <input type="text" id="signup-name" placeholder="Ej: Dr. Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Correo Institucional</label>
+                    <input type="email" id="signup-email" placeholder="usuario@celimin.cl" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-role">Rol Solicitado</label>
+                    <select id="signup-role" required>
+                        <option value="" disabled selected>Seleccione un rol...</option>
+                        <option value="Administrador General">Administrador General</option>
+                        <option value="Encargada de Inventario">Encargada de Inventario</option>
+                        <option value="Supervisor de Laboratorio">Supervisor de Laboratorio</option>
+                        <option value="Técnico en Laboratorio">Técnico en Laboratorio</option>
+                        <option value="Técnico de Apoyo">Técnico de Apoyo</option>
+                        <option value="Investigadora">Investigadora</option>
+                        <option value="Docente">Docente</option>
+                        <option value="Tesista">Tesista</option>
+                        <option value="Ayudante">Ayudante</option>
+                        <option value="Compras y Abastecimiento">Compras y Abastecimiento</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn" id="btn-cancel-signup" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 2;">Enviar Solicitud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: REGISTRAR MOVIMIENTO (INGRESO/SALIDA) -->
+    <div id="modal-movement" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3 id="movement-modal-title">Registrar Movimiento</h3>
+                <button class="btn-close" id="close-modal-movement">&times;</button>
+            </header>
+            <form id="form-movement">
+                <input type="hidden" id="mv-item-index">
+                <input type="hidden" id="mv-type">
+                
+                <div class="form-group">
+                    <label>Ítem Seleccionado</label>
+                    <p id="mv-item-name" style="font-weight: 700; color: var(--primary); font-size: 1.1rem;"></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="mv-qty">Cantidad a <span id="mv-type-label"></span></label>
+                    <input type="number" id="mv-qty" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="mv-reason">Motivo / Nota</label>
+                    <input type="text" id="mv-reason" placeholder="Ej: Reposición mensual o Uso en Lab 2">
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-mv" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-confirm-mv" style="flex: 1;">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVA SOLICITUD -->
+    <div id="modal-request" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Solicitar Insumos</h3>
+                <button class="btn-close" id="close-modal-request">&times;</button>
+            </header>
+            <form id="form-new-request">
+                <div class="form-group">
+                    <label for="req-item">Seleccionar Insumo</label>
+                    <select id="req-item" required>
+                        <!-- Cargado dinámicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="req-qty">Cantidad</label>
+                    <input type="number" id="req-qty" min="1" required>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-req" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Enviar Solicitud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: AGENDAR TRABAJO -->
+    <div id="modal-agendar" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Agendar Trabajo</h3>
+                <button class="btn-close" id="close-modal-agendar">&times;</button>
+            </header>
+            <form id="form-agendar">
+                <input type="hidden" id="agenda-type" value="Trabajo">
+                <div class="form-group">
+                    <label for="agenda-titulo" id="label-agenda-titulo">Título del Trabajo / Ítem</label>
+                    <input type="text" id="agenda-titulo" placeholder="Ej: Análisis de muestra" required>
+                </div>
+                <div class="form-group">
+                    <label for="agenda-fecha">Fecha a Agendar</label>
+                    <input type="date" id="agenda-fecha" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" id="agenda-time-range-container">
+                    <div class="form-group">
+                        <label for="agenda-hora-inicio">Hora Inicio</label>
+                        <input type="time" id="agenda-hora-inicio" step="900" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="agenda-hora-fin">Hora Fin</label>
+                        <input type="time" id="agenda-hora-fin" step="900" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="agenda-insumos">Uso de Insumos</label>
+                    <textarea id="agenda-insumos" rows="2" placeholder="Detalle de insumos necesarios..." style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border);"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="agenda-equipo">Uso de Equipo</label>
+                    <textarea id="agenda-equipo" rows="2" placeholder="Detalle del equipo requerido..." style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border);"></textarea>
+                </div>
+                 <div class="form-group">
+                    <label for="agenda-responsable">Responsable</label>
+                    <input type="text" id="agenda-responsable" placeholder="Ej: Dr. Juan Pérez" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border);">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-agendar" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Agendar Trabajo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: REGISTRAR LIMPIEZA -->
+    <div id="modal-limpieza" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Registrar Limpieza / Mantenimiento</h3>
+                <button class="btn-close" id="close-modal-limpieza">&times;</button>
+            </header>
+            <form id="form-limpieza">
+                <div class="form-group">
+                    <label for="limpieza-equipo">Equipo Limpiado/Revisado</label>
+                    <input type="text" id="limpieza-equipo" placeholder="Ej: Microscopio Binocular" required>
+                </div>
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label for="limpieza-fecha">Fecha</label>
+                        <input type="date" id="limpieza-fecha" required>
+                    </div>
+                    <div>
+                        <label for="limpieza-hora">Hora</label>
+                        <input type="time" id="limpieza-hora" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="limpieza-tipo">Tipo de Acción</label>
+                    <select id="limpieza-tipo">
+                        <option value="Limpieza Rutinaria">Limpieza Rutinaria</option>
+                        <option value="Limpieza Profunda">Limpieza Profunda</option>
+                        <option value="Mantenimiento Preventivo">Mantenimiento Preventivo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="limpieza-obs">Observaciones</label>
+                    <textarea id="limpieza-obs" rows="2" placeholder="Detalles de la limpieza..."></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-limpieza" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Registrar Acción</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ACTUALIZAR ESPACIO Y UBICACIÓN -->
+    <div id="modal-espacio" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Asignar Orden y Ubicación</h3>
+                <button class="btn-close" id="close-modal-espacio">&times;</button>
+            </header>
+            <form id="form-espacio">
+                <input type="hidden" id="espacio-item-index">
+                <div class="form-group">
+                    <label>Insumo / Equipo</label>
+                    <p id="espacio-item-name" style="font-weight: 700; color: var(--primary); font-size: 1.1rem;"></p>
+                </div>
+                <div class="form-group">
+                    <label for="espacio-location-detail">Espacio / Ubicación Específica</label>
+                    <input type="text" id="espacio-location-detail" placeholder="Ej: Estante B, Cajón 2" required>
+                </div>
+                <div class="form-group">
+                    <label>Laboratorio (Sedes)</label>
+                    <div class="checkbox-group" id="espacio-labs-selection">
+                        <!-- Generado dinámicamente -->
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-espacio" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Orden</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ASIGNAR RESPONSABLE -->
+    <div id="modal-turno" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Asignar Responsable</h3>
+                <button class="btn-close" id="close-modal-turno">&times;</button>
+            </header>
+            <form id="form-turno">
+                <div class="form-group">
+                    <label for="turno-lab">Laboratorio</label>
+                    <input type="text" id="turno-lab" placeholder="Ej: Laboratorio Central" required>
+                </div>
+                <div class="form-group">
+                    <label for="turno-jefe">Responsable</label>
+                    <input type="text" id="turno-jefe" placeholder="Nombre del encargado..." required>
+                </div>
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label for="turno-semana">Semana</label>
+                        <input type="text" id="turno-semana" placeholder="Ej: Semana 1" required>
+                    </div>
+                    <div>
+                        <label for="turno-mes">Mes</label>
+                        <input type="month" id="turno-mes" required>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-turno" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Responsable</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: REGISTRAR USO (AUDITORIA) -->
+    <div id="modal-uso" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Registrar Uso de Insumo/Reactivo/Equipo</h3>
+                <button class="btn-close" id="close-modal-uso">&times;</button>
+            </header>
+            <form id="form-uso">
+                <div class="form-group">
+                    <label for="uso-item">Insumo / Reactivo / Equipo</label>
+                    <input type="text" id="uso-item" placeholder="Ej: Reactivo A, Guantes, Microscopio..." required>
+                </div>
+                <div class="form-group">
+                    <label for="uso-usuario">Usuario</label>
+                    <input type="text" id="uso-usuario" placeholder="Nombre de quién lo usó" required>
+                </div>
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label for="uso-cantidad">Cantidad</label>
+                        <input type="number" id="uso-cantidad" min="1" placeholder="Ej: 2" required>
+                    </div>
+                    <div>
+                        <label for="uso-fecha">Fecha</label>
+                        <input type="date" id="uso-fecha" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="uso-comentario">Comentario / Observación</label>
+                    <textarea id="uso-comentario" placeholder="Escriba comentarios u observaciones aquí..." rows="2" style="width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:#f8fafc; font-family:inherit;"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-uso" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: DETALLES DEL DÍA EN CALENDARIO -->
+    <div id="modal-calendar-day" class="modal hidden">
+        <div class="modal-content" style="width: 600px;">
+            <header class="modal-header">
+                <h3 id="calendar-day-title">Actividades del Día</h3>
+                <button class="btn-close" id="close-modal-calendar-day" onclick="document.getElementById('modal-calendar-day').classList.add('hidden')">&times;</button>
+            </header>
+            <div id="calendar-day-content" class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <!-- Lista de actividades generada por JS -->
+            </div>
+            <div style="margin-top: 1.5rem; text-align: right;">
+                <button class="btn" id="btn-close-day-details" onclick="document.getElementById('modal-calendar-day').classList.add('hidden')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SUBIR DOCUMENTO (BIBLIOTECA) -->
+    <div id="modal-doc" class="modal hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>Subir Documento PDF</h3>
+                <button class="btn-close" id="close-modal-doc">&times;</button>
+            </header>
+            <form id="form-new-doc">
+                <div class="form-group">
+                    <label for="doc-title">Título del Documento</label>
+                    <input type="text" id="doc-title" placeholder="Ej: Manual de Espectrómetro, Protocolo A1..." required>
+                </div>
+                <div class="form-group">
+                    <label for="doc-desc">Descripción / Observación</label>
+                    <textarea id="doc-desc" placeholder="Breve descripción del documento..." rows="2" style="width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:#f8fafc; font-family:inherit;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="doc-file">Seleccionar Archivo PDF</label>
+                    <input type="file" id="doc-file" accept=".pdf" required style="padding: 0.5rem 0;">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" id="btn-cancel-doc" style="flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Subir PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="app.js"></script>
+</body>
+</html>
