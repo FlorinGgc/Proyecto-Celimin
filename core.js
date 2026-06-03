@@ -34,127 +34,54 @@ const STORAGE_KEYS = {
     SESSION: 'celimin_session_v2'
 };
 
-const initialLabs = [
-    { id: 'L1', name: 'Lab 1', location: 'Piso 1 - Ala Norte' },
-    { id: 'L2', name: 'Lab 2', location: 'Piso 1 - Ala Sur' },
-    { id: 'L3', name: 'Lab 3', location: 'Piso 2 - Central' }
-];
+// Datos iniciales globales (se poblarán desde Supabase)
+let labsData = [];
+let inventoryData = [];
+let usersData = [];
+let movementsData = [];
+let requestsData = [];
+let agendaTrabajosData = [];
+let mantenimientoData = [];
+let turnosData = [];
+let usosData = [];
+let planificacionData = [];
+let libraryDocsData = [];
 
-// Datos iniciales
-const initialInventory = [
-    { code: 'INS-001', name: 'Alcohol Isopropílico', category: 'Reactivos', stockActual: 50, stockMin: 10, unit: 'L', locationDetail: 'Estante A1', expiryDate: '2026-12-31', format: 'Botella 1L', state: 'Nuevo', reactDate: '2026-01-15', comments: 'Pureza 99%', supplier: 'Química Norte', responsible: 'Dr. Alejandro Ruiz', status: 'ok', labs: ['L1', 'L2'] },
-    { code: 'EQU-045', name: 'Microscopio Binocular', category: 'Equipos', stockActual: 5, stockMin: 1, unit: 'Unid', locationDetail: 'Mesón 4', expiryDate: '', format: 'N/A', state: 'N/A', supplier: 'Zeiss Chile', responsible: 'Lic. María García', status: 'ok', labs: ['L1'], inUse: false },
-    { code: 'INS-012', name: 'Guantes de Nitrilo', category: 'Consumibles', stockActual: 2, stockMin: 5, unit: 'Cajas', locationDetail: 'Bodega Central', expiryDate: '2027-05-15', format: 'Caja 100u', state: 'N/A', supplier: 'MedSupply', responsible: 'Ing. Carlos Pérez', status: 'low', labs: ['L1', 'L2', 'L3'] },
-    { code: 'INS-089', name: 'Tubos de Ensayo 10ml', category: 'Vidriería', stockActual: 0, stockMin: 20, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Pack 50u', state: 'N/A', supplier: 'LabTools', responsible: 'Lic. María García', status: 'out', labs: ['L3'] },
-    { code: 'EQU-099', name: 'Espectrómetro', category: 'Equipos', stockActual: 1, stockMin: 1, unit: 'Unid', locationDetail: 'Lab 2 - Central', expiryDate: '', format: 'N/A', state: 'N/A', supplier: 'Agilent', responsible: 'Dr. Alejandro Ruiz', status: 'ok', labs: ['L2'], inUse: true },
-    { code: 'R1930', name: 'Papel filtro circular, caja 100 unid.grado 101F, diam disco 12,5 cm, equivale a Whatman 40 y a MFS 5B, cuantitativo, sin ceniza, media-lenta (fat free) -- equivale a R1010FX', category: 'Consumibles', stockActual: 10, stockMin: 2, unit: 'Cajas', locationDetail: 'Estante A1', expiryDate: '', format: 'Caja 100u', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'OTT-000287', name: 'Vaso forma alta graduado sin vertedero 400 ml Duran', category: 'Vidriería', stockActual: 15, stockMin: 3, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Unid', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'V7550', name: 'Vaso pp, alto, grad., 250 ml', category: 'Vidriería', stockActual: 20, stockMin: 5, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Unid', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'V7560', name: 'Vaso pp, alto, grad., 400 ml', category: 'Vidriería', stockActual: 20, stockMin: 5, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Unid', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'V7570', name: 'Vaso pp, alto, grad., 600 ml', category: 'Vidriería', stockActual: 15, stockMin: 5, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Unid', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'M3586', name: 'Guantes Nitrilo S, 100 un. SIN POLVO', category: 'Consumibles', stockActual: 25, stockMin: 5, unit: 'Cajas', locationDetail: 'Bodega Central', expiryDate: '', format: 'Caja 100u', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1', 'L2', 'L3'] },
-    { code: 'R0710', name: 'Papel Indicador Universal, pH 1-14, rollo, 1 indicador', category: 'Consumibles', stockActual: 10, stockMin: 2, unit: 'Rollos', locationDetail: 'Estante A1', expiryDate: '', format: 'Rollo', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'M3120', name: 'kG. Algodón Hidrófilo prensado buclo', category: 'Consumibles', stockActual: 5, stockMin: 1, unit: 'Kg', locationDetail: 'Bodega Central', expiryDate: '', format: 'Paquete 1Kg', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'R1040', name: 'Papel filtro circular, caja 100 unid. 292, diam disco 12,5 cm, equivale a Whatman 1 y a MFS 2, Cualitativo, bajo en ceniza, media-rapida', category: 'Consumibles', stockActual: 8, stockMin: 2, unit: 'Cajas', locationDetail: 'Estante A1', expiryDate: '', format: 'Caja 100u', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'R1043', name: 'Papel filtro circular, caja 100 unid. 292, diam disco 9,0 cm, equivale a Whatman 1. MFS 2, Cualitativo, bajo en ceniza, media-rapida', category: 'Consumibles', stockActual: 8, stockMin: 2, unit: 'Cajas', locationDetail: 'Estante A1', expiryDate: '', format: 'Caja 100u', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'R1045', name: 'Papel filtro circular, caja 100 unid. 292, diam disco 11,0 cm, equivale a Whatman 1 y a MFS 2, Cualitativo, bajo en ceniza, media-rapida', category: 'Consumibles', stockActual: 8, stockMin: 2, unit: 'Cajas', locationDetail: 'Estante A1', expiryDate: '', format: 'Caja 100u', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'R1005', name: 'Papel filtro circular, caja 100 unid. 389F, diam disco 9,0 cm, equivale a Whatman 40 y a MFS 5B, cuantitativo, sin ceniza, media-lenta (fat free)', category: 'Consumibles', stockActual: 12, stockMin: 2, unit: 'Cajas', locationDetail: 'Estante A1', expiryDate: '', format: 'Caja 100u', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'R1007', name: 'Papel filtro circular, caja 100 unid. 389F, diam disco 11,0 cm, equivale a Whatman 40 y a MFS 5B, cuantitativo, sin ceniza, media-lenta (fat free)', category: 'Consumibles', stockActual: 12, stockMin: 2, unit: 'Cajas', locationDetail: 'Estante A1', expiryDate: '', format: 'Caja 100u', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'V7380', name: 'Vaso pp, bajo, grad., 100 ml', category: 'Vidriería', stockActual: 25, stockMin: 5, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Unid', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'V7400', name: 'Vaso pp, bajo, grad., 250 ml', category: 'Vidriería', stockActual: 20, stockMin: 5, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Unid', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'V7410', name: 'Vaso pp, bajo, grad., 400 ml', category: 'Vidriería', stockActual: 20, stockMin: 5, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Unid', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'V7420', name: 'Vaso pp, bajo, grad., 600 ml', category: 'Vidriería', stockActual: 15, stockMin: 5, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Unid', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'V7440', name: 'Vaso pp, bajo, grad., 1000 ml', category: 'Vidriería', stockActual: 10, stockMin: 2, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Unid', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'V7450', name: 'Vaso pp, bajo, grad., 2000 ml', category: 'Vidriería', stockActual: 10, stockMin: 2, unit: 'Unid', locationDetail: 'Gabinete G2', expiryDate: '', format: 'Unid', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'CV-102', name: 'Flete Transporte al cliente', category: 'Otros', stockActual: 1, stockMin: 0, unit: 'Servicio', locationDetail: 'N/A', expiryDate: '', format: 'Servicio', state: 'N/A', supplier: 'Proveedor General', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'REA-101', name: 'CLORURO DE LITIO', category: 'Reactivos', stockActual: 10, stockMin: 2, unit: 'g', locationDetail: 'Estante A1', expiryDate: '2028-12-31', format: 'Frasco 500g', state: 'Nuevo', reactDate: '2026-06-01', comments: 'Proyecto Igualdad en CYT en la Universidad de Antofagasta Codigo INGE210023 / In', supplier: 'Universidad de Antofagasta', responsible: 'crojas', status: 'ok', labs: ['L1'] },
-    { code: 'REA-102', name: 'HYDROCHLORIC ACID, 37%, A.C.S. REAGENT', category: 'Reactivos', stockActual: 5, stockMin: 1, unit: 'L', locationDetail: 'Estante A1', expiryDate: '2027-06-30', format: 'Botella 1L', state: 'Nuevo', reactDate: '2026-06-01', comments: 'Flete y otros cargos. Proyecto Igualdad en CYT en la Universidad de Antofagasta Codigo INGE210023 / In', supplier: 'Universidad de Antofagasta', responsible: 'crojas', status: 'ok', labs: ['L1'] }
-];
-
-const initialUsers = [
-    { name: 'aegonzalez', role: 'Administrador General', lastAccess: 'Hace 5 min', permissions: 'Full Access', active: true },
-    { name: 'crojas', role: 'Encargada de Inventario', lastAccess: 'Ayer', permissions: 'Lectura/Escritura', active: true },
-    { name: 'mfernandez', role: 'Supervisor de Laboratorio', lastAccess: 'Hoy', permissions: 'Supervisión', active: true },
-    { name: 'jmorales', role: 'Técnico en Laboratorio', lastAccess: 'Hoy', permissions: 'Ingreso/Salida', active: true },
-    { name: 'rvega', role: 'Técnico de Apoyo', lastAccess: 'Hoy', permissions: 'Ingreso/Salida', active: true },
-    { name: 'pherrera', role: 'Investigadora', lastAccess: 'Hoy', permissions: 'Solicitudes', active: true },
-    { name: 'scortes', role: 'Docente', lastAccess: 'Hoy', permissions: 'Solicitudes', active: true },
-    { name: 'vsoto', role: 'Tesista', lastAccess: 'Hoy', permissions: 'Estudiante', active: true },
-    { name: 'daraya', role: 'Ayudante', lastAccess: 'Hoy', permissions: 'Estudiante', active: true },
-    { name: 'amunoz', role: 'Compras y Abastecimiento', lastAccess: 'Hoy', permissions: 'Compras', active: true }
-];
-
-// Verificación de primera ejecución para no sobreescribir borrados con muestras
-const isFirstRun = !localStorage.getItem('celimin_initialized_v1');
-
-let labsData = storage.get('celimin_labs_v2', initialLabs);
-let inventoryData = storage.get(STORAGE_KEYS.INVENTORY, initialInventory);
-
-// Asegurar la inyección de los nuevos registros si ya existe persistencia previa
-let updatedInventory = false;
-initialInventory.forEach(newItem => {
-    if (!inventoryData.some(item => item.code === newItem.code)) {
-        inventoryData.push(newItem);
-        updatedInventory = true;
+// Función para sincronizar datos al inicio
+window.initApp = async function() {
+    try {
+        const db = await window.dbSync.loadAllData();
+        labsData = db.labs;
+        inventoryData = db.inventory;
+        usersData = db.users;
+        movementsData = db.movements;
+        requestsData = db.requests;
+        agendaTrabajosData = db.agenda;
+        planificacionData = db.planificacion;
+        mantenimientoData = db.mantenimiento;
+        turnosData = db.turnos;
+        usosData = db.auditoria;
+        libraryDocsData = db.library_docs;
+        
+        console.log("Base de datos cargada exitosamente.");
+        
+        // Render iniciales
+        if (typeof renderDashboard === 'function') renderDashboard();
+        if (typeof renderEquipmentStatus === 'function') renderEquipmentStatus();
+        if (typeof renderLabs === 'function') renderLabs();
+        if (typeof updateLabSelections === 'function') updateLabSelections();
+        
+    } catch (error) {
+        console.error("Fallo crítico en initApp", error);
     }
-});
-if (updatedInventory) {
-    storage.set(STORAGE_KEYS.INVENTORY, inventoryData);
-}
-
-let usersData = storage.get(STORAGE_KEYS.USERS, initialUsers);
-
-let movementsData = storage.get(STORAGE_KEYS.MOVEMENTS, []);
-if (isFirstRun && movementsData.length === 0) {
-    movementsData = [
-        { id: 'TRX-123456', type: 'Ingreso', item: 'Alcohol Isopropílico', qty: '10 L', user: 'crojas', target: 'Abastecimiento Mensual', date: '2026-05-14', time: '10:30' },
-        { id: 'TRX-789012', type: 'Salida', item: 'Guantes de Nitrilo', qty: '1 Cajas', user: 'jmorales', target: 'Laboratorio 1', date: '2026-05-15', time: '09:15' }
-    ];
-}
-
-let requestsData = storage.get('celimin_requests_v2', []);
-if (isFirstRun && requestsData.length === 0) {
-    requestsData = [
-        { id: 'SOL-5566', user: 'pherrera', item: 'Tubos de Ensayo 10ml', qty: '10 Unid', date: '15/05/2026', status: 'pendiente' },
-        { id: 'SOL-7788', user: 'scortes', item: 'Alcohol Isopropílico', qty: '2 L', date: '14/05/2026', status: 'aprobada' }
-    ];
-}
+};
 
 function saveData() {
-    storage.set('celimin_labs_v2', labsData);
-    storage.set(STORAGE_KEYS.INVENTORY, inventoryData);
-    storage.set(STORAGE_KEYS.USERS, usersData);
-    storage.set(STORAGE_KEYS.MOVEMENTS, movementsData);
-    storage.set('celimin_requests_v2', requestsData);
-    storage.set('celimin_mantenimiento_v1', mantenimientoData);
-    storage.set('celimin_agenda_trabajos_v1', agendaTrabajosData);
-    storage.set('celimin_turnos_v1', turnosData);
-    storage.set('celimin_usos_v1', usosData);
-    storage.set('celimin_planificacion_v1', planificacionData);
-    storage.set('celimin_library_docs_v1', libraryDocsData);
-
-    // Auto-update dashboard and equipment panels when data changes
+    // Ya no guardamos en localStorage. Las operaciones a base de datos
+    // se hacen puntualmente con await dbSync.saveX() en las vistas.
+    // Esta función se mantiene para disparar actualizaciones de UI por compatibilidad.
     if (typeof renderDashboard === 'function') renderDashboard();
     if (typeof renderEquipmentStatus === 'function') renderEquipmentStatus();
-}
-
-let agendaTrabajosData = storage.get('celimin_agenda_trabajos_v1', []);
-if (isFirstRun && agendaTrabajosData.length === 0) {
-    agendaTrabajosData = [
-        { titulo: 'Análisis de Sedimentos', fecha: '2026-05-20', insumos: 'Ácido Sulfúrico, Agua Destilada', equipo: 'Espectrómetro', responsable: 'Dr. Alejandro Ruiz', type: 'Trabajo', horaInicio: '08:00', horaFin: '12:00', hora: '08:00 - 12:00' },
-        { titulo: 'Mantenimiento de Microscopios', fecha: '2026-05-22', insumos: 'Kit de Limpieza Óptica', equipo: 'Microscopio Binocular', responsable: 'Lic. María García', type: 'Trabajo', horaInicio: '10:00', horaFin: '13:00', hora: '10:00 - 13:00' }
-    ];
-}
-
-let mantenimientoData = storage.get('celimin_mantenimiento_v1', []);
-let turnosData = storage.get('celimin_turnos_v1', []);
-let usosData = storage.get('celimin_usos_v1', []);
-let planificacionData = storage.get('celimin_planificacion_v1', []);
-let libraryDocsData = storage.get('celimin_library_docs_v1', []);
-
-if (isFirstRun) {
-    localStorage.setItem('celimin_initialized_v1', 'true');
-    saveData();
 }
 
 // =============================================================================
@@ -402,9 +329,11 @@ function deleteLab(index) {
         return;
     }
     if (confirm(`¿Eliminar el laboratorio "${labsData[index].name}"?`)) {
-        labsData.splice(index, 1);
-        saveData();
-        renderLabs();
+        window.dbSync.deleteLab(labsData[index].id).then(() => {
+            labsData.splice(index, 1);
+            saveData();
+            renderLabs();
+        });
     }
 }
 
@@ -538,23 +467,29 @@ function renderRequests() {
     `).join('') : '<tr><td colspan="7" style="text-align:center;padding:2rem;">No hay solicitudes registradas</td></tr>';
 }
 
-window.approveRequest = (index) => {
+window.approveRequest = async (index) => {
     const req = requestsData[index];
     const itemIndex = inventoryData.findIndex(i => i.name === req.item);
     
+    // Suponiendo que req.qty contiene un número (ej. "10 Unid")
+    const qtyMatch = req.qty.match(/\d+/);
+    const qtyNum = qtyMatch ? parseInt(qtyMatch[0]) : 1;
+
     if (itemIndex !== -1) {
         const item = inventoryData[itemIndex];
-        if (item.stockActual < req.qtyNum) {
+        if (item.stockActual < qtyNum) {
             alert('No hay stock suficiente para aprobar esta solicitud.');
             return;
         }
-        item.stockActual -= req.qtyNum;
+        item.stockActual -= qtyNum;
         if (item.stockActual <= 0) item.status = 'out';
         else if (item.stockActual <= item.stockMin) item.status = 'low';
         else item.status = 'ok';
         
+        await window.dbSync.saveInventoryItem(item);
+        
         const now = new Date();
-        movementsData.push({
+        const mov = {
             id: `TRX-${Date.now().toString().slice(-6)}`,
             type: 'Salida (Solicitud)',
             item: item.name,
@@ -563,18 +498,22 @@ window.approveRequest = (index) => {
             target: 'Entrega por Solicitud',
             date: now.toISOString().split('T')[0],
             time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-        });
+        };
+        await window.dbSync.insertMovement(mov);
+        movementsData.push(mov);
     }
 
-    requestsData[index].status = 'aprobada';
+    req.status = 'aprobada';
+    await window.dbSync.saveRequest(req);
     saveData();
     renderRequests();
     renderInventory();
     renderDashboard();
 };
 
-window.rejectRequest = (index) => {
+window.rejectRequest = async (index) => {
     requestsData[index].status = 'rechazada';
+    await window.dbSync.saveRequest(requestsData[index]);
     saveData();
     renderRequests();
 };
@@ -649,22 +588,28 @@ window.forceUpdateDashboard = function() {
     renderEquipmentStatus();
 }
 
-window.masterSync = function() {
-    saveData();
+window.masterSync = async function() {
+    // Re-cargar todo de supabase
+    await initApp();
     renderInventory();
     renderLabs();
     if (typeof window.renderAgendaTrabajos === 'function') window.renderAgendaTrabajos();
     if (typeof window.renderCalendar === 'function') window.renderCalendar();
     
-    console.log("Sincronización maestra completada en memoria.");
+    console.log("Sincronización maestra completada con Supabase.");
 };
 
 function renderInventory(data = inventoryData) {
-    renderInventoryTable(data);
+    if (typeof renderInventoryTable === 'function') renderInventoryTable(data);
     if (typeof renderEquipmentStatus === 'function') {
         renderEquipmentStatus(currentEquipmentFilter);
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar aplicación cargando datos de Supabase
+    window.initApp();
+});
 
 // =============================================================================
 // AGENDA DE TRABAJOS

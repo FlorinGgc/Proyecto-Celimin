@@ -51,8 +51,11 @@ function renderInventoryTable(data = inventoryData) {
 // =============================================================================
 let currentEquipmentFilter = 'all';
 
-window.toggleEquipmentStatus = function(index) {
-    inventoryData[index].inUse = !inventoryData[index].inUse;
+window.toggleEquipmentStatus = async function(index) {
+    const item = inventoryData[index];
+    const newStatus = !item.inUse;
+    await window.dbSync.toggleEquipmentInUse(item.id, newStatus);
+    item.inUse = newStatus;
     window.masterSync();
 };
 
@@ -150,13 +153,14 @@ window.editEquipmentDetails = function(index) {
             }
             return { name, code, location, inUse };
         }
-    }).then((result) => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
             inventoryData[index].name = result.value.name;
             inventoryData[index].code = result.value.code;
             inventoryData[index].locationDetail = result.value.location;
             inventoryData[index].inUse = result.value.inUse;
             
+            await window.dbSync.saveInventoryItem(inventoryData[index]);
             window.masterSync();
             
             Swal.fire({
@@ -240,14 +244,16 @@ window.editItem = (index) => {
     document.getElementById('modal-edit-item').classList.remove('hidden');
 };
 
-window.deleteItem = (index) => {
+window.deleteItem = async (index) => {
     const session = storage.get(STORAGE_KEYS.SESSION);
     const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
     }
-    if (confirm(`¿Está seguro de eliminar "${inventoryData[index].name}"?`)) {
+    const item = inventoryData[index];
+    if (confirm(`¿Está seguro de eliminar "${item.name}"?`)) {
+        await window.dbSync.deleteInventoryItem(item.id);
         inventoryData.splice(index, 1);
         saveData();
         renderInventory();
@@ -342,9 +348,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelBtn) cancelBtn.addEventListener('click', () => toggleModal(false));
 
     if (formNewItem) {
-        formNewItem.addEventListener('submit', (e) => {
+        formNewItem.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const btn = e.target.querySelector('button[type="submit"]');
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            btn.disabled = true;
+
             const selectedLabs = Array.from(document.querySelectorAll('input[name="labs"]:checked')).map(cb => cb.value);
             
             const newItem = {
@@ -366,6 +377,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 labs: selectedLabs
             };
 
+            const savedId = await window.dbSync.saveInventoryItem(newItem, true);
+            newItem.id = savedId;
             inventoryData.push(newItem);
             
             const session = storage.get(STORAGE_KEYS.SESSION);
@@ -380,6 +393,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 date: now.toISOString().split('T')[0],
                 time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
             };
+            
+            await window.dbSync.insertMovement(movement);
             movementsData.push(movement);
 
             saveData();
@@ -389,6 +404,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             formNewItem.reset();
             toggleModal(false);
+            btn.innerHTML = origHtml;
+            btn.disabled = false;
             alert('Registro de ítem guardado con éxito');
         });
     }
@@ -396,13 +413,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Edit Item Logic
     const formEditItem = document.getElementById('form-edit-item');
     if (formEditItem) {
-        formEditItem.addEventListener('submit', (e) => {
+        formEditItem.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            btn.disabled = true;
+
             const index = document.getElementById('edit-item-index').value;
-            
             const selectedLabs = Array.from(document.querySelectorAll('input[name="edit-labs"]:checked')).map(cb => cb.value);
 
-            inventoryData[index] = {
+            const updatedItem = {
                 ...inventoryData[index],
                 name: document.getElementById('edit-item-name').value,
                 category: document.getElementById('edit-item-category').value,
@@ -421,11 +442,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 labs: selectedLabs
             };
 
+            await window.dbSync.saveInventoryItem(updatedItem);
+            inventoryData[index] = updatedItem;
+
             saveData();
             renderInventory();
             if (typeof renderDashboard === 'function') renderDashboard();
             if (typeof renderEspacios === 'function') renderEspacios();
             document.getElementById('modal-edit-item').classList.add('hidden');
+            btn.innerHTML = origHtml;
+            btn.disabled = false;
             alert('Cambios guardados con éxito');
         });
     }
