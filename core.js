@@ -1649,21 +1649,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelUsoBtn) cancelUsoBtn.addEventListener('click', () => toggleUsoModal(false));
 
     if (formUso) {
-        formUso.addEventListener('submit', (e) => {
+        formUso.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const record = {
-                item: document.getElementById('uso-item').value,
-                usuario: document.getElementById('uso-usuario').value,
-                cantidad: document.getElementById('uso-cantidad').value,
-                fecha: document.getElementById('uso-fecha').value,
-                comentario: document.getElementById('uso-comentario').value,
-                checked: false
-            };
-            usosData.push(record);
-            saveData();
-            renderAuditoria();
-            toggleUsoModal(false);
-            formUso.reset();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            btn.disabled = true;
+
+            try {
+                const record = {
+                    item: document.getElementById('uso-item').value,
+                    usuario: document.getElementById('uso-usuario').value,
+                    cantidad: document.getElementById('uso-cantidad').value,
+                    fecha: document.getElementById('uso-fecha').value,
+                    comentario: document.getElementById('uso-comentario').value,
+                    checked: false
+                };
+                
+                await window.dbSync.saveAuditoria(record, true);
+                
+                if (window.initApp) {
+                    await window.initApp();
+                }
+                
+                if (typeof renderAuditoria === 'function') renderAuditoria();
+                toggleUsoModal(false);
+                formUso.reset();
+            } catch (error) {
+                console.error("Error al guardar auditoria:", error);
+                alert("Hubo un error al guardar. Asegúrate de tener el id autoincrementable y RLS desactivado para la tabla 'auditoria' en Supabase.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         });
     }
 
