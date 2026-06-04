@@ -1553,21 +1553,45 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelLimpiezaBtn) cancelLimpiezaBtn.addEventListener('click', () => modalLimpieza.classList.add('hidden'));
 
     if (formLimpieza) {
-        formLimpieza.addEventListener('submit', (e) => {
+        formLimpieza.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const record = {
-                equipo: document.getElementById('limpieza-equipo').value,
-                fecha: document.getElementById('limpieza-fecha').value,
-                hora: document.getElementById('limpieza-hora').value,
-                tipo: document.getElementById('limpieza-tipo').value,
-                obs: document.getElementById('limpieza-obs').value
-            };
-            mantenimientoData.push(record);
-            saveData();
-            renderMantenimiento();
-            modalLimpieza.classList.add('hidden');
-            formLimpieza.reset();
-            alert('Registro de limpieza guardado con éxito.');
+            const btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('.btn-primary');
+            const originalText = btn ? btn.innerHTML : 'Guardar';
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                btn.disabled = true;
+            }
+
+            try {
+                const record = {
+                    equipo: document.getElementById('limpieza-equipo').value,
+                    fecha: document.getElementById('limpieza-fecha').value,
+                    hora: document.getElementById('limpieza-hora').value,
+                    tipo: document.getElementById('limpieza-tipo').value,
+                    obs: document.getElementById('limpieza-obs').value
+                };
+
+                if (window.dbSync && window.dbSync.insertMantenimiento) {
+                    await window.dbSync.insertMantenimiento(record);
+                }
+
+                if (window.initApp) {
+                    await window.initApp();
+                }
+
+                if (typeof renderMantenimiento === 'function') renderMantenimiento();
+                modalLimpieza.classList.add('hidden');
+                formLimpieza.reset();
+                alert('Registro de limpieza guardado con éxito.');
+            } catch (error) {
+                console.error("Error saving limpieza:", error);
+                alert("Error al guardar el registro. Asegúrate de tener RLS desactivado en la tabla 'mantenimiento'.");
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
         });
     }
 
