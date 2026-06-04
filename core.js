@@ -348,9 +348,13 @@ function updateLabSelections() {
         const isEdit = container.id.includes('edit');
         const name = isEdit ? 'edit-labs' : 'labs';
         
-        container.innerHTML = labsData.map(lab => `
-            <label class="checkbox-item"><input type="checkbox" name="${name}" value="${lab.id}"> ${lab.name}</label>
-        `).join('');
+        if (labsData.length === 0) {
+            container.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem; font-style:italic; padding: 0.25rem;">No hay laboratorios registrados. Ve a la sección "Laboratorio (Sedes)" para agregar uno.</span>';
+        } else {
+            container.innerHTML = labsData.map(lab => `
+                <label class="checkbox-item"><input type="checkbox" name="${name}" value="${lab.id}"> ${lab.name}</label>
+            `).join('');
+        }
     });
 
     const filterSelect = document.getElementById('lab-filter');
