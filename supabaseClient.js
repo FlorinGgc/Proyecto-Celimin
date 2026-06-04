@@ -4,10 +4,15 @@
 
 // Reemplazar en un entorno de producción seguro o mediante build step
 // Para modo de desarrollo estático, leemos las variables directamente o usamos placeholders temporales
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'URL_DE_TU_PROYECTO_SUPABASE';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'LLAVE_ANON_DE_TU_PROYECTO_SUPABASE';
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabaseClient;
+try {
+    const SUPABASE_URL = 'https://sdlojkscphgijpcsigzc.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkbG9qa3NjcGhnaWpwY3NpZ3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NDQyMDEsImV4cCI6MjA5NjAyMDIwMX0.xP0MrZzgUFDLXYilGMEbCsqeo2Cww6oZRP9psEfSQ2A';
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (e) {
+    console.error("Error initializing Supabase client:", e);
+}
 
 window.dbSync = {
     // ---- INITIAL LOAD ALL DATA ----
