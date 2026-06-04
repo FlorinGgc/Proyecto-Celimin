@@ -1853,7 +1853,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const reader = new FileReader();
-            reader.onload = function(evt) {
+            reader.onload = async function(evt) {
                 const base64Data = evt.target.result;
                 const session = storage.get(STORAGE_KEYS.SESSION);
                 const uploader = session ? session.user : 'Sistema';
@@ -1869,18 +1869,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     user: uploader
                 };
 
-                libraryDocsData.push(newDoc);
-                saveData();
-                renderLibrary();
-                toggleDocModal(false);
+                try {
+                    // Si dbSync.insertLibraryDoc existe, lo usamos
+                    if (window.dbSync && window.dbSync.insertLibraryDoc) {
+                        await window.dbSync.insertLibraryDoc(newDoc);
+                    }
+                    
+                    // Recargar datos desde Supabase
+                    if (window.initApp) {
+                        await window.initApp();
+                    }
+                    
+                    if (typeof renderLibrary === 'function') renderLibrary();
+                    toggleDocModal(false);
 
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Documento Guardado',
-                    text: 'El PDF se ha subido correctamente a la biblioteca.',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Documento Guardado',
+                        text: 'El PDF se ha subido correctamente a la base de datos.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } catch (error) {
+                    console.error("Error al guardar el documento:", error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de Guardado',
+                        text: 'Hubo un problema al guardar en la base de datos. Verifica el RLS de la tabla library_docs.'
+                    });
+                }
             };
             reader.onerror = function() {
                 Swal.fire({
