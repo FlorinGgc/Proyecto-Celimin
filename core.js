@@ -1394,88 +1394,105 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelAgendarBtn) cancelAgendarBtn.addEventListener('click', () => toggleAgendarModal(false));
 
     if (formAgendar) {
-        formAgendar.addEventListener('submit', (e) => {
+        formAgendar.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const tipo = document.getElementById('agenda-type').value;
-            const titulo = document.getElementById('agenda-titulo').value;
-            const fecha = document.getElementById('agenda-fecha').value;
-            const insumos = document.getElementById('agenda-insumos').value;
-            const equipo = document.getElementById('agenda-equipo').value;
-            const responsable = document.getElementById('agenda-responsable').value;
-            
-            const session = storage.get(STORAGE_KEYS.SESSION);
-
-            if (tipo === 'Movimiento') {
-                movementsData.push({
-                    id: `TRX-${Date.now().toString().slice(-6)}`,
-                    type: 'Manual',
-                    item: titulo,
-                    qty: insumos || 'N/A',
-                    user: session ? session.user : 'Sistema',
-                    target: equipo || 'Ajuste manual',
-                    date: fecha,
-                    time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-                });
-            } else if (tipo === 'Solicitud') {
-                requestsData.push({
-                    id: `SOL-${Date.now().toString().slice(-4)}`,
-                    user: session ? (session.user || 'Sistema') : 'Sistema',
-                    item: titulo,
-                    qty: insumos || 'N/A',
-                    date: fecha.split('-').reverse().join('/'),
-                    status: 'pendiente'
-                });
-            } else {
-                const horaInicio = document.getElementById('agenda-hora-inicio').value;
-                const horaFin = document.getElementById('agenda-hora-fin').value;
-                const newActivity = {
-                    titulo, fecha, insumos, equipo, responsable, type: 'Trabajo',
-                    horaInicio, horaFin,
-                    hora: `${horaInicio} - ${horaFin}`
-                };
-
-                if (window.currentEditingActivityIndex !== undefined) {
-                    if (window.currentEditingActivitySource === 'planificacion') {
-                        planificacionData[window.currentEditingActivityIndex] = {
-                            item: titulo,
-                            usuario: session ? session.user : 'Sistema',
-                            fecha: fecha,
-                            completado: false
-                        };
-                    } else {
-                        agendaTrabajosData[window.currentEditingActivityIndex] = newActivity;
-                    }
-                    window.currentEditingActivityIndex = undefined;
-                    window.currentEditingActivitySource = undefined;
-                } else {
-                    agendaTrabajosData.push(newActivity);
-                }
-            }
-
-            saveData();
-            
             const btn = e.target.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
             btn.disabled = true;
 
-            setTimeout(() => {
+            try {
+                const tipo = document.getElementById('agenda-type').value;
+                const titulo = document.getElementById('agenda-titulo').value;
+                const fecha = document.getElementById('agenda-fecha').value;
+                const insumos = document.getElementById('agenda-insumos').value;
+                const equipo = document.getElementById('agenda-equipo').value;
+                const responsable = document.getElementById('agenda-responsable').value;
+                
+                const session = storage.get(STORAGE_KEYS.SESSION);
+
+                if (tipo === 'Movimiento') {
+                    const mov = {
+                        id: `TRX-${Date.now().toString().slice(-6)}`,
+                        type: 'Manual',
+                        item: titulo,
+                        qty: insumos || 'N/A',
+                        user: session ? session.user : 'Sistema',
+                        target: equipo || 'Ajuste manual',
+                        date: fecha,
+                        time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                    };
+                    await window.dbSync.insertMovement(mov);
+                } else if (tipo === 'Solicitud') {
+                    const req = {
+                        id: `SOL-${Date.now().toString().slice(-4)}`,
+                        user: session ? (session.user || 'Sistema') : 'Sistema',
+                        item: titulo,
+                        qty: insumos || 'N/A',
+                        date: fecha.split('-').reverse().join('/'),
+                        status: 'pendiente'
+                    };
+                    if (window.dbSync.saveRequest) {
+                        await window.dbSync.saveRequest(req, true);
+                    } else {
+                        // Fallback if saveRequest is slightly differently named in some versions
+                        await supabaseClient.from('requests').insert([{
+                            id: req.id, user_name: req.user, item: req.item, qty: req.qty, date: req.date, status: req.status
+                        }]);
+                    }
+                } else {
+                    const horaInicio = document.getElementById('agenda-hora-inicio').value;
+                    const horaFin = document.getElementById('agenda-hora-fin').value;
+                    let activityItem = {
+                        titulo, fecha, insumos, equipo, responsable, type: 'Trabajo',
+                        horaInicio, horaFin,
+                        hora: `${horaInicio} - ${horaFin}`
+                    };
+
+                    if (window.currentEditingActivityIndex !== undefined) {
+                        if (window.currentEditingActivitySource === 'planificacion') {
+                            const pData = planificacionData[window.currentEditingActivityIndex];
+                            pData.item = titulo;
+                            pData.fecha = fecha;
+                            await window.dbSync.savePlanificacion(pData);
+                        } else {
+                            const aData = agendaTrabajosData[window.currentEditingActivityIndex];
+                            activityItem.id = aData.id;
+                            await window.dbSync.saveAgenda(activityItem);
+                        }
+                    } else {
+                        await window.dbSync.saveAgenda(activityItem, true);
+                    }
+                }
+
+                // Recargar datos desde Supabase para tener los IDs y datos frescos
+                if (window.initApp) {
+                    await window.initApp();
+                }
+                
                 modalAgendar.classList.add('hidden');
-                renderAgendaTrabajos();
-                renderCalendar();
+                
+                if (typeof renderAgendaTrabajos === 'function') renderAgendaTrabajos();
+                if (typeof renderCalendar === 'function') renderCalendar();
                 
                 window.currentEditingActivityIndex = undefined;
+                window.currentEditingActivitySource = undefined;
+                
                 const btnSubmit = formAgendar.querySelector('button[type="submit"]');
-                btnSubmit.textContent = 'Agendar Trabajo';
+                if (btnSubmit) btnSubmit.textContent = 'Agendar Trabajo';
 
-                if (document.getElementById('agendar-trabajos-view').classList.contains('hidden')) {
+                if (document.getElementById('agendar-trabajos-view') && !document.getElementById('agendar-trabajos-view').classList.contains('hidden')) {
                     switchView('agendar-trabajos');
                 }
                 
+                formAgendar.reset();
+            } catch (error) {
+                console.error("Error al guardar en agenda/planificación:", error);
+                alert("Hubo un error al guardar. Si estás en Supabase, revisa que el RLS esté desactivado o que haya políticas activas para esta tabla.");
+            } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
-                formAgendar.reset();
-            }, 500);
+            }
         });
 
         const agendaTypeSelect = document.getElementById('agenda-type');
