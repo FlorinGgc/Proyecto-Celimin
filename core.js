@@ -1248,28 +1248,47 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-modal-request')?.addEventListener('click', () => modalRequest.classList.add('hidden'));
     document.getElementById('btn-cancel-req')?.addEventListener('click', () => modalRequest.classList.add('hidden'));
     
-    document.getElementById('form-new-request')?.addEventListener('submit', (e) => {
+    document.getElementById('form-new-request')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const itemName = document.getElementById('req-item').value;
-        const qty = parseInt(document.getElementById('req-qty').value);
-        const item = inventoryData.find(i => i.name === itemName);
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        btn.disabled = true;
 
-        const newReq = {
-            id: `SOL-${Math.floor(1000 + Math.random() * 9000)}`,
-            user: storage.get(STORAGE_KEYS.SESSION)?.user || 'Usuario',
-            item: itemName,
-            qty: `${qty} ${item.unit}`,
-            qtyNum: qty,
-            date: new Date().toLocaleDateString(),
-            status: 'pendiente'
-        };
+        try {
+            const itemName = document.getElementById('req-item').value;
+            const qty = parseInt(document.getElementById('req-qty').value);
+            const item = inventoryData.find(i => i.name === itemName);
 
-        requestsData.unshift(newReq);
-        saveData();
-        renderRequests();
-        modalRequest.classList.add('hidden');
-        e.target.reset();
-        alert('Solicitud enviada con éxito');
+            const newReq = {
+                id: `SOL-${Math.floor(1000 + Math.random() * 9000)}`,
+                user: storage.get(STORAGE_KEYS.SESSION)?.user || 'Usuario',
+                item: itemName,
+                qty: `${qty} ${item.unit}`,
+                qtyNum: qty,
+                date: new Date().toLocaleDateString(),
+                status: 'pendiente'
+            };
+
+            if (window.dbSync && window.dbSync.saveRequest) {
+                await window.dbSync.saveRequest(newReq, true);
+            }
+
+            if (window.initApp) {
+                await window.initApp();
+            }
+
+            if (typeof renderRequests === 'function') renderRequests();
+            modalRequest.classList.add('hidden');
+            e.target.reset();
+            alert('Solicitud enviada con éxito');
+        } catch (error) {
+            console.error("Error saving request:", error);
+            alert("Error al enviar solicitud. Asegúrate de tener RLS desactivado en la tabla 'requests'.");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     });
 
     const btnNewLab = document.getElementById('btn-new-lab');
