@@ -1596,20 +1596,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelTurnoBtn) cancelTurnoBtn.addEventListener('click', () => toggleTurnoModal(false));
 
     if (formTurno) {
-        formTurno.addEventListener('submit', (e) => {
+        formTurno.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const record = {
-                laboratorio: document.getElementById('turno-lab').value,
-                jefe: document.getElementById('turno-jefe').value,
-                semana: document.getElementById('turno-semana').value,
-                mes: document.getElementById('turno-mes').value
-            };
-            turnosData.push(record);
-            saveData();
-            renderTurnos();
-            toggleTurnoModal(false);
-            formTurno.reset();
-            alert('Responsable registrado exitosamente.');
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            btn.disabled = true;
+
+            try {
+                const record = {
+                    laboratorio: document.getElementById('turno-lab').value,
+                    jefe: document.getElementById('turno-jefe').value,
+                    semana: document.getElementById('turno-semana').value,
+                    mes: document.getElementById('turno-mes').value
+                };
+                
+                await window.dbSync.insertTurno(record);
+                
+                // Recargar datos para traer los registros actualizados con su ID
+                if (window.initApp) {
+                    await window.initApp();
+                }
+                
+                if (typeof renderTurnos === 'function') renderTurnos();
+                toggleTurnoModal(false);
+                formTurno.reset();
+                alert('Responsable registrado exitosamente.');
+            } catch (error) {
+                console.error("Error al guardar turno:", error);
+                alert("Hubo un error al guardar. Asegúrate de tener desactivado RLS para la tabla 'turnos' en Supabase.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         });
     }
 
