@@ -405,7 +405,7 @@ window.openMovementModal = (index, type) => {
     document.getElementById('modal-movement').classList.remove('hidden');
 };
 
-function handleMovement(e) {
+async function handleMovement(e) {
     e.preventDefault();
     const index = document.getElementById('mv-item-index').value;
     const type = document.getElementById('mv-type').value;
@@ -418,31 +418,52 @@ function handleMovement(e) {
         return;
     }
 
-    if (type === 'Ingreso') item.stockActual += qty;
-    else item.stockActual -= qty;
+    const btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('.btn-primary');
+    const originalText = btn ? btn.innerHTML : 'Guardar';
+    if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'; btn.disabled = true; }
 
-    if (item.stockActual <= 0) item.status = 'out';
-    else if (item.stockActual <= item.stockMin) item.status = 'low';
-    else item.status = 'ok';
+    try {
+        if (type === 'Ingreso') item.stockActual += qty;
+        else item.stockActual -= qty;
 
-    const now = new Date();
-    const session = storage.get(STORAGE_KEYS.SESSION);
-    movementsData.push({
-        id: `TRX-${Date.now().toString().slice(-6)}`,
-        type: type,
-        item: item.name,
-        qty: `${qty} ${item.unit}`,
-        user: session ? session.user : 'Sistema',
-        target: reason || 'Ajuste de inventario',
-        date: now.toISOString().split('T')[0],
-        time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-    });
+        if (item.stockActual <= 0) item.status = 'out';
+        else if (item.stockActual <= item.stockMin) item.status = 'low';
+        else item.status = 'ok';
 
-    saveData();
-    renderInventory();
-    renderDashboard();
-    document.getElementById('modal-movement').classList.add('hidden');
-    document.getElementById('form-movement').reset();
+        const now = new Date();
+        const session = storage.get(STORAGE_KEYS.SESSION);
+        const mov = {
+            id: `TRX-${Date.now().toString().slice(-6)}`,
+            type: type,
+            item: item.name,
+            qty: `${qty} ${item.unit}`,
+            user: session ? session.user : 'Sistema',
+            target: reason || 'Ajuste de inventario',
+            date: now.toISOString().split('T')[0],
+            time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        if (window.dbSync && window.dbSync.saveInventoryItem) {
+            await window.dbSync.saveInventoryItem(item);
+        }
+        if (window.dbSync && window.dbSync.insertMovement) {
+            await window.dbSync.insertMovement(mov);
+        }
+
+        movementsData.push(mov);
+        saveData();
+        renderInventory();
+        renderDashboard();
+        if (typeof renderMovements === 'function') renderMovements();
+        document.getElementById('modal-movement').classList.add('hidden');
+        document.getElementById('form-movement').reset();
+        alert('Movimiento registrado con éxito.');
+    } catch(err) {
+        console.error('Error saving movement:', err);
+        alert('Error al registrar movimiento. Asegúrate de tener RLS desactivado en "movements" y "inventory".');
+    } finally {
+        if(btn) { btn.innerHTML = originalText; btn.disabled = false; }
+    }
 }
 
 // =============================================================================
