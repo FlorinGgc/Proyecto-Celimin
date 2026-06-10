@@ -4,86 +4,17 @@
 
 let selectedPlanoZone = null;
 
-const planoZones = {
-    'analisis-gases': {
-        name: 'Módulo de Análisis de Gases',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Área aislada para el monitoreo de emisiones gaseosas, campanas de flujo controlado y sensores de reactividad.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('gases') || item.locationDetail?.toLowerCase().includes('contaminación')
-    },
-    'baterias-almacen': {
-        name: 'Almacén de Material y Equipos',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Bodega de almacenamiento de celdas de litio, consumibles, guantes y componentes de recambio.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('bodega') || item.locationDetail?.toLowerCase().includes('almacén') || item.locationDetail?.toLowerCase().includes('almacen') || item.locationDetail?.toLowerCase().includes('supply')
-    },
-    'procesos-mesa-lat': {
-        name: 'Mesón Lateral Izquierdo',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Mesón principal para soporte de equipos ópticos, balanzas analíticas y microscopios de procesos.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('mesón 4') || item.locationDetail?.toLowerCase().includes('mesa lateral') || item.locationDetail?.toLowerCase().includes('lateral izquierdo') || item.locationDetail?.toLowerCase().includes('mesa 4')
-    },
-    'procesos-estanteria-sup': {
-        name: 'Estantería Superior Izquierda',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Estante elevado para reactivos químicos sellados, sales de litio y ácidos orgánicos.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('estante a1') || item.locationDetail?.toLowerCase().includes('estante') || item.locationDetail?.toLowerCase().includes('estantería')
-    },
-    'procesos-mesa-central': {
-        name: 'Mesón Central de Procesos',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Mesa de trabajo central multifuncional para la mezcla de disoluciones e instrumentación general.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('mesón central') || (item.locationDetail?.toLowerCase().includes('central') && item.labs?.includes('L1'))
-    },
-    'procesos-lavaplatos': {
-        name: 'Lavaplatos Doble (Procesos)',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Zona húmeda de lavado de material de vidrio de laboratorio (buretas, precipitados, matraces).',
-        match: (item) => item.locationDetail?.toLowerCase().includes('lavaplatos') || item.locationDetail?.toLowerCase().includes('lavadero')
-    },
-    'procesos-campana': {
-        name: 'Campana Extractora (Procesos)',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Extractor de vapores ácidos y solventes volátiles orgánicos para manipulación segura de reactivos.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('campana') || item.locationDetail?.toLowerCase().includes('extractora')
-    },
-    'procesos-estanteria-inf': {
-        name: 'Estantería de Procesos (G2)',
-        lab: 'Laboratorio de Procesos',
-        desc: 'Gabinete inferior cerrado para almacenamiento de vidriería de repuesto y consumibles secos.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('gabinete g2') || item.locationDetail?.toLowerCase().includes('gabinete') || item.locationDetail?.toLowerCase().includes('almacenaje inferior')
-    },
-    'baterias-lavaplatos': {
-        name: 'Lavaplatos de Baterías',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Lavadero secundario para lavado y secado rápido de componentes inertes.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('lavaplatos baterías') || item.locationDetail?.toLowerCase().includes('lavaplatos baterias')
-    },
-    'baterias-mesa-central-sup': {
-        name: 'Mesón Central Superior',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Área destinada a la preparación de electrolitos, pesaje de ánodos/cátodos y ensamblaje inicial.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('mesa central superior') || item.locationDetail?.toLowerCase().includes('mesón superior')
-    },
-    'baterias-mesa-central-inf': {
-        name: 'Mesón Central Inferior',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Espacio de trabajo para montaje de celdas de moneda (coin cells) y conexión de multímetros.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('mesa central inferior') || item.locationDetail?.toLowerCase().includes('mesón inferior')
-    },
-    'baterias-mesa-lat': {
-        name: 'Mesón Lateral Derecho',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Mesón de instrumentación para espectrómetros, equipos analíticos avanzados y hornos de secado.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('lab 2 - central') || item.locationDetail?.toLowerCase().includes('lateral derecho') || item.locationDetail?.toLowerCase().includes('mesón lateral')
-    },
-    'baterias-equipos-inf': {
-        name: 'Módulo de Equipos de Ciclos',
-        lab: 'Laboratorio de Baterías',
-        desc: 'Estaciones de ciclado y carga/descarga de celdas de ion litio conectadas a sistemas de control computarizado.',
-        match: (item) => item.locationDetail?.toLowerCase().includes('equipos') || item.locationDetail?.toLowerCase().includes('ciclado') || item.name?.toLowerCase().includes('espectrómetro') || item.name?.toLowerCase().includes('microscopio')
-    }
-};
+const planoZones = {};
+const letters = 'ABCDEFGHIJKLMNOPQR'.split('');
+letters.forEach(letter => {
+    let lab = letter >= 'M' ? 'Laboratorio de Baterías de Ion Litio' : 'Laboratorio en Procesos';
+    planoZones[letter] = {
+        name: `Zona ${letter}`,
+        lab: lab,
+        desc: `Área designada como Zona ${letter} en el plano.`,
+        match: (item) => item.locationDetail?.toUpperCase().includes(`ZONA ${letter}`) || item.locationDetail?.toUpperCase() === letter
+    };
+});
 
 window.initPlano = function() {
     const svg = document.getElementById('labs-map-svg');

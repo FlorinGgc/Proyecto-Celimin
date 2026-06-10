@@ -9,8 +9,8 @@ function renderUsers() {
     const tbody = document.getElementById('users-table-body');
     if (!tbody) return;
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
-    const canEdit = session && session.role === 'Administrador General';
+    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const canEdit = session && session.role === 'Administrador';
     tbody.innerHTML = usersData.map((user, index) => `
         <tr>
             <td><div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:30px;height:30px;background:#eee;border-radius:50%;display:grid;place-items:center;">${user.name[0]}</div>${user.name}</div></td>
@@ -40,7 +40,7 @@ window.editUser = (index) => {
 
 window.deleteUser = async (index) => {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
@@ -78,13 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Control de acceso por roles para el botón "Nuevo Registro" (Inventario)
         const allowedRolesInventory = [
-            'Administrador General', 
-            'Encargada de Inventario'
+            'Administrador', 
+            'Compra y Abastecimiento'
         ];
         
         // Control de acceso por roles para el botón "Registrar Usuario" (Personal)
         const allowedRolesUsers = [
-            'Administrador General'
+            'Administrador'
         ];
 
         const btnNewItem = document.getElementById('btn-new-item');
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Control "Ver todo": Ocultar ciertos menús si no es admin
-        const isAdmin = session.role === 'Administrador General';
+        const isAdmin = session.role === 'Administrador';
         document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
             const link = item.querySelector('.nav-link');
             if (link && link.getAttribute('data-view')) {

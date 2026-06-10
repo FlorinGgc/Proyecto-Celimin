@@ -37,16 +37,33 @@
                     <label for="login-user">Usuario</label>
                     <select id="login-user" name="username" required style="width:100%; padding:0.75rem 1rem; border:1px solid var(--border-color); border-radius:0.5rem; font-size:0.95rem; background:var(--surface-color); color:var(--text-color); cursor:pointer;">
                         <option value="" disabled>— Seleccione su usuario —</option>
-                        <option value="aegonzalez" selected>aegonzalez — Administrador General</option>
-                        <option value="crojas">crojas — Encargada de Inventario</option>
-                        <option value="mfernandez">mfernandez — Supervisor de Laboratorio</option>
-                        <option value="jmorales">jmorales — Técnico en Laboratorio</option>
-                        <option value="rvega">rvega — Técnico de Apoyo</option>
-                        <option value="pherrera">pherrera — Investigadora</option>
-                        <option value="scortes">scortes — Docente</option>
-                        <option value="vsoto">vsoto — Tesista</option>
-                        <option value="daraya">daraya — Ayudante</option>
-                        <option value="amunoz">amunoz — Compras y Abastecimiento</option>
+                        <optgroup label="Senior Researchers">
+                            <option value="Mario Grágeda Zegarra" selected>Mario Grágeda Zegarra — Administrador</option>
+                            <option value="Svetlana Ushak">Svetlana Ushak — Administrador</option>
+                            <option value="Paula Marín Aguirre">Paula Marín Aguirre — Administrador</option>
+                            <option value="Alonso Gonzalez">Alonso Gonzalez — Administrador</option>
+                            <option value="Marcelo Gonzales Saique">Marcelo Gonzales Saique — Administrador</option>
+                            <option value="Adrian Quispe Huayta">Adrian Quispe Huayta — Investigador</option>
+                            <option value="Kumaresan Lakshmanan">Kumaresan Lakshmanan — Investigador</option>
+                            <option value="Sagar Panwar">Sagar Panwar — Investigador</option>
+                            <option value="Mirko Grageda">Mirko Grageda — Compra y Abastecimiento</option>
+                        </optgroup>
+                        <optgroup label="Research Team">
+                            <option value="Nicolás Palma Ovalle">Nicolás Palma Ovalle — Tesista</option>
+                            <option value="Maura Judith Cruz">Maura Judith Cruz — Tesista</option>
+                            <option value="Luis Rojas Daza">Luis Rojas Daza — Tesista</option>
+                            <option value="Sergio Pablo Gabriel">Sergio Pablo Gabriel — Tesista</option>
+                            <option value="Evgeniya Pasechnaya">Evgeniya Pasechnaya — Tesista</option>
+                            <option value="Geovanna Choque Guisbert">Geovanna Choque Guisbert — Tesista</option>
+                            <option value="Milton Arratia Rios">Milton Arratia Rios — Tesista</option>
+                            <option value="Moises Gonzales Apaza">Moises Gonzales Apaza — Tesista</option>
+                            <option value="Joseas Ariel Mamani Perez">Joseas Ariel Mamani Perez — Tesista</option>
+                            <option value="Reina Eulalia Flores Huayllas">Reina Eulalia Flores Huayllas — Tesista</option>
+                            <option value="Ivan Nelson Vera Condori">Ivan Nelson Vera Condori — Tesista</option>
+                            <option value="Elgalini Ines Castro Galarza">Elgalini Ines Castro Galarza — Tesista</option>
+                            <option value="Daniela Estefany Mora Martinez">Daniela Estefany Mora Martinez — Tesista</option>
+                            <option value="Keyla Candy Ramos Tiza">Keyla Candy Ramos Tiza — Tesista</option>
+                        </optgroup>
                     </select>
                 </div>
 
@@ -130,6 +147,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" data-view="calendar">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Calendario Anual</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" data-view="labs">
                             <i class="fas fa-flask"></i>
                             <span>Laboratorio (Sedes)</span>
@@ -209,12 +232,7 @@
                                     <span>SOMOS</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" data-view="calendar">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <span>Calendario Anual</span>
-                                </a>
-                            </li>
+
                             <li class="nav-item">
                                 <a class="nav-link" data-view="linea-trabajo">
                                     <i class="fas fa-microscope"></i>
@@ -290,6 +308,9 @@
                 </div>
                 
                 <div class="header-right">
+                    <button class="btn btn-outline" onclick="switchView('calendar')" style="margin-right: 15px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
+                        <i class="fas fa-calendar-alt" style="color: var(--primary);"></i> Calendario
+                    </button>
                     <div id="live-clock" class="clock-display">
                         <span id="clock-date">--/--/----</span>
                         <span id="clock-time">00:00:00</span>
@@ -390,6 +411,7 @@
                                 <th>Formato / Unidad</th>
                                 <th>Vencimiento</th>
                                 <th>Laboratorios</th>
+                                <th>Ubicación</th>
                                 <th>Estado</th>
                                 <th style="text-align: right;">Acciones</th>
                             </tr>
@@ -675,11 +697,21 @@
 
             <!-- SECCIÓN: BIBLIOTECA -->
             <section id="library-view" class="view-section hidden">
-                <div class="action-bar">
+                <div class="action-bar" style="flex-wrap: wrap;">
                     <h3>Biblioteca de Documentos</h3>
-                    <div style="display: flex; gap: 1rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                        <div class="search-box" style="position: relative;">
+                            <i class="fas fa-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                            <input type="text" id="library-search" placeholder="Buscar documento..." style="padding: 0.5rem 1rem 0.5rem 2rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem;">
+                        </div>
+                        <select id="library-category-filter" style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); font-size: 0.9rem; cursor: pointer;">
+                            <option value="all">Todas las Categorías</option>
+                            <option value="Protocolo">Protocolo</option>
+                            <option value="Documentos">Documentos</option>
+                            <option value="Informacion">Información</option>
+                        </select>
                         <button class="btn btn-primary" id="btn-new-doc">
-                            <i class="fas fa-plus"></i> Subir Documento
+                            <i class="fas fa-file-pdf"></i> Subir PDF
                         </button>
                     </div>
                 </div>
@@ -788,88 +820,74 @@
                     <!-- Mapa SVG interactivo -->
                     <div class="plano-map-card">
                         <svg viewBox="0 0 800 600" class="map-svg-element" id="labs-map-svg">
-                            <!-- Fondo y Paredes Exteriores -->
-                            <rect x="10" y="90" width="780" height="500" rx="8" fill="#ffffff" stroke="#1e293b" stroke-width="4" />
-                            
-                            <!-- Pared Divisoria Central -->
-                            <line x1="400" y1="90" x2="400" y2="590" stroke="#1e293b" stroke-width="4" />
-                            
-                            <!-- Puertas (Arco de apertura) -->
-                            <path d="M 330 590 A 60 60 0 0 0 390 590" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="4,4" />
-                            <line x1="330" y1="590" x2="330" y2="530" stroke="#1e293b" stroke-width="3" />
-                            
-                            <path d="M 470 590 A 60 60 0 0 0 410 590" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="4,4" />
-                            <line x1="470" y1="590" x2="470" y2="530" stroke="#1e293b" stroke-width="3" />
-                            
-                            <!-- ANEXO TOP-LEFT: Análisis de Gases -->
-                            <rect x="25" y="10" width="150" height="80" rx="4" fill="#ffffff" stroke="#1e293b" stroke-width="3" />
-                            <rect class="map-interactive-zone" id="zone-analisis-gases" x="35" y="20" width="130" height="60" rx="4" data-zone="analisis-gases" />
-                            <text class="map-text-label" x="100" y="45">Análisis de Gases</text>
-                            <text class="map-text-label" x="100" y="60" style="font-size: 9px; opacity: 0.85;">y Contaminación</text>
-                            
-                            <!-- ANEXO TOP-RIGHT: Almacén de Materiales -->
-                            <rect x="625" y="10" width="150" height="80" rx="4" fill="#ffffff" stroke="#1e293b" stroke-width="3" />
-                            <rect class="map-interactive-zone" id="zone-baterias-almacen" x="635" y="20" width="130" height="60" rx="4" data-zone="baterias-almacen" />
-                            <text class="map-text-label" x="700" y="45">Almacén de Material</text>
-                            <text class="map-text-label" x="700" y="60" style="font-size: 9px; opacity: 0.85;">y Equipos</text>
+    <rect x="10" y="10" width="780" height="580" fill="#ffffff" stroke="#1e293b" stroke-width="2" />
+    <rect x="15" y="15" width="770" height="570" fill="none" stroke="#1e293b" stroke-width="1" />
 
-                            <!-- Títulos de Laboratorios -->
-                            <text class="map-title-label" x="200" y="130">LABORATORIO DE PROCESOS</text>
-                            <text class="map-title-label" x="600" y="130">LABORATORIO DE BATERÍAS</text>
-                            <text class="map-text-label" x="600" y="150" style="font-size: 11px;">DE ION LITIO</text>
+    <text x="210" y="45" font-family="'Outfit', sans-serif" font-size="20" font-weight="700" fill="#000" text-anchor="middle">LABORATORIO EN PROCESOS</text>
+    <text x="590" y="45" font-family="'Outfit', sans-serif" font-size="20" font-weight="700" fill="#000" text-anchor="middle">LABORATORIO DE BATERÍAS DE ION LITIO</text>
 
-                            <!-- ZONAS INTERACTIVAS: LABORATORIO DE PROCESOS (LEFT) -->
-                            
-                            <!-- Mesón Lateral Izquierdo -->
-                            <rect class="map-interactive-zone" id="zone-procesos-mesa-lat" x="25" y="160" width="50" height="300" rx="4" data-zone="procesos-mesa-lat" />
-                            <text class="map-text-label" x="50" y="310" transform="rotate(-90, 50, 310)">Mesón Lateral Izquierdo</text>
+    <!-- ZONAS: LABORATORIO EN PROCESOS -->
+    <rect class="map-interactive-zone" id="zone-E" x="50" y="60" width="75" height="75" rx="2" data-zone="E" />
+    <text class="map-title-label" x="87.5" y="105">E</text>
 
-                            <!-- Estantería Superior Izquierda -->
-                            <rect class="map-interactive-zone" id="zone-procesos-estanteria-sup" x="100" y="160" width="180" height="45" rx="4" data-zone="procesos-estanteria-sup" />
-                            <text class="map-text-label" x="190" y="187">Estantería Superior</text>
+    <rect class="map-interactive-zone" id="zone-F" x="125" y="60" width="75" height="75" rx="2" data-zone="F" />
+    <text class="map-title-label" x="162.5" y="105">F</text>
 
-                            <!-- Mesón Central de Procesos -->
-                            <rect class="map-interactive-zone" id="zone-procesos-mesa-central" x="315" y="170" width="65" height="190" rx="4" data-zone="procesos-mesa-central" />
-                            <text class="map-text-label" x="347" y="265" transform="rotate(-90, 347, 265)">Mesón Central de Procesos</text>
+    <rect class="map-interactive-zone" id="zone-G" x="200" y="60" width="75" height="75" rx="2" data-zone="G" />
+    <text class="map-title-label" x="237.5" y="105">G</text>
 
-                            <!-- Lavaplatos Doble (Procesos) -->
-                            <rect class="map-interactive-zone" id="zone-procesos-lavaplatos" x="315" y="380" width="65" height="60" rx="4" data-zone="procesos-lavaplatos" />
-                            <text class="map-text-label" x="347" y="415">Lavaplatos</text>
+    <rect class="map-interactive-zone" id="zone-H" x="275" y="60" width="75" height="75" rx="2" data-zone="H" />
+    <text class="map-title-label" x="312.5" y="105">H</text>
 
-                            <!-- Campana Extractora (Procesos) -->
-                            <rect class="map-interactive-zone" id="zone-procesos-campana" x="315" y="460" width="65" height="70" rx="4" data-zone="procesos-campana" />
-                            <text class="map-text-label" x="347" y="495">Campana Ext.</text>
-                            <line x1="315" y1="460" x2="380" y2="530" stroke="#cbd5e1" stroke-width="1" style="pointer-events: none;" />
-                            <line x1="380" y1="460" x2="315" y2="530" stroke="#cbd5e1" stroke-width="1" style="pointer-events: none;" />
+    <rect class="map-interactive-zone" id="zone-D" x="50" y="135" width="75" height="75" rx="2" data-zone="D" />
+    <text class="map-title-label" x="87.5" y="180">D</text>
 
-                            <!-- Estantería/Almacenaje Inferior de Procesos -->
-                            <rect class="map-interactive-zone" id="zone-procesos-estanteria-inf" x="100" y="480" width="180" height="50" rx="4" data-zone="procesos-estanteria-inf" />
-                            <text class="map-text-label" x="190" y="510">Estantería Inferior (G2)</text>
+    <rect class="map-interactive-zone" id="zone-C" x="50" y="210" width="75" height="75" rx="2" data-zone="C" />
+    <text class="map-title-label" x="87.5" y="255">C</text>
 
+    <rect class="map-interactive-zone" id="zone-B" x="50" y="285" width="75" height="75" rx="2" data-zone="B" />
+    <text class="map-title-label" x="87.5" y="330">B</text>
 
-                            <!-- ZONAS INTERACTIVAS: LABORATORIO DE BATERÍAS (RIGHT) -->
+    <rect class="map-interactive-zone" id="zone-A" x="50" y="360" width="75" height="75" rx="2" data-zone="A" />
+    <text class="map-title-label" x="87.5" y="405">A</text>
 
-                            <!-- Lavaplatos Baterías -->
-                            <rect class="map-interactive-zone" id="zone-baterias-lavaplatos" x="420" y="170" width="60" height="60" rx="4" data-zone="baterias-lavaplatos" />
-                            <text class="map-text-label" x="450" y="205">Lavaplatos</text>
+    <rect class="map-interactive-zone" id="zone-I" x="275" y="180" width="60" height="90" rx="2" data-zone="I" />
+    <text class="map-title-label" x="305" y="230">I</text>
 
-                            <!-- Mesón Central Superior -->
-                            <rect class="map-interactive-zone" id="zone-baterias-mesa-central-sup" x="510" y="170" width="80" height="150" rx="4" data-zone="baterias-mesa-central-sup" />
-                            <text class="map-text-label" x="550" y="245">Mesón Central</text>
-                            <text class="map-text-label" x="550" y="260" style="font-size: 9px; opacity: 0.8;">Superior</text>
+    <rect class="map-interactive-zone" id="zone-J" x="275" y="270" width="60" height="90" rx="2" data-zone="J" />
+    <text class="map-title-label" x="305" y="320">J</text>
 
-                            <!-- Mesón Central Inferior -->
-                            <rect class="map-interactive-zone" id="zone-baterias-mesa-central-inf" x="510" y="340" width="80" height="150" rx="4" data-zone="baterias-mesa-central-inf" />
-                            <text class="map-text-label" x="550" y="415">Mesón Central</text>
-                            <text class="map-text-label" x="550" y="430" style="font-size: 9px; opacity: 0.8;">Inferior</text>
+    <rect class="map-interactive-zone" id="zone-K" x="360" y="380" width="90" height="65" rx="2" data-zone="K" />
+    <text class="map-title-label" x="405" y="417.5">K</text>
 
-                            <!-- Mesón Lateral Derecho -->
-                            <rect class="map-interactive-zone" id="zone-baterias-mesa-lat" x="725" y="170" width="50" height="280" rx="4" data-zone="baterias-mesa-lat" />
-                            <text class="map-text-label" x="750" y="310" transform="rotate(90, 750, 310)">Mesón Lateral Derecho</text>
+    <rect class="map-interactive-zone" id="zone-L" x="450" y="380" width="90" height="65" rx="2" data-zone="L" />
+    <text class="map-title-label" x="495" y="417.5">L</text>
 
-                            <!-- Equipos de Baterías Inferiores -->
-                            <rect class="map-interactive-zone" id="zone-baterias-equipos-inf" x="725" y="470" width="50" height="80" rx="4" data-zone="baterias-equipos-inf" />
-                            <text class="map-text-label" x="750" y="515" style="font-size: 9px;">Equipos</text>
+    <!-- ZONAS: LABORATORIO DE BATERÍAS DE ION LITIO -->
+    <rect class="map-interactive-zone" id="zone-M" x="510" y="60" width="110" height="75" rx="2" data-zone="M" />
+    <text class="map-title-label" x="565" y="105">M</text>
+
+    <rect class="map-interactive-zone" id="zone-N" x="620" y="60" width="110" height="75" rx="2" data-zone="N" />
+    <text class="map-title-label" x="675" y="105">N</text>
+
+    <rect class="map-interactive-zone" id="zone-O" x="655" y="135" width="75" height="75" rx="2" data-zone="O" />
+    <text class="map-title-label" x="692.5" y="180">O</text>
+
+    <rect class="map-interactive-zone" id="zone-P" x="655" y="210" width="75" height="75" rx="2" data-zone="P" />
+    <text class="map-title-label" x="692.5" y="255">P</text>
+
+    <rect class="map-interactive-zone" id="zone-Q" x="655" y="285" width="75" height="75" rx="2" data-zone="Q" />
+    <text class="map-title-label" x="692.5" y="330">Q</text>
+
+    <rect class="map-interactive-zone" id="zone-R" x="655" y="360" width="75" height="75" rx="2" data-zone="R" />
+    <text class="map-title-label" x="692.5" y="405">R</text>
+
+    <!-- Puertas (Bottom Center) -->
+    <path d="M 330 580 A 60 60 0 0 0 390 580" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="4,4" />
+    <line x1="330" y1="580" x2="330" y2="520" stroke="#1e293b" stroke-width="3" />
+    
+    <path d="M 470 580 A 60 60 0 0 0 410 580" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="4,4" />
+    <line x1="470" y1="580" x2="470" y2="520" stroke="#1e293b" stroke-width="3" />
                         </svg>
                     </div>
 
@@ -1101,7 +1119,31 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label for="item-location-detail">Ubicación Específica</label>
-                        <input type="text" id="item-location-detail" placeholder="Ej: Estante B, Cajón 2">
+                        <select id="item-location-detail" required>
+                            <option value="">— Seleccione una Zona —</option>
+                            <optgroup label="Laboratorio en Procesos">
+                                <option value="Zona A">Zona A</option>
+                                <option value="Zona B">Zona B</option>
+                                <option value="Zona C">Zona C</option>
+                                <option value="Zona D">Zona D</option>
+                                <option value="Zona E">Zona E</option>
+                                <option value="Zona F">Zona F</option>
+                                <option value="Zona G">Zona G</option>
+                                <option value="Zona H">Zona H</option>
+                                <option value="Zona I">Zona I</option>
+                                <option value="Zona J">Zona J</option>
+                                <option value="Zona K">Zona K</option>
+                                <option value="Zona L">Zona L</option>
+                            </optgroup>
+                            <optgroup label="Laboratorio de Baterías de Ion Litio">
+                                <option value="Zona M">Zona M</option>
+                                <option value="Zona N">Zona N</option>
+                                <option value="Zona O">Zona O</option>
+                                <option value="Zona P">Zona P</option>
+                                <option value="Zona Q">Zona Q</option>
+                                <option value="Zona R">Zona R</option>
+                            </optgroup>
+                        </select>
                     </div>
                     <div class="form-group" id="item-expiry-group">
                         <label for="item-expiry">Fecha de Vencimiento</label>
@@ -1174,16 +1216,10 @@
                 <div class="form-group">
                     <label for="user-new-role">Rol en el Sistema</label>
                     <select id="user-new-role" required>
-                        <option value="Administrador General">Administrador General</option>
-                        <option value="Encargada de Inventario">Encargada de Inventario</option>
-                        <option value="Supervisor de Laboratorio">Supervisor de Laboratorio</option>
-                        <option value="Técnico en Laboratorio">Técnico en Laboratorio</option>
-                        <option value="Técnico de Apoyo">Técnico de Apoyo</option>
-                        <option value="Investigadora">Investigadora</option>
-                        <option value="Docente">Docente</option>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Investigador">Investigador</option>
+                        <option value="Compra y Abastecimiento">Compra y Abastecimiento</option>
                         <option value="Tesista">Tesista</option>
-                        <option value="Ayudante">Ayudante</option>
-                        <option value="Compras y Abastecimiento">Compras y Abastecimiento</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -1214,16 +1250,10 @@
                 <div class="form-group">
                     <label for="edit-user-role">Rol en el Sistema</label>
                     <select id="edit-user-role" required>
-                        <option value="Administrador General">Administrador General</option>
-                        <option value="Encargada de Inventario">Encargada de Inventario</option>
-                        <option value="Supervisor de Laboratorio">Supervisor de Laboratorio</option>
-                        <option value="Técnico en Laboratorio">Técnico en Laboratorio</option>
-                        <option value="Técnico de Apoyo">Técnico de Apoyo</option>
-                        <option value="Investigadora">Investigadora</option>
-                        <option value="Docente">Docente</option>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Investigador">Investigador</option>
+                        <option value="Compra y Abastecimiento">Compra y Abastecimiento</option>
                         <option value="Tesista">Tesista</option>
-                        <option value="Ayudante">Ayudante</option>
-                        <option value="Compras y Abastecimiento">Compras y Abastecimiento</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -1301,7 +1331,31 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label for="edit-item-location-detail">Ubicación Específica</label>
-                        <input type="text" id="edit-item-location-detail">
+                        <select id="edit-item-location-detail" required>
+                            <option value="">— Seleccione una Zona —</option>
+                            <optgroup label="Laboratorio en Procesos">
+                                <option value="Zona A">Zona A</option>
+                                <option value="Zona B">Zona B</option>
+                                <option value="Zona C">Zona C</option>
+                                <option value="Zona D">Zona D</option>
+                                <option value="Zona E">Zona E</option>
+                                <option value="Zona F">Zona F</option>
+                                <option value="Zona G">Zona G</option>
+                                <option value="Zona H">Zona H</option>
+                                <option value="Zona I">Zona I</option>
+                                <option value="Zona J">Zona J</option>
+                                <option value="Zona K">Zona K</option>
+                                <option value="Zona L">Zona L</option>
+                            </optgroup>
+                            <optgroup label="Laboratorio de Baterías de Ion Litio">
+                                <option value="Zona M">Zona M</option>
+                                <option value="Zona N">Zona N</option>
+                                <option value="Zona O">Zona O</option>
+                                <option value="Zona P">Zona P</option>
+                                <option value="Zona Q">Zona Q</option>
+                                <option value="Zona R">Zona R</option>
+                            </optgroup>
+                        </select>
                     </div>
                     <div class="form-group" id="edit-item-expiry-group">
                         <label for="edit-item-expiry">Fecha de Vencimiento</label>
@@ -1457,16 +1511,10 @@
                     <label for="signup-role">Rol Solicitado</label>
                     <select id="signup-role" required>
                         <option value="" disabled selected>Seleccione un rol...</option>
-                        <option value="Administrador General">Administrador General</option>
-                        <option value="Encargada de Inventario">Encargada de Inventario</option>
-                        <option value="Supervisor de Laboratorio">Supervisor de Laboratorio</option>
-                        <option value="Técnico en Laboratorio">Técnico en Laboratorio</option>
-                        <option value="Técnico de Apoyo">Técnico de Apoyo</option>
-                        <option value="Investigadora">Investigadora</option>
-                        <option value="Docente">Docente</option>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Investigador">Investigador</option>
+                        <option value="Compra y Abastecimiento">Compra y Abastecimiento</option>
                         <option value="Tesista">Tesista</option>
-                        <option value="Ayudante">Ayudante</option>
-                        <option value="Compras y Abastecimiento">Compras y Abastecimiento</option>
                     </select>
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
@@ -1761,6 +1809,14 @@
                 <div class="form-group">
                     <label for="doc-desc">Descripción / Observación</label>
                     <textarea id="doc-desc" placeholder="Breve descripción del documento..." rows="2" style="width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:#f8fafc; font-family:inherit;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="doc-category">Categoría</label>
+                    <select id="doc-category" required style="width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:#f8fafc;">
+                        <option value="Protocolo">Protocolo</option>
+                        <option value="Documentos">Documentos</option>
+                        <option value="Informacion">Información</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="doc-file">Seleccionar Archivo PDF</label>

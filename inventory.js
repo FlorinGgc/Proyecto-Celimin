@@ -7,7 +7,7 @@ function renderInventoryTable(data = inventoryData) {
     const tbody = document.getElementById('inventory-table-body');
     if (!tbody) return;
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canModify = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canModify = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
     tbody.innerHTML = data.map((item, index) => {
         const realIndex = inventoryData.indexOf(item);
         const itemLabs = (item.labs || []).map(labId => {
@@ -27,6 +27,7 @@ function renderInventoryTable(data = inventoryData) {
             <td>${item.format && item.unit && item.format !== item.unit ? `${item.format} (${item.unit})` : (item.format || item.unit || 'N/A')}</td>
             <td>${item.expiryDate || '-'}</td>
             <td><div class="lab-badges-container">${itemLabs}</div></td>
+            <td>${item.locationDetail ? `<span class="badge" style="background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:4px; font-size:0.75rem; font-weight:600;">${item.locationDetail}</span>` : '<span class="text-muted">—</span>'}</td>
             <td>
                 <span class="status-badge status-${item.status}">${(item.status || 'ok').toUpperCase()}</span>
                 ${item.comments ? `<i class="fas fa-comment-dots text-muted" title="${item.comments}" style="margin-left: 5px; cursor: help;"></i>` : ''}
@@ -124,7 +125,15 @@ window.editEquipmentDetails = function(index) {
                 
                 <div style="margin-bottom: 1rem;">
                     <label style="display:block; margin-bottom: 0.3rem; font-weight: 700; font-size: 0.85rem;">Ubicación en Laboratorio</label>
-                    <input id="swal-eq-loc" class="swal2-input" value="${eq.locationDetail || ''}" style="width: 100%; margin: 0; border-radius: 8px;">
+                    <select id="swal-eq-loc" class="swal2-select" style="width: 100%; margin: 0; border-radius: 8px; height: 45px; font-size: 14px;">
+                        <option value="">— Seleccione una Zona —</option>
+                        <optgroup label="Laboratorio en Procesos">
+                            ${['Zona A', 'Zona B', 'Zona C', 'Zona D', 'Zona E', 'Zona F', 'Zona G', 'Zona H', 'Zona I', 'Zona J', 'Zona K', 'Zona L'].map(z => `<option value="${z}" ${eq.locationDetail === z ? 'selected' : ''}>${z}</option>`).join('')}
+                        </optgroup>
+                        <optgroup label="Laboratorio de Baterías de Ion Litio">
+                            ${['Zona M', 'Zona N', 'Zona O', 'Zona P', 'Zona Q', 'Zona R'].map(z => `<option value="${z}" ${eq.locationDetail === z ? 'selected' : ''}>${z}</option>`).join('')}
+                        </optgroup>
+                    </select>
                 </div>
                 
                 <div style="margin-bottom: 0.5rem;">
@@ -246,7 +255,7 @@ window.editItem = (index) => {
 
 window.deleteItem = async (index) => {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;

@@ -292,7 +292,7 @@ function renderLabs() {
     const tbody = document.getElementById('labs-table-body');
     if (!tbody) return;
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canModify = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canModify = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
     tbody.innerHTML = labsData.map((lab, index) => `
         <tr>
             <td><code>${lab.id}</code></td>
@@ -323,7 +323,7 @@ window.editLab = (index) => {
 
 function deleteLab(index) {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
@@ -473,7 +473,7 @@ function renderRequests() {
     const tbody = document.getElementById('requests-table-body');
     if (!tbody) return;
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canApprove = session && ['Administrador General', 'Encargada de Inventario', 'Supervisor de Laboratorio'].includes(session.role);
+    const canApprove = session && ['Administrador', 'Compra y Abastecimiento', 'Investigador'].includes(session.role);
     tbody.innerHTML = requestsData.length ? requestsData.map((req, index) => `
         <tr>
             <td><code>${req.id}</code></td>
@@ -680,7 +680,7 @@ window.renderAgendaTrabajos = function() {
     });
 
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
 
     tbody.innerHTML = combinedData.length ? combinedData.map(t => {
         const typeKey = (t.type || 'trab').toLowerCase().substring(0,4);
@@ -788,7 +788,7 @@ window.editActivity = function(source, index) {
 
 window.deleteActivity = function(source, index) {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
@@ -852,7 +852,7 @@ window.showDayDetails = function(dateStr) {
     title.textContent = `Actividades del Día: ${displayDate}`;
     
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
 
     content.innerHTML = `
         <table>
@@ -903,7 +903,7 @@ function renderAuditoria() {
     const tbody = document.getElementById('auditoria-table-body');
     if (!tbody) return;
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canCheck = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canCheck = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
     tbody.innerHTML = usosData.length ? usosData.map((u, index) => `
         <tr>
             <td style="text-align: center;"><strong>${u.item}</strong></td>
@@ -926,7 +926,7 @@ function renderAuditoria() {
 
 window.toggleUsoCheck = (index) => {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canCheck = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canCheck = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
     if (!canCheck) {
         alert('No tiene permisos para modificar la revisión.');
         return;
@@ -1131,9 +1131,38 @@ window.renderLibrary = function() {
     }
 
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
 
-    grid.innerHTML = libraryDocsData.map((doc) => `
+    const searchInput = document.getElementById('library-search');
+    const categorySelect = document.getElementById('library-category-filter');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    const selectedCategory = categorySelect ? categorySelect.value : 'all';
+
+    let filteredDocs = libraryDocsData;
+
+    if (searchTerm) {
+        filteredDocs = filteredDocs.filter(doc => 
+            doc.title.toLowerCase().includes(searchTerm) || 
+            (doc.desc && doc.desc.toLowerCase().includes(searchTerm)) ||
+            doc.fileName.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    if (selectedCategory && selectedCategory !== 'all') {
+        filteredDocs = filteredDocs.filter(doc => doc.category === selectedCategory);
+    }
+
+    if (filteredDocs.length === 0) {
+        grid.innerHTML = `
+            <div class="info-placeholder" style="grid-column: 1 / -1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; background: #fff; border-radius: 16px; border: 1px dashed var(--border);">
+                <i class="fas fa-search fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
+                <p style="color: var(--text-muted); font-size: 1rem; margin: 0;">No se encontraron documentos con esos filtros.</p>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = filteredDocs.map((doc) => `
         <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease; position: relative; overflow: hidden; border: 1px solid var(--border);">
             <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem;">
                 <div style="background: #fef2f2; padding: 0.75rem; border-radius: 12px;">
@@ -1149,30 +1178,21 @@ window.renderLibrary = function() {
                 ${doc.desc || 'Sin descripción disponible.'}
             </p>
 
-            <div style="background: #f8fafc; padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
-                <div style="display: flex; justify-content: space-between;">
-                    <span>Subido por:</span>
-                    <strong style="color: var(--text-dark);">${doc.user}</strong>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;"><i class="fas fa-calendar-alt"></i> ${doc.date}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;"><i class="fas fa-folder"></i> ${doc.category || 'Sin Categoría'}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>Fecha:</span>
-                    <strong>${doc.date}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>Tamaño:</span>
-                    <strong>${doc.size}</strong>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 0.5rem; width: 100%;">
-                <button class="btn btn-primary" onclick="downloadDocument('${doc.id}')" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem;">
-                    <i class="fas fa-download"></i> Descargar
-                </button>
-                ${canDelete ? `
-                    <button class="btn" onclick="deleteDocument('${doc.id}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; padding: 0.6rem; border-radius: 12px; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
-                        <i class="fas fa-trash-alt"></i>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-primary" onclick="downloadDocument('${doc.id}')" style="display: flex; align-items: center; justify-content: center; padding: 0.5rem 0.8rem;">
+                        <i class="fas fa-download"></i>
                     </button>
-                ` : ''}
+                    ${canDelete ? `
+                        <button class="btn" onclick="deleteDocument('${doc.id}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; padding: 0.5rem 0.8rem; border-radius: 12px; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    ` : ''}
+                </div>
             </div>
         </div>
     `).join('');
@@ -1192,7 +1212,7 @@ window.downloadDocument = function(id) {
 
 window.deleteDocument = function(id) {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador General', 'Encargada de Inventario'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
     if (!canDelete) {
         Swal.fire({
             icon: 'error',
@@ -1762,8 +1782,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (btnNewPlanificacion) btnNewPlanificacion.addEventListener('click', () => togglePlanificacionModal(true));
-    if (closePlanificacionBtn) closePlanificacionBtn.addEventListener('click', () => togglePlanificacionModal(false));
-    if (cancelPlanificacionBtn) cancelPlanificacionBtn.addEventListener('click', () => togglePlanificacionModal(false));
+    if (closePlanificacionBtn) closePlanificacionBtn.addEventListener('click', () => togglePlanificacionBtn(false));
+    if (cancelPlanificacionBtn) cancelPlanificacionBtn.addEventListener('click', () => togglePlanificacionBtn(false));
 
     if (formPlanificacion) {
         formPlanificacion.addEventListener('submit', (e) => {
@@ -1886,6 +1906,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const title = document.getElementById('doc-title').value.trim();
             const desc = document.getElementById('doc-desc').value.trim();
+            const category = document.getElementById('doc-category').value;
             const fileInput = document.getElementById('doc-file');
             
             if (!fileInput.files || fileInput.files.length === 0) {
@@ -1926,6 +1947,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: `DOC-${Date.now().toString().slice(-6)}`,
                     title: title,
                     desc: desc,
+                    category: category,
                     fileName: file.name,
                     fileData: base64Data,
                     date: new Date().toLocaleDateString('es-ES'),
@@ -1971,6 +1993,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             };
             reader.readAsDataURL(file);
+        });
+    }
+
+    // Add event listeners for library filters
+    const librarySearch = document.getElementById('library-search');
+    if (librarySearch) {
+        librarySearch.addEventListener('input', () => {
+            if (typeof renderLibrary === 'function') renderLibrary();
+        });
+    }
+
+    const libraryCategoryFilter = document.getElementById('library-category-filter');
+    if (libraryCategoryFilter) {
+        libraryCategoryFilter.addEventListener('change', () => {
+            if (typeof renderLibrary === 'function') renderLibrary();
         });
     }
 });
