@@ -34,37 +34,8 @@
             
             <form id="login-form">
                 <div class="form-group">
-                    <label for="login-user">Usuario</label>
-                    <select id="login-user" name="username" required style="width:100%; padding:0.75rem 1rem; border:1px solid var(--border-color); border-radius:0.5rem; font-size:0.95rem; background:var(--surface-color); color:var(--text-color); cursor:pointer;">
-                        <option value="" disabled>— Seleccione su usuario —</option>
-                        <optgroup label="Senior Researchers">
-                            <option value="Mario Grágeda Zegarra" selected>Mario Grágeda Zegarra — Administrador</option>
-                            <option value="Svetlana Ushak">Svetlana Ushak — Administrador</option>
-                            <option value="Paula Marín Aguirre">Paula Marín Aguirre — Administrador</option>
-                            <option value="Alonso Gonzalez">Alonso Gonzalez — Administrador</option>
-                            <option value="Marcelo Gonzales Saique">Marcelo Gonzales Saique — Administrador</option>
-                            <option value="Adrian Quispe Huayta">Adrian Quispe Huayta — Investigador</option>
-                            <option value="Kumaresan Lakshmanan">Kumaresan Lakshmanan — Investigador</option>
-                            <option value="Sagar Panwar">Sagar Panwar — Investigador</option>
-                            <option value="Mirko Grageda">Mirko Grageda — Compra y Abastecimiento</option>
-                        </optgroup>
-                        <optgroup label="Research Team">
-                            <option value="Nicolás Palma Ovalle">Nicolás Palma Ovalle — Tesista</option>
-                            <option value="Maura Judith Cruz">Maura Judith Cruz — Tesista</option>
-                            <option value="Luis Rojas Daza">Luis Rojas Daza — Tesista</option>
-                            <option value="Sergio Pablo Gabriel">Sergio Pablo Gabriel — Tesista</option>
-                            <option value="Evgeniya Pasechnaya">Evgeniya Pasechnaya — Tesista</option>
-                            <option value="Geovanna Choque Guisbert">Geovanna Choque Guisbert — Tesista</option>
-                            <option value="Milton Arratia Rios">Milton Arratia Rios — Tesista</option>
-                            <option value="Moises Gonzales Apaza">Moises Gonzales Apaza — Tesista</option>
-                            <option value="Joseas Ariel Mamani Perez">Joseas Ariel Mamani Perez — Tesista</option>
-                            <option value="Reina Eulalia Flores Huayllas">Reina Eulalia Flores Huayllas — Tesista</option>
-                            <option value="Ivan Nelson Vera Condori">Ivan Nelson Vera Condori — Tesista</option>
-                            <option value="Elgalini Ines Castro Galarza">Elgalini Ines Castro Galarza — Tesista</option>
-                            <option value="Daniela Estefany Mora Martinez">Daniela Estefany Mora Martinez — Tesista</option>
-                            <option value="Keyla Candy Ramos Tiza">Keyla Candy Ramos Tiza — Tesista</option>
-                        </optgroup>
-                    </select>
+                    <label for="login-email">Correo Electrónico</label>
+                    <input type="email" id="login-email" placeholder="usuario@celimin.cl" required style="width:100%; padding:0.75rem 1rem; border:1px solid var(--border-color); border-radius:0.5rem; font-size:0.95rem; background:var(--surface-color); color:var(--text-color);">
                 </div>
 
                 <div class="form-group">
@@ -72,15 +43,15 @@
                         <label for="login-pass" style="margin-bottom: 0;">Contraseña</label>
                         <a href="#" id="link-forgot-password" class="small-link">¿Olvidó su contraseña?</a>
                     </div>
-                    <input type="password" id="login-pass" placeholder="••••••••" required value="123456">
+                    <input type="password" id="login-pass" placeholder="••••••••" required>
                 </div>
                 <button type="submit" class="btn btn-primary login-btn">
                     <i class="fas fa-sign-in-alt"></i> Ingresar al Sistema
                 </button>
                 
-                <div class="login-extra-actions">
-                    <span>¿No tiene una cuenta?</span>
-                    <a href="#" id="link-create-account">Solicitar acceso</a>
+                <div class="login-extra-actions" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; text-align: center;">
+                    <span style="font-size: 0.9rem; color: var(--text-muted);">¿No tiene una cuenta?</span>
+                    <button type="button" id="btn-create-account" class="btn btn-outline" style="width: 100%;">Crear una cuenta</button>
                 </div>
             </form>
 
@@ -1499,13 +1470,23 @@
             </header>
             <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Complete sus datos para solicitar una cuenta al administrador.</p>
             <form id="form-signup">
-                <div class="form-group">
-                    <label for="signup-name">Nombre Completo</label>
-                    <input type="text" id="signup-name" placeholder="Ej: Dr. Juan Pérez" required>
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="signup-id">ID / RUT</label>
+                        <input type="text" id="signup-id" placeholder="Ej: 12345678-9" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-name">Nombre Completo</label>
+                        <input type="text" id="signup-name" placeholder="Ej: Dr. Juan Pérez" required>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="signup-email">Correo Institucional</label>
                     <input type="email" id="signup-email" placeholder="usuario@celimin.cl" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-pass">Contraseña</label>
+                    <input type="password" id="signup-pass" placeholder="Mínimo 6 caracteres" required minlength="6">
                 </div>
                 <div class="form-group">
                     <label for="signup-role">Rol Solicitado</label>
@@ -1519,7 +1500,7 @@
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                     <button type="button" class="btn" id="btn-cancel-signup" style="flex: 1;">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" style="flex: 2;">Enviar Solicitud</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 2;">Crear Cuenta</button>
                 </div>
             </form>
         </div>

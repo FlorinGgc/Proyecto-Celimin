@@ -132,34 +132,55 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const userInput = document.getElementById('login-user').value.trim();
+            const btn = loginForm.querySelector('button[type="submit"]');
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ingresando...';
+            btn.disabled = true;
+
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-pass').value;
             
-            let foundUser = usersData.find(u => u.name.toLowerCase() === userInput.toLowerCase());
-            
-            if (foundUser) {
+            try {
+                // Autenticar con Supabase
+                const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) throw error;
+
+                // Buscar usuario en los datos simulados por si hay roles
+                let foundUser = usersData.find(u => u.name.toLowerCase() === email.toLowerCase());
+                
+                const userName = foundUser ? foundUser.name : email;
+                const userRole = foundUser ? foundUser.role : 'Usuario';
+
                 const nowStr = 'Recientemente';
-                await window.dbSync.updateUserAccess(foundUser.name, nowStr);
-                foundUser.lastAccess = nowStr;
+                if (foundUser) {
+                    await window.dbSync.updateUserAccess(userName, nowStr);
+                    foundUser.lastAccess = nowStr;
+                }
+                
+                const session = { user: userName, role: userRole };
+                storage.set(STORAGE_KEYS.SESSION, session);
+                applySession(session);
+            } catch (err) {
+                console.error("Error en login:", err);
+                alert("Error al iniciar sesión: " + err.message);
+            } finally {
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
             }
-            
-            // Extract role from the selected option text as a fallback
-            const loginSelect = document.getElementById('login-user');
-            const selectedText = loginSelect.options[loginSelect.selectedIndex].text;
-            const fallbackRole = selectedText.includes('—') ? selectedText.split('—')[1].trim() : 'Usuario';
-            
-            const user = foundUser ? foundUser.name : userInput;
-            const role = foundUser ? foundUser.role : fallbackRole;
-            
-            const session = { user, role };
-            storage.set(STORAGE_KEYS.SESSION, session);
-            applySession(session);
         });
     }
 
     // Logout Event
     if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
+        btnLogout.addEventListener('click', async () => {
             if (confirm('¿Cerrar sesión?')) {
+                try {
+                    await window.supabaseClient.auth.signOut();
+                } catch(e) { console.error(e); }
                 storage.remove(STORAGE_KEYS.SESSION);
                 location.reload();
             }
@@ -254,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalForgot = document.getElementById('modal-forgot');
     const modalSignup = document.getElementById('modal-signup');
     const linkForgot = document.getElementById('link-forgot-password');
-    const linkSignup = document.getElementById('link-create-account');
+    const btnSignup = document.getElementById('btn-create-account');
 
     if (linkForgot) {
         linkForgot.addEventListener('click', (e) => {
@@ -263,8 +284,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (linkSignup) {
-        linkSignup.addEventListener('click', (e) => {
+    if (btnSignup) {
+        btnSignup.addEventListener('click', (e) => {
             e.preventDefault();
             modalSignup.classList.remove('hidden');
         });
@@ -291,19 +312,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1500);
     });
 
-    document.getElementById('form-signup')?.addEventListener('submit', (e) => {
+    document.getElementById('form-signup')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = e.target.querySelector('button[type="submit"]');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
         btn.disabled = true;
 
-        setTimeout(() => {
-            alert('Su solicitud ha sido enviada. El administrador revisará sus datos y activará su cuenta en las próximas 24 horas.');
-            modalSignup.classList.add('hidden');
+        const idRut = document.getElementById('signup-id').value.trim();
+        const name = document.getElementById('signup-name').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-pass').value;
+        const role = document.getElementById('signup-role').value;
+
+        try {
+            // Registrar con Supabase Auth
+            const { data, error } = await window.supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        id_rut: idRut,
+                        full_name: name,
+                        requested_role: role
+                    }
+                }
+            });
+
+            if (error) throw error;
+
+            // También registrar el usuario en la tabla 'users' para mantener coherencia
+            await window.dbSync.saveUser({
+                id: idRut, // Utilizando el ID/RUT como ID opcional si la tabla lo permite
+                name: name,
+                role: role,
+                permissions: 'Estándar',
+                lastAccess: 'Nunca',
+                active: true
+            }, true);
+
+            alert('Cuenta creada exitosamente en Supabase. Ahora puede iniciar sesión.');
+            const modalSignup = document.getElementById('modal-signup');
+            if (modalSignup) modalSignup.classList.add('hidden');
+            e.target.reset();
+        } catch (err) {
+            console.error("Error en registro:", err);
+            alert("Error al registrar: " + err.message);
+        } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
-            e.target.reset();
-        }, 1500);
+        }
     });
 });
