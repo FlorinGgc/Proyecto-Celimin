@@ -143,11 +143,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('login-pass').value;
             
             try {
-                // Autenticar con Supabase (intentarlo, pero ignorar error para permitir acceso sin credenciales)
-                const { data, error } = await window.supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
+                let error = null;
+                // Si el valor seleccionado parece un correo, intentamos validar con Supabase
+                if (email.includes('@')) {
+                    const res = await window.supabaseClient.auth.signInWithPassword({
+                        email: email,
+                        password: password,
+                    });
+                    error = res.error;
+                } else {
+                    // Si es un nombre del menú desplegable, lo dejamos pasar por bypass
+                    console.log('Ingreso mediante lista de personal (bypass)');
+                }
 
                 if (error) {
                     console.warn("Autenticación fallida con Supabase, usando bypass local. Error:", error.message);
