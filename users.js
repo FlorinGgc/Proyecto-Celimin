@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let foundUser = usersData.find(u => u.name.toLowerCase() === email.toLowerCase());
                 
                 const userName = foundUser ? foundUser.name : email;
-                const userRole = foundUser ? foundUser.role : 'Usuario';
+                const userRole = foundUser ? foundUser.role : 'Administrador General';
 
                 const nowStr = 'Recientemente';
                 if (foundUser) {
