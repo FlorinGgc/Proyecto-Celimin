@@ -676,6 +676,17 @@ tr:hover td {
     box-shadow: 0 6px 15px rgba(239, 68, 68, 0.3);
 }
 
+.btn-outline {
+    background-color: transparent;
+    color: var(--text-main);
+    border: 1px solid var(--border);
+}
+
+.btn-outline:hover {
+    background-color: var(--bg);
+    border-color: var(--text-muted);
+}
+
 .status-badge {
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
