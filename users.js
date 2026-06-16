@@ -139,8 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ingresando...';
             btn.disabled = true;
 
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-pass').value;
+            const emailEl = document.getElementById('login-email');
+            const passEl = document.getElementById('login-pass');
+            const email = emailEl ? emailEl.value.trim() : '';
+            const password = passEl ? passEl.value : '';
             
             try {
                 let error = null;
