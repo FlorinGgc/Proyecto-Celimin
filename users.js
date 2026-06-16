@@ -9,8 +9,8 @@ function renderUsers() {
     const tbody = document.getElementById('users-table-body');
     if (!tbody) return;
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
-    const canEdit = session && session.role === 'Administrador';
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
+    const canEdit = session && ['Administrador', 'Administrador General'].includes(session.role);
     tbody.innerHTML = usersData.map((user, index) => `
         <tr>
             <td><div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:30px;height:30px;background:#eee;border-radius:50%;display:grid;place-items:center;">${user.name[0]}</div>${user.name}</div></td>
@@ -40,7 +40,7 @@ window.editUser = (index) => {
 
 window.deleteUser = async (index) => {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
@@ -79,12 +79,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Control de acceso por roles para el botón "Nuevo Registro" (Inventario)
         const allowedRolesInventory = [
             'Administrador', 
+            'Administrador General',
             'Compra y Abastecimiento'
         ];
         
         // Control de acceso por roles para el botón "Registrar Usuario" (Personal)
         const allowedRolesUsers = [
-            'Administrador'
+            'Administrador',
+            'Administrador General'
         ];
 
         const btnNewItem = document.getElementById('btn-new-item');
@@ -103,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Control "Ver todo": Ocultar ciertos menús si no es admin
-        const isAdmin = session.role === 'Administrador';
+        const isAdmin = session.role === 'Administrador' || session.role === 'Administrador General';
         document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
             const link = item.querySelector('.nav-link');
             if (link && link.getAttribute('data-view')) {
@@ -147,9 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     password: password,
                 });
 
-                if (error) {
-                    console.warn("Autenticación fallida con Supabase, usando bypass local. Error:", error.message);
-                }
+                if (error) throw error;
 
                 // Buscar usuario en los datos simulados por si hay roles
                 let foundUser = usersData.find(u => u.name.toLowerCase() === email.toLowerCase());
