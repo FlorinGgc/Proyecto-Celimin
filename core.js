@@ -866,7 +866,11 @@ window.showDayDetails = function(dateStr) {
             <tbody>
                 ${dayEvents.map(e => `
                     <tr>
-                        <td><strong>${e.titulo}</strong> ${e.time ? `<br><small>${e.time}</small>` : ''}</td>
+                        <td>
+                            <strong>${e.titulo}</strong> 
+                            ${e.time ? `<br><small>${e.time}</small>` : ''}
+                            ${e.responsable ? `<br><small><strong>Responsable:</strong> ${e.responsable}</small>` : ''}
+                        </td>
                         <td><span class="type-indicator type-${e.type.toLowerCase().substring(0,4)}">${e.type}</span></td>
                         <td>
                             <div style="display: flex; gap: 0.5rem;">
