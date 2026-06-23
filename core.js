@@ -1347,20 +1347,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelLabBtn) cancelLabBtn.addEventListener('click', () => toggleLabModal(false));
 
     if (formNewLab) {
-        formNewLab.addEventListener('submit', (e) => {
+        formNewLab.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const newLab = {
-                id: document.getElementById('lab-id').value,
-                name: document.getElementById('lab-name').value,
-                location: document.getElementById('lab-location').value
-            };
+            const btn = e.target.querySelector('button[type="submit"]');
+            const origText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            btn.disabled = true;
 
-            labsData.push(newLab);
-            saveData();
-            renderLabs();
-            formNewLab.reset();
-            toggleLabModal(false);
-            alert(`Laboratorio ${newLab.name} registrado con éxito`);
+            try {
+                const newLab = {
+                    id: document.getElementById('lab-id').value,
+                    name: document.getElementById('lab-name').value,
+                    location: document.getElementById('lab-location').value
+                };
+
+                // Guardar en Supabase para que sea permanente
+                if (window.dbSync && window.dbSync.saveLab) {
+                    await window.dbSync.saveLab(newLab, true);
+                }
+
+                labsData.push(newLab);
+                saveData();
+                renderLabs();
+                formNewLab.reset();
+                toggleLabModal(false);
+                alert(`Laboratorio ${newLab.name} registrado con éxito`);
+            } catch (err) {
+                console.error("Error al guardar laboratorio:", err);
+                alert("Error al guardar el laboratorio: " + err.message);
+            } finally {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
         });
     }
 
@@ -1374,20 +1392,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelEditLabBtn) cancelEditLabBtn.addEventListener('click', () => modalEditLab.classList.add('hidden'));
 
     if (formEditLab) {
-        formEditLab.addEventListener('submit', (e) => {
+        formEditLab.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const index = document.getElementById('edit-lab-index').value;
+            const btn = e.target.querySelector('button[type="submit"]');
+            const origText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            btn.disabled = true;
 
-            labsData[index] = {
-                id: document.getElementById('edit-lab-id').value,
-                name: document.getElementById('edit-lab-name').value,
-                location: document.getElementById('edit-lab-location').value
-            };
+            try {
+                const index = document.getElementById('edit-lab-index').value;
 
-            saveData();
-            renderLabs();
-            modalEditLab.classList.add('hidden');
-            alert('Laboratorio actualizado con éxito.');
+                const updatedLab = {
+                    id: document.getElementById('edit-lab-id').value,
+                    name: document.getElementById('edit-lab-name').value,
+                    location: document.getElementById('edit-lab-location').value
+                };
+
+                // Actualizar en Supabase para que sea permanente
+                if (window.dbSync && window.dbSync.saveLab) {
+                    await window.dbSync.saveLab(updatedLab, false);
+                }
+
+                labsData[index] = updatedLab;
+                saveData();
+                renderLabs();
+                modalEditLab.classList.add('hidden');
+                alert('Laboratorio actualizado con éxito.');
+            } catch (err) {
+                console.error("Error al actualizar laboratorio:", err);
+                alert("Error al actualizar el laboratorio: " + err.message);
+            } finally {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
         });
     }
 
@@ -2011,3 +2048,61 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// =============================================================================
+// CONFIRMACIÓN TÉRMINO DE TRABAJOS (AUDITORIA / CHECKEO GENERAL)
+// =============================================================================
+window.confirmarTerminoTrabajo = async function() {
+    Swal.fire({
+        title: '¿Confirmar Término?',
+        text: 'Esto registrará en el sistema que has finalizado los trabajos y revisión de Insumos/Reactivos/Equipos.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, confirmar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: 'var(--primary)'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            const now = new Date();
+            const session = storage.get(STORAGE_KEYS.SESSION);
+            const user = session ? session.user : 'Usuario no identificado';
+            
+            // Registramos un movimiento general que será visible en Dashboard y Movimientos
+            const mov = {
+                id: `TRX-${Date.now().toString().slice(-6)}`,
+                type: 'Término de Trabajo',
+                item: 'Checkeo General Completado',
+                qty: '-',
+                user: user,
+                target: 'Cierre de Trabajos (Insumos/Reactivos/Equipos)',
+                date: now.toISOString().split('T')[0],
+                time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+            };
+
+            try {
+                if (window.dbSync && window.dbSync.insertMovement) {
+                    await window.dbSync.insertMovement(mov);
+                }
+                if (movementsData) movementsData.push(mov);
+                saveData();
+                if (typeof renderDashboard === 'function') renderDashboard();
+                if (typeof renderMovements === 'function') renderMovements();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Trabajos Finalizados',
+                    text: 'El término ha sido registrado y es visible para todos los usuarios.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } catch (err) {
+                console.error("Error al registrar término:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo guardar en la base de datos.'
+                });
+            }
+        }
+    });
+};

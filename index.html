@@ -34,37 +34,35 @@
             
             <form id="login-form">
                 <div class="form-group">
-                    <label for="login-email">Usuario / Personal</label>
-                    <select id="login-email" class="form-select" required style="width:100%; padding:0.75rem 1rem; border:1px solid var(--border-color); border-radius:0.5rem; font-size:0.95rem; background:var(--surface-color); color:var(--text-color);">
-                        <option value="" disabled selected>Seleccione su nombre...</option>
-                        <optgroup label="Senior Researchers">
-                            <option value="Mario Grágeda Zegarra">Mario Grágeda Zegarra</option>
-                            <option value="Svetlana Ushak">Svetlana Ushak</option>
-                            <option value="Paula Marín Aguirre">Paula Marín Aguirre</option>
-                            <option value="Alonso Gonzalez">Alonso Gonzalez</option>
-                            <option value="Marcelo Gonzales Saique">Marcelo Gonzales Saique</option>
-                            <option value="Adrian Quispe Huayta">Adrian Quispe Huayta</option>
-                            <option value="Kumaresan Lakshmanan">Kumaresan Lakshmanan</option>
-                            <option value="Sagar Panwar">Sagar Panwar</option>
-                            <option value="Mirko Grageda">Mirko Grageda</option>
-                        </optgroup>
-                        <optgroup label="Research Team">
-                            <option value="Nicolás Palma Ovalle">Nicolás Palma Ovalle</option>
-                            <option value="Maura Judith Cruz">Maura Judith Cruz</option>
-                            <option value="Luis Rojas Daza">Luis Rojas Daza</option>
-                            <option value="Sergio Pablo Gabriel">Sergio Pablo Gabriel</option>
-                            <option value="Evgeniya Pasechnaya">Evgeniya Pasechnaya</option>
-                            <option value="Geovanna Choque Guisbert">Geovanna Choque Guisbert</option>
-                            <option value="Milton Arratia Rios">Milton Arratia Rios</option>
-                            <option value="Moises Gonzales Apaza">Moises Gonzales Apaza</option>
-                            <option value="Joseas Ariel Mamani Perez">Joseas Ariel Mamani Perez</option>
-                            <option value="Reina Eulalia Flores Huayllas">Reina Eulalia Flores Huayllas</option>
-                            <option value="Ivan Nelson Vera Condori">Ivan Nelson Vera Condori</option>
-                            <option value="Elgalini Ines Castro Galarza">Elgalini Ines Castro Galarza</option>
-                            <option value="Daniela Estefany Mora Martinez">Daniela Estefany Mora Martinez</option>
-                            <option value="Keyla Candy Ramos Tiza">Keyla Candy Ramos Tiza</option>
-                        </optgroup>
-                    </select>
+                    <label for="login-email">Usuario, Personal o Correo Gmail</label>
+                    <input type="text" id="login-email" list="users-list" placeholder="Ingrese su nombre o correo..." required style="width:100%; padding:0.75rem 1rem; border:1px solid var(--border-color); border-radius:0.5rem; font-size:0.95rem; background:var(--surface-color); color:var(--text-color);">
+                    <datalist id="users-list">
+                        <!-- Senior Researchers -->
+                        <option value="Mario Grágeda"></option>
+                        <option value="Svetlana Ushak"></option>
+                        <option value="Paula Marín"></option>
+                        <option value="Alonso Gonzalez"></option>
+                        <option value="Marcelo Gonzales"></option>
+                        <option value="Adrian Quispe"></option>
+                        <option value="Kumaresan Lakshmanan"></option>
+                        <option value="Sagar Panwar"></option>
+                        <option value="Mirko Grageda"></option>
+                        <!-- Research Team -->
+                        <option value="Nicolás Palma"></option>
+                        <option value="Maura Judith"></option>
+                        <option value="Luis Rojas"></option>
+                        <option value="Sergio Pablo"></option>
+                        <option value="Evgeniya Pasechnaya"></option>
+                        <option value="Geovanna Choque"></option>
+                        <option value="Milton Arratia"></option>
+                        <option value="Moises Gonzales"></option>
+                        <option value="Joseas Ariel"></option>
+                        <option value="Reina Eulalia"></option>
+                        <option value="Ivan Nelson"></option>
+                        <option value="Elgalini Ines"></option>
+                        <option value="Daniela Estefany"></option>
+                        <option value="Keyla Candy"></option>
+                    </datalist>
                 </div>
 
                 <div class="form-group">
@@ -74,6 +72,7 @@
                     </div>
                     <input type="password" id="login-pass" placeholder="••••••••" required>
                 </div>
+                
                 <button type="submit" class="btn btn-primary login-btn">
                     <i class="fas fa-sign-in-alt"></i> Ingresar al Sistema
                 </button>
@@ -671,9 +670,14 @@
             <section id="auditoria-view" class="view-section hidden">
                 <div class="action-bar">
                     <h3>Checkeo General ( Insumos/Reactivos/Equipos)</h3>
-                    <button class="btn btn-primary" id="btn-new-uso" style="border: none;">
-                        <i class="fas fa-check-square"></i> Registrar Uso
-                    </button>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn btn-primary" id="btn-new-uso" style="border: none;">
+                            <i class="fas fa-check-square"></i> Registrar Uso
+                        </button>
+                        <button class="btn success-btn" id="btn-confirm-work" style="border: none;" onclick="window.confirmarTerminoTrabajo()">
+                            <i class="fas fa-flag-checkered"></i> Confirmar Término de Trabajos
+                        </button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table>
@@ -1476,11 +1480,11 @@
                 <h3>Recuperar Acceso</h3>
                 <button class="btn-close" id="close-modal-forgot">&times;</button>
             </header>
-            <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Ingrese su correo electrónico institucional para recibir las instrucciones de recuperación.</p>
+            <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Ingrese su correo electrónico (Gmail) para recibir las instrucciones de recuperación.</p>
             <form id="form-forgot">
                 <div class="form-group">
-                    <label for="forgot-email">Correo Electrónico</label>
-                    <input type="email" id="forgot-email" placeholder="usuario@celimin.cl" required>
+                    <label for="forgot-email">Correo Electrónico (Gmail)</label>
+                    <input type="email" id="forgot-email" placeholder="ejemplo@gmail.com" required>
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                     <button type="button" class="btn" id="btn-cancel-forgot" style="flex: 1;">Cancelar</button>
@@ -1505,13 +1509,13 @@
                         <input type="text" id="signup-id" placeholder="Ej: 12345678-9" required>
                     </div>
                     <div class="form-group">
-                        <label for="signup-name">Nombre Completo</label>
-                        <input type="text" id="signup-name" placeholder="Ej: Dr. Juan Pérez" required>
+                        <label for="signup-name">Nombre y Segundo Nombre</label>
+                        <input type="text" id="signup-name" placeholder="Ej: Mario Grágeda" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="signup-email">Correo Institucional</label>
-                    <input type="email" id="signup-email" placeholder="usuario@celimin.cl" required>
+                    <label for="signup-email">Correo Electrónico (Gmail)</label>
+                    <input type="email" id="signup-email" placeholder="ejemplo@gmail.com" required>
                 </div>
                 <div class="form-group">
                     <label for="signup-pass">Contraseña</label>
@@ -1839,18 +1843,18 @@
             </form>
         </div>
     </div>
-
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabaseClient.js?v=3"></script>
+    <script src="supabaseClient.js?v=8"></script>
     <script>
       if (typeof window.dbSync === 'undefined') {
           alert("¡ADVERTENCIA! Tu navegador de Chrome sigue usando una versión vieja de los archivos guardada en memoria caché. Por favor, presiona 'Ctrl + F5' o 'Shift + F5' para forzar una recarga completa y borrar la caché.");
       }
     </script>
-    <script src="core.js?v=3"></script>
-    <script src="inventory.js?v=3"></script>
-    <script src="users.js?v=3"></script>
-    <script src="plano.js?v=3"></script>
+    <script src="core.js?v=8"></script>
+    <script src="inventory.js?v=8"></script>
+    <script src="users.js?v=8"></script>
+    <script src="plano.js?v=8"></script>
+    <script src="app.js?v=8"></script>
 </body>
 </html>

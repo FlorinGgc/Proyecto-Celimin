@@ -146,53 +146,70 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 let error = null;
-                // Si el valor seleccionado parece un correo, intentamos validar con Supabase
+                // Si el valor ingresado es un correo, validamos con Supabase Auth
                 if (email.includes('@')) {
                     const res = await window.supabaseClient.auth.signInWithPassword({
                         email: email,
                         password: password,
                     });
                     error = res.error;
+                    if (error) {
+                        throw new Error("Credenciales inválidas o correo no registrado.");
+                    }
                 } else {
-                    // Si es un nombre del menú desplegable, lo dejamos pasar por bypass
-                    console.log('Ingreso mediante lista de personal (bypass)');
-                }
-
-                if (error) {
-                    console.warn("Autenticación fallida con Supabase, usando bypass local. Error:", error.message);
+                    // Ingreso mediante nombre (Bypass simulado para personal)
+                    // En un sistema real, aquí también se verificaría la contraseña en la BD.
+                    console.log('Ingreso directo por nombre (bypass simulado):', email);
                 }
 
                 const MOCK_ROLES = {
-                    "Mario Grágeda Zegarra": "Administrador General",
+                    "Mario Grágeda": "Administrador General",
                     "Svetlana Ushak": "Administrador",
-                    "Paula Marín Aguirre": "Administrador",
+                    "Paula Marín": "Administrador",
                     "Alonso Gonzalez": "Administrador",
-                    "Marcelo Gonzales Saique": "Administrador",
-                    "Adrian Quispe Huayta": "Investigador",
+                    "Marcelo Gonzales": "Administrador",
+                    "Adrian Quispe": "Investigador",
                     "Kumaresan Lakshmanan": "Investigador",
                     "Sagar Panwar": "Investigador",
                     "Mirko Grageda": "Compra y Abastecimiento",
-                    "Nicolás Palma Ovalle": "Tesista",
-                    "Maura Judith Cruz": "Tesista",
-                    "Luis Rojas Daza": "Tesista",
-                    "Sergio Pablo Gabriel": "Tesista",
+                    "Nicolás Palma": "Tesista",
+                    "Maura Judith": "Tesista",
+                    "Luis Rojas": "Tesista",
+                    "Sergio Pablo": "Tesista",
                     "Evgeniya Pasechnaya": "Tesista",
-                    "Geovanna Choque Guisbert": "Tesista",
-                    "Milton Arratia Rios": "Tesista",
-                    "Moises Gonzales Apaza": "Tesista",
-                    "Joseas Ariel Mamani Perez": "Tesista",
-                    "Reina Eulalia Flores Huayllas": "Tesista",
-                    "Ivan Nelson Vera Condori": "Tesista",
-                    "Elgalini Ines Castro Galarza": "Tesista",
-                    "Daniela Estefany Mora Martinez": "Tesista",
-                    "Keyla Candy Ramos Tiza": "Tesista"
+                    "Geovanna Choque": "Tesista",
+                    "Milton Arratia": "Tesista",
+                    "Moises Gonzales": "Tesista",
+                    "Joseas Ariel": "Tesista",
+                    "Reina Eulalia": "Tesista",
+                    "Ivan Nelson": "Tesista",
+                    "Elgalini Ines": "Tesista",
+                    "Daniela Estefany": "Tesista",
+                    "Keyla Candy": "Tesista"
                 };
 
-                // Buscar usuario en los datos simulados por si hay roles
-                let foundUser = usersData.find(u => u.name.toLowerCase() === email.toLowerCase());
+                // Buscar usuario por nombre corto o correo
+                let foundUser = usersData.find(u => u.name.toLowerCase().includes(email.toLowerCase()) || (u.email && u.email.toLowerCase() === email.toLowerCase()));
                 
                 const userName = foundUser ? foundUser.name : email;
-                const userRole = foundUser ? foundUser.role : (MOCK_ROLES[email] || 'Administrador General');
+                
+                // Si es un gmail asume un rol por defecto si no lo encuentra
+                let userRole = 'Investigador'; 
+                if (foundUser) {
+                    userRole = foundUser.role;
+                } else {
+                    // Buscar coincidencia parcial en MOCK_ROLES
+                    for (const [key, role] of Object.entries(MOCK_ROLES)) {
+                        if (email.toLowerCase().includes(key.toLowerCase())) {
+                            userRole = role;
+                            break;
+                        }
+                    }
+                    if (email.includes('@')) {
+                        // Si es correo pero no está en la lista, lo dejamos como Estándar
+                        userRole = 'Estándar';
+                    }
+                }
 
                 const nowStr = 'Recientemente';
                 if (foundUser) {
@@ -335,20 +352,34 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-cancel-forgot')?.addEventListener('click', () => modalForgot.classList.add('hidden'));
     document.getElementById('btn-cancel-signup')?.addEventListener('click', () => modalSignup.classList.add('hidden'));
 
-    document.getElementById('form-forgot')?.addEventListener('submit', (e) => {
+    document.getElementById('form-forgot')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = e.target.querySelector('button[type="submit"]');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
         btn.disabled = true;
 
-        setTimeout(() => {
-            alert('Se ha enviado un correo de recuperación a su casilla institucional.');
+        const email = document.getElementById('forgot-email').value.trim();
+
+        try {
+            const { data, error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + window.location.pathname
+            });
+
+            if (error) {
+                throw error;
+            }
+
+            alert('Se ha enviado un correo de recuperación a su casilla de Gmail. Por favor, revise su bandeja de entrada para restablecer su contraseña.');
             modalForgot.classList.add('hidden');
+            e.target.reset();
+        } catch (err) {
+            console.error("Error al recuperar contraseña:", err);
+            alert("Error al intentar recuperar la contraseña: " + err.message);
+        } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
-            e.target.reset();
-        }, 1500);
+        }
     });
 
     document.getElementById('form-signup')?.addEventListener('submit', async (e) => {
@@ -392,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 active: true
             }, true);
 
-            alert('Cuenta creada exitosamente en Supabase. Ahora puede iniciar sesión.');
+            alert('Cuenta creada exitosamente. Se ha enviado un correo a su cuenta de Gmail para confirmar el registro y la contraseña.');
             const modalSignup = document.getElementById('modal-signup');
             if (modalSignup) modalSignup.classList.add('hidden');
             e.target.reset();
