@@ -104,13 +104,26 @@ document.addEventListener('DOMContentLoaded', () => {
             btnNewUser.style.display = allowedRolesUsers.includes(session.role) ? 'inline-flex' : 'none';
         }
 
-        // Control "Ver todo": Ocultar ciertos menús si no es admin
-        const isAdmin = session.role === 'Administrador' || session.role === 'Administrador General';
+        // Matriz de permisos de vistas por rol
+        const roleViewPermissions = {
+            'Administrador General': ['dashboard', 'inventory', 'agendar-trabajos', 'users', 'movements', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano', 'low-stock', 'expiry-alerts'],
+            'Administrador': ['dashboard', 'inventory', 'agendar-trabajos', 'users', 'movements', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano', 'low-stock', 'expiry-alerts'],
+            'Compra y Abastecimiento': ['dashboard', 'inventory', 'movements', 'low-stock', 'expiry-alerts'],
+            'Investigador': ['dashboard', 'inventory', 'agendar-trabajos', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano'],
+            'Tesista': ['dashboard', 'inventory', 'agendar-trabajos', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano'],
+            'Estándar': ['dashboard', 'inventory', 'agendar-trabajos', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano']
+        };
+
+        const allowedViews = roleViewPermissions[session.role] || roleViewPermissions['Estándar'];
+        
+        // Guardar las vistas permitidas en sesión/window global para usar en switchView
+        window.allowedViews = allowedViews;
+
         document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
             const link = item.querySelector('.nav-link');
             if (link && link.getAttribute('data-view')) {
                 const view = link.getAttribute('data-view');
-                if (!isAdmin && (view === 'users' || view === 'movements')) {
+                if (!allowedViews.includes(view)) {
                     item.style.display = 'none';
                 } else {
                     item.style.display = '';
@@ -158,8 +171,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else {
                     // Ingreso mediante nombre (Bypass simulado para personal)
-                    // En un sistema real, aquí también se verificaría la contraseña en la BD.
-                    console.log('Ingreso directo por nombre (bypass simulado):', email);
+                    const mockPassword = 'celiminadmin'; // Contraseña genérica de control
+                    if (password !== mockPassword) {
+                        throw new Error("Contraseña incorrecta. Intente nuevamente.");
+                    }
+                    console.log('Ingreso directo por nombre (bypass validado):', email);
                 }
 
                 const MOCK_ROLES = {
@@ -222,7 +238,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 applySession(session);
             } catch (err) {
                 console.error("Error en login:", err);
-                alert("Error al iniciar sesión: " + err.message);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Acceso Denegado',
+                        text: err.message,
+                        confirmButtonColor: '#3085d6'
+                    });
+                } else {
+                    alert("Error al iniciar sesión: " + err.message);
+                }
             } finally {
                 btn.innerHTML = origHtml;
                 btn.disabled = false;

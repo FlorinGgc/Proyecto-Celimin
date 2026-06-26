@@ -88,6 +88,12 @@ function saveData() {
 // NAVEGACIÓN
 // =============================================================================
 function switchView(viewId) {
+    if (window.allowedViews && !window.allowedViews.includes(viewId)) {
+        console.warn(`Access denied to view: ${viewId}`);
+        alert('No tienes permisos para acceder a esta sección.');
+        return;
+    }
+
     let viewElementId = `${viewId}-view`;
     
     // Casos especiales que usan el layout de inventario

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Sistema de Inventario CELIMIN",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite --open --host"
   },
   "devDependencies": {
     "vite": "^5.0.0"
