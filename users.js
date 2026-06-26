@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     "Mario Grágeda": "Administrador General",
                     "Svetlana Ushak": "Administrador",
                     "Paula Marín": "Administrador",
-                    "Alonso Gonzalez": "Administrador",
+                    "Alonso Gonzalez": "Administrador General",
                     "Marcelo Gonzales": "Administrador",
                     "Adrian Quispe": "Investigador",
                     "Kumaresan Lakshmanan": "Investigador",
