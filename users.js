@@ -104,14 +104,16 @@ document.addEventListener('DOMContentLoaded', () => {
             btnNewUser.style.display = allowedRolesUsers.includes(session.role) ? 'inline-flex' : 'none';
         }
 
+        const institucionalViews = ['somos', 'linea-trabajo', 'asesorias', 'proyectos', 'publicaciones', 'infraestructura', 'capital-humano', 'novedades', 'congreso', 'contactos'];
+
         // Matriz de permisos de vistas por rol
         const roleViewPermissions = {
-            'Administrador General': ['dashboard', 'inventory', 'agendar-trabajos', 'users', 'movements', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano', 'low-stock', 'expiry-alerts'],
-            'Administrador': ['dashboard', 'inventory', 'agendar-trabajos', 'users', 'movements', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano', 'low-stock', 'expiry-alerts'],
+            'Administrador General': ['dashboard', 'inventory', 'agendar-trabajos', 'users', 'movements', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano', 'low-stock', 'expiry-alerts', ...institucionalViews],
+            'Administrador': ['dashboard', 'inventory', 'agendar-trabajos', 'users', 'movements', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano', 'low-stock', 'expiry-alerts', ...institucionalViews],
             'Compra y Abastecimiento': ['dashboard', 'inventory', 'movements', 'low-stock', 'expiry-alerts'],
-            'Investigador': ['dashboard', 'inventory', 'agendar-trabajos', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano'],
-            'Tesista': ['dashboard', 'inventory', 'agendar-trabajos', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano'],
-            'Estándar': ['dashboard', 'inventory', 'agendar-trabajos', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano']
+            'Investigador': ['dashboard', 'inventory', 'agendar-trabajos', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano', ...institucionalViews],
+            'Tesista': ['dashboard', 'inventory', 'agendar-trabajos', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano', ...institucionalViews],
+            'Estándar': ['dashboard', 'inventory', 'agendar-trabajos', 'calendar', 'labs', 'turnos', 'auditoria', 'library', 'plano', ...institucionalViews]
         };
 
         const allowedViews = roleViewPermissions[session.role] || roleViewPermissions['Estándar'];
@@ -353,22 +355,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // LOGIN EXTRA ACTIONS (Forgot & Signup)
-    const modalForgot = document.getElementById('modal-forgot');
-    const modalSignup = document.getElementById('modal-signup');
     const linkForgot = document.getElementById('link-forgot-password');
-    const btnSignup = document.getElementById('btn-create-account');
 
     if (linkForgot) {
-        linkForgot.addEventListener('click', (e) => {
+        linkForgot.addEventListener('click', async (e) => {
             e.preventDefault();
-            modalForgot.classList.remove('hidden');
-        });
-    }
+            const { value: email } = await Swal.fire({
+                title: 'Recuperar contraseña',
+                input: 'email',
+                inputLabel: 'Ingrese su correo (Gmail)',
+                inputPlaceholder: 'ejemplo@gmail.com',
+                showCancelButton: true,
+                confirmButtonText: 'Enviar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#3085d6'
+            });
 
-    if (btnSignup) {
-        btnSignup.addEventListener('click', (e) => {
-            e.preventDefault();
-            modalSignup.classList.remove('hidden');
+            if (email) {
+                if (typeof supabase !== 'undefined') {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email);
+                    if (error) {
+                        Swal.fire('Error', error.message, 'error');
+                    } else {
+                        Swal.fire('Enviado', 'Si el correo está registrado, se han enviado las instrucciones de recuperación.', 'success');
+                    }
+                } else {
+                    Swal.fire('Error', 'Servicio de autenticación no disponible.', 'error');
+                }
+            }
         });
     }
 

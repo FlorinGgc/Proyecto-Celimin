@@ -77,10 +77,7 @@
                     <i class="fas fa-sign-in-alt"></i> Ingresar al Sistema
                 </button>
                 
-                <div class="login-extra-actions" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; text-align: center;">
-                    <span style="font-size: 0.9rem; color: var(--text-muted);">¿No tiene una cuenta?</span>
-                    <button type="button" id="btn-create-account" class="btn btn-outline" style="width: 100%;" onclick="document.getElementById('modal-signup').classList.remove('hidden')">Crear una cuenta</button>
-                </div>
+
             </form>
 
             <footer class="login-footer">
@@ -1845,16 +1842,17 @@
     </div>
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="supabaseClient.js?v=9"></script>
     <script>
       if (typeof window.dbSync === 'undefined') {
           alert("¡ADVERTENCIA! Tu navegador de Chrome sigue usando una versión vieja de los archivos guardada en memoria caché. Por favor, presiona 'Ctrl + F5' o 'Shift + F5' para forzar una recarga completa y borrar la caché.");
       }
     </script>
-    <script src="core.js?v=9"></script>
-    <script src="inventory.js?v=9"></script>
-    <script src="users.js?v=9"></script>
-    <script src="plano.js?v=9"></script>
-    <script src="app.js?v=9"></script>
+    <script src="core.js?v=10"></script>
+    <script src="inventory.js?v=10"></script>
+    <script src="users.js?v=10"></script>
+    <script src="plano.js?v=10"></script>
+    <script src="app.js?v=10"></script>
 </body>
 </html>

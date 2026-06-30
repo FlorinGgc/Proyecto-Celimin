@@ -90,7 +90,16 @@ function saveData() {
 function switchView(viewId) {
     if (window.allowedViews && !window.allowedViews.includes(viewId)) {
         console.warn(`Access denied to view: ${viewId}`);
-        alert('No tienes permisos para acceder a esta sección.');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Acceso Denegado',
+                text: 'No tienes permisos para acceder a esta sección.',
+                confirmButtonColor: '#3085d6'
+            });
+        } else {
+            alert('No tienes permisos para acceder a esta sección.');
+        }
         return;
     }
 
@@ -1268,7 +1277,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Nav Links
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', (e) => {
-            switchView(e.currentTarget.getAttribute('data-view'));
+            const viewId = e.currentTarget.getAttribute('data-view');
+            if (viewId) {
+                switchView(viewId);
+            }
         });
     });
 
