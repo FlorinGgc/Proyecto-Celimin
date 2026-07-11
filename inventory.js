@@ -35,12 +35,7 @@ function renderInventoryTable(data = inventoryData) {
             <td style="text-align: right;">
                 <div style="display: flex; gap: 0.35rem; justify-content: flex-end;">
                     <button class="btn-action view" onclick="viewItem(${realIndex})" title="Ver detalles"><i class="fas fa-eye"></i></button>
-                    ${canModify ? `
                     <button class="btn-action edit" onclick="editItem(${realIndex})" title="Editar"><i class="fas fa-edit"></i></button>
-                    <button class="btn-action success-btn" onclick="openMovementModal(${realIndex}, 'Ingreso')" title="Ingreso Stock"><i class="fas fa-plus-circle"></i></button>
-                    <button class="btn-action danger-btn" onclick="openMovementModal(${realIndex}, 'Salida')" title="Salida Stock"><i class="fas fa-minus-circle"></i></button>
-                    <button class="btn-action delete" onclick="deleteItem(${realIndex})" title="Eliminar"><i class="fas fa-trash"></i></button>
-                    ` : ''}
                 </div>
             </td>
         </tr>
