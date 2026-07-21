@@ -2,12 +2,54 @@
 // INVENTORY.JS — Módulo de Inventario (tabla, equipos, CRUD ítems, PDF)
 // =============================================================================
 
+// Helper functions for inline stock editing
+window.updateStockInline = async function (index, value) {
+    const item = inventoryData[index];
+    if (!item) return;
+    const newStock = parseInt(value, 10);
+    if (isNaN(newStock) || newStock < 0) {
+        alert("Por favor ingrese un stock válido (mayor o igual a 0).");
+        if (typeof renderInventory === 'function') renderInventory();
+        return;
+    }
+
+    let newStatus = 'ok';
+    if (newStock === 0) newStatus = 'out';
+    else if (newStock <= item.stockMin) newStatus = 'low';
+
+    item.stockActual = newStock;
+    item.status = newStatus;
+
+    try {
+        if (window.dbSync && window.dbSync.updateInventoryStock) {
+            await window.dbSync.updateInventoryStock(item.id, newStock, newStatus);
+        }
+        saveData();
+        if (typeof renderInventory === 'function') renderInventory();
+        if (typeof renderDashboard === 'function') renderDashboard();
+    } catch (err) {
+        console.error("Error al actualizar stock:", err);
+        alert("No se pudo actualizar el stock en la base de datos.");
+    }
+};
+
+window.adjustStockInline = async function (index, delta) {
+    const item = inventoryData[index];
+    if (!item) return;
+    const newStock = Math.max(0, item.stockActual + delta);
+    await window.updateStockInline(index, newStock);
+};
+
 // Renders
 function renderInventoryTable(data = inventoryData) {
     const tbody = document.getElementById('inventory-table-body');
     if (!tbody) return;
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canModify = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const userRole = (session && session.role) ? session.role.toLowerCase().trim() : '';
+    const canModify = ['administrador', 'administrador general', 'compra y abastecimiento'].includes(userRole);
+    const disableAttr = canModify ? '' : 'disabled';
+    const disableBtnStyle = canModify ? '' : 'opacity: 0.5; cursor: not-allowed;';
+
     tbody.innerHTML = data.map((item, index) => {
         const realIndex = inventoryData.indexOf(item);
         const itemLabs = (item.labs || []).map(labId => {
@@ -23,7 +65,13 @@ function renderInventoryTable(data = inventoryData) {
                 ${item.category === 'Reactivos' ? `<br><small class="status-badge" style="background:var(--surface-hover); color:var(--primary); border:1px solid var(--primary); padding:1px 4px; font-size:0.65rem;">${item.state || 'Nuevo'}</small>` : ''}
             </td>
             <td>${item.category}</td>
-            <td class="${item.stockActual <= item.stockMin ? 'danger-text' : 'stable-text'}">${item.stockActual}</td>
+            <td>
+                <div style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <button class="btn-action" onclick="window.adjustStockInline(${realIndex}, -1)" ${disableAttr} style="width: 22px; height: 22px; border-radius: 4px; padding: 0; line-height: 1; border: 1px solid var(--border); display: inline-grid; place-items: center; cursor: pointer; background: var(--bg); color: var(--text-main); font-size: 0.75rem; ${disableBtnStyle}"><i class="fas fa-minus"></i></button>
+                    <input type="number" value="${item.stockActual}" onchange="window.updateStockInline(${realIndex}, this.value)" ${disableAttr} style="width: 55px; text-align: center; border: 1px solid var(--border); border-radius: 6px; padding: 2px 4px; font-weight: 600; font-size: 0.85rem; color: ${item.stockActual <= item.stockMin ? 'var(--danger)' : 'var(--text-main)'}; background: transparent;">
+                    <button class="btn-action" onclick="window.adjustStockInline(${realIndex}, 1)" ${disableAttr} style="width: 22px; height: 22px; border-radius: 4px; padding: 0; line-height: 1; border: 1px solid var(--border); display: inline-grid; place-items: center; cursor: pointer; background: var(--bg); color: var(--text-main); font-size: 0.75rem; ${disableBtnStyle}"><i class="fas fa-plus"></i></button>
+                </div>
+            </td>
             <td>${item.format && item.unit && item.format !== item.unit ? `${item.format} (${item.unit})` : (item.format || item.unit || 'N/A')}</td>
             <td>${item.expiryDate || '-'}</td>
             <td><div class="lab-badges-container">${itemLabs}</div></td>
@@ -36,10 +84,12 @@ function renderInventoryTable(data = inventoryData) {
                 <div style="display: flex; gap: 0.35rem; justify-content: flex-end;">
                     <button class="btn-action view" onclick="viewItem(${realIndex})" title="Ver detalles"><i class="fas fa-eye"></i></button>
                     <button class="btn-action edit" onclick="editItem(${realIndex})" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn-action delete" onclick="deleteItem(${realIndex})" title="Eliminar"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
         </tr>
-    `;}).join('');
+    `;
+    }).join('');
 }
 
 // =============================================================================
@@ -47,7 +97,7 @@ function renderInventoryTable(data = inventoryData) {
 // =============================================================================
 let currentEquipmentFilter = 'all';
 
-window.toggleEquipmentStatus = async function(index) {
+window.toggleEquipmentStatus = async function (index) {
     const item = inventoryData[index];
     const newStatus = !item.inUse;
     await window.dbSync.toggleEquipmentInUse(item.id, newStatus);
@@ -100,10 +150,10 @@ function renderEquipmentStatus(filter = 'all') {
     `).join('');
 }
 
-window.editEquipmentDetails = function(index) {
+window.editEquipmentDetails = function (index) {
     const eq = inventoryData[index];
     if (!eq) return;
-    
+
     Swal.fire({
         title: '<i class="fas fa-microscope" style="color:var(--primary)"></i> Gestión de Equipo',
         html: `
@@ -150,7 +200,7 @@ window.editEquipmentDetails = function(index) {
             const code = document.getElementById('swal-eq-code').value;
             const location = document.getElementById('swal-eq-loc').value;
             const inUse = document.getElementById('swal-eq-use').value === 'true';
-            
+
             if (!name) {
                 Swal.showValidationMessage('El nombre es obligatorio');
                 return false;
@@ -163,10 +213,10 @@ window.editEquipmentDetails = function(index) {
             inventoryData[index].code = result.value.code;
             inventoryData[index].locationDetail = result.value.location;
             inventoryData[index].inUse = result.value.inUse;
-            
+
             await window.dbSync.saveInventoryItem(inventoryData[index]);
             window.masterSync();
-            
+
             Swal.fire({
                 icon: 'success',
                 title: 'Sincronización Exitosa',
@@ -234,7 +284,7 @@ window.editItem = (index) => {
     document.getElementById('edit-item-state').value = item.state || 'Nuevo';
     document.getElementById('edit-item-react-date').value = item.reactDate || '';
     document.getElementById('edit-item-comments').value = item.comments || '';
-    
+
     const reagentFields = document.getElementById('edit-reagent-only-fields');
     if (item.category === 'Reactivos') reagentFields.classList.remove('hidden');
     else reagentFields.classList.add('hidden');
@@ -250,7 +300,8 @@ window.editItem = (index) => {
 
 window.deleteItem = async (index) => {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const userRole = (session && session.role) ? session.role.toLowerCase().trim() : '';
+    const canDelete = ['administrador', 'administrador general', 'compra y abastecimiento'].includes(userRole);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
@@ -274,15 +325,15 @@ function downloadInventory() {
 
     const title = "CELIMIN - Reporte de Inventario";
     const date = new Date().toLocaleDateString();
-    
+
     doc.setFontSize(18);
     doc.setTextColor(40);
     doc.text(title, 14, 22);
-    
+
     doc.setFontSize(11);
     doc.setTextColor(100);
     doc.text(`Fecha de generación: ${date}`, 14, 30);
-    
+
     const columns = [
         { header: 'Código', dataKey: 'code' },
         { header: 'Nombre', dataKey: 'name' },
@@ -354,14 +405,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (formNewItem) {
         formNewItem.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const btn = e.target.querySelector('button[type="submit"]');
             const origHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
             btn.disabled = true;
 
             const selectedLabs = Array.from(document.querySelectorAll('input[name="labs"]:checked')).map(cb => cb.value);
-            
+
             const newItem = {
                 code: `INS-${Math.floor(100 + Math.random() * 900)}`,
                 name: document.getElementById('item-name').value,
@@ -384,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const savedId = await window.dbSync.saveInventoryItem(newItem, true);
             newItem.id = savedId;
             inventoryData.push(newItem);
-            
+
             const session = storage.get(STORAGE_KEYS.SESSION);
             const now = new Date();
             const movement = {
@@ -397,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 date: now.toISOString().split('T')[0],
                 time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
             };
-            
+
             await window.dbSync.insertMovement(movement);
             movementsData.push(movement);
 
@@ -405,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderInventory();
             renderDashboard();
             if (typeof renderEspacios === 'function') renderEspacios();
-            
+
             formNewItem.reset();
             toggleModal(false);
             btn.innerHTML = origHtml;

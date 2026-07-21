@@ -297,6 +297,9 @@ window.dbSync = {
             return await supabaseClient.from('auditoria').update(payload).eq('id', aud.id);
         }
     },
+    async deleteAuditoria(id) {
+        return await supabaseClient.from('auditoria').delete().eq('id', id);
+    },
 
     // ---- LIBRARY ----
     async insertLibraryDoc(doc) {

@@ -307,7 +307,7 @@ function renderLabs() {
     const tbody = document.getElementById('labs-table-body');
     if (!tbody) return;
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canModify = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const canModify = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
     tbody.innerHTML = labsData.map((lab, index) => `
         <tr>
             <td><code>${lab.id}</code></td>
@@ -338,7 +338,7 @@ window.editLab = (index) => {
 
 function deleteLab(index) {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
@@ -639,8 +639,21 @@ window.masterSync = async function() {
     console.log("Sincronización maestra completada con Supabase.");
 };
 
-function renderInventory(data = inventoryData) {
-    if (typeof renderInventoryTable === 'function') renderInventoryTable(data);
+function renderInventory(data) {
+    if (data === undefined || data === inventoryData) {
+        const searchInput = document.getElementById('inventory-search');
+        const labFilter = document.getElementById('lab-filter');
+        const hasSearch = searchInput && searchInput.value.trim() !== '';
+        const hasLab = labFilter && labFilter.value !== 'all';
+
+        if ((hasSearch || hasLab) && typeof applyFilters === 'function') {
+            applyFilters();
+            return;
+        }
+    }
+
+    const displayData = data === undefined ? inventoryData : data;
+    if (typeof renderInventoryTable === 'function') renderInventoryTable(displayData);
     if (typeof renderEquipmentStatus === 'function') {
         renderEquipmentStatus(currentEquipmentFilter);
     }
@@ -695,7 +708,7 @@ window.renderAgendaTrabajos = function() {
     });
 
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
 
     tbody.innerHTML = combinedData.length ? combinedData.map(t => {
         const typeKey = (t.type || 'trab').toLowerCase().substring(0,4);
@@ -803,7 +816,7 @@ window.editActivity = function(source, index) {
 
 window.deleteActivity = function(source, index) {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
@@ -867,7 +880,7 @@ window.showDayDetails = function(dateStr) {
     title.textContent = `Actividades del Día: ${displayDate}`;
     
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
 
     content.innerHTML = `
         <table>
@@ -922,7 +935,8 @@ function renderAuditoria() {
     const tbody = document.getElementById('auditoria-table-body');
     if (!tbody) return;
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canCheck = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const userRole = (session && session.role) ? session.role.toLowerCase().trim() : '';
+    const canCheck = ['administrador', 'administrador general', 'compra y abastecimiento'].includes(userRole);
     tbody.innerHTML = usosData.length ? usosData.map((u, index) => `
         <tr>
             <td style="text-align: center;"><strong>${u.item}</strong></td>
@@ -937,6 +951,7 @@ function renderAuditoria() {
                 <div style="display: flex; gap: 0.35rem; justify-content: center;">
                     <button class="btn-action view" onclick="viewUsoDetail(${index})" title="Ver detalles"><i class="fas fa-eye"></i></button>
                     <button class="btn-action edit" onclick="editUso(${index})" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn-action delete" onclick="deleteUso(${index})" title="Eliminar"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
         </tr>
@@ -945,13 +960,63 @@ function renderAuditoria() {
 
 window.toggleUsoCheck = (index) => {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canCheck = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const userRole = (session && session.role) ? session.role.toLowerCase().trim() : '';
+    const canCheck = ['administrador', 'administrador general', 'compra y abastecimiento'].includes(userRole);
     if (!canCheck) {
         alert('No tiene permisos para modificar la revisión.');
         return;
     }
     usosData[index].checked = !usosData[index].checked;
     saveData();
+};
+
+window.deleteUso = async (index) => {
+    const session = storage.get(STORAGE_KEYS.SESSION);
+    const userRole = (session && session.role) ? session.role.toLowerCase().trim() : '';
+    const canDelete = ['administrador', 'administrador general', 'compra y abastecimiento'].includes(userRole);
+    if (!canDelete) {
+        alert('No tiene permisos para eliminar.');
+        return;
+    }
+    
+    const u = usosData[index];
+    if (!u) return;
+
+    Swal.fire({
+        title: '¿Eliminar Registro?',
+        text: `¿Estás seguro de que deseas eliminar el registro de uso para "${u.item}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: 'var(--danger)'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                if (window.dbSync && window.dbSync.deleteAuditoria) {
+                    await window.dbSync.deleteAuditoria(u.id);
+                }
+                usosData.splice(index, 1);
+                saveData();
+                renderAuditoria();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Eliminado',
+                    text: 'El registro ha sido eliminado del sistema.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            } catch (err) {
+                console.error("Error al eliminar uso:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo eliminar el registro de la base de datos.'
+                });
+            }
+        }
+    });
 };
 
 window.viewUsoDetail = (index) => {
@@ -1150,7 +1215,7 @@ window.renderLibrary = function() {
     }
 
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
 
     const searchInput = document.getElementById('library-search');
     const categorySelect = document.getElementById('library-category-filter');
@@ -1231,7 +1296,7 @@ window.downloadDocument = function(id) {
 
 window.deleteDocument = function(id) {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
     if (!canDelete) {
         Swal.fire({
             icon: 'error',
@@ -2075,9 +2140,38 @@ document.addEventListener('DOMContentLoaded', () => {
 // CONFIRMACIÓN TÉRMINO DE TRABAJOS (AUDITORIA / CHECKEO GENERAL)
 // =============================================================================
 window.confirmarTerminoTrabajo = async function() {
+    const session = storage.get(STORAGE_KEYS.SESSION);
+    const user = session ? session.user : null;
+    if (!user) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Acceso Denegado',
+            text: 'Inicie sesión para poder confirmar su término de trabajo.'
+        });
+        return;
+    }
+    window.confirmarTerminoUsuario(user);
+};
+
+window.confirmarTerminoUsuario = async function(userName) {
+    const session = storage.get(STORAGE_KEYS.SESSION);
+    const currentUser = session ? session.user : '';
+    const userRole = session ? session.role : '';
+    const isAdmin = ['Administrador', 'Administrador General'].includes(userRole);
+    
+    if (currentUser !== userName && !isAdmin) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Acceso Denegado',
+            text: 'Solo puedes confirmar tu propio término de trabajo o ser Administrador.',
+            confirmButtonColor: '#3085d6'
+        });
+        return;
+    }
+    
     Swal.fire({
-        title: '¿Confirmar Término?',
-        text: 'Esto registrará en el sistema que has finalizado los trabajos y revisión de Insumos/Reactivos/Equipos.',
+        title: `¿Confirmar Término para ${userName}?`,
+        text: 'Esto registrará en el sistema que ha finalizado los trabajos y revisión de Insumos/Reactivos/Equipos.',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Sí, confirmar',
@@ -2086,16 +2180,12 @@ window.confirmarTerminoTrabajo = async function() {
     }).then(async (result) => {
         if (result.isConfirmed) {
             const now = new Date();
-            const session = storage.get(STORAGE_KEYS.SESSION);
-            const user = session ? session.user : 'Usuario no identificado';
-            
-            // Registramos un movimiento general que será visible en Dashboard y Movimientos
             const mov = {
                 id: `TRX-${Date.now().toString().slice(-6)}`,
                 type: 'Término de Trabajo',
                 item: 'Checkeo General Completado',
                 qty: '-',
-                user: user,
+                user: userName,
                 target: 'Cierre de Trabajos (Insumos/Reactivos/Equipos)',
                 date: now.toISOString().split('T')[0],
                 time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
@@ -2109,11 +2199,12 @@ window.confirmarTerminoTrabajo = async function() {
                 saveData();
                 if (typeof renderDashboard === 'function') renderDashboard();
                 if (typeof renderMovements === 'function') renderMovements();
+                if (typeof renderAuditoria === 'function') renderAuditoria();
 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Trabajos Finalizados',
-                    text: 'El término ha sido registrado y es visible para todos los usuarios.',
+                    title: 'Trabajo Finalizado',
+                    text: `El término de trabajo para ${userName} ha sido registrado.`,
                     timer: 2000,
                     showConfirmButton: false
                 });

@@ -2,6 +2,14 @@
 // USERS.JS — Módulo de Usuarios (gestión, sesión, login/logout, permisos)
 // =============================================================================
 
+// Función para obtener la contraseña predeterminada del usuario
+function getDefaultPassword(name) {
+    if (!name) return 'celiminadmin';
+    const firstWord = name.trim().split(/\s+/)[0];
+    return firstWord.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+window.getDefaultPassword = getDefaultPassword;
+
 // =============================================================================
 // RENDERIZADO DE USUARIOS
 // =============================================================================
@@ -17,6 +25,7 @@ function renderUsers() {
             <td>${user.role}</td>
             <td>${user.lastAccess}</td>
             <td><code>${user.permissions || 'Estándar'}</code></td>
+            <td><code>${getDefaultPassword(user.name)}</code></td>
             <td><span class="status-badge status-ok">ACTIVO</span></td>
             <td style="text-align: right;">
                 <div style="display: flex; gap: 0.35rem; justify-content: flex-end;">
@@ -173,8 +182,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else {
                     // Ingreso mediante nombre (Bypass simulado para personal)
-                    const mockPassword = 'celiminadmin'; // Contraseña genérica de control
-                    if (password !== mockPassword) {
+                    const foundUser = usersData.find(u => u.name.toLowerCase().includes(email.toLowerCase()));
+                    if (!foundUser) {
+                        throw new Error("Usuario no registrado en la base de datos.");
+                    }
+                    const expectedPassword = getDefaultPassword(foundUser.name);
+                    if (password !== expectedPassword && password !== 'celiminadmin') {
                         throw new Error("Contraseña incorrecta. Intente nuevamente.");
                     }
                     console.log('Ingreso directo por nombre (bypass validado):', email);

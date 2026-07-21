@@ -1,41 +1,48 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vite App</title>
-    
+
     <!-- Fuentes: Inter y Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <!-- Iconos: FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Estilos Personalizados -->
     <link rel="stylesheet" href="style.css">
-    
+
     <!-- PDF Generation Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body class="login-active">
 
     <!-- PANTALLA DE ACCESO (LOGIN) -->
     <div id="login-screen" class="login-screen">
         <div class="login-card">
             <header class="login-header">
-                <img src="logo.png" alt="CELIMIN Logo" class="login-logo" onerror="this.src='https://via.placeholder.com/90?text=CELIMIN'">
+                <img src="logo.png" alt="CELIMIN Logo" class="login-logo"
+                    onerror="this.src='https://via.placeholder.com/90?text=CELIMIN'">
                 <h2>CELIMIN</h2>
                 <p>Centro de Investigación Avanzada del Litio y minerales industriales</p>
             </header>
-            
+
             <form id="login-form">
                 <div class="form-group">
                     <label for="login-email">Usuario, Personal o Correo Gmail</label>
-                    <input type="text" id="login-email" list="users-list" placeholder="Ingrese su nombre o correo..." required style="width:100%; padding:0.75rem 1rem; border:1px solid var(--border-color); border-radius:0.5rem; font-size:0.95rem; background:var(--surface-color); color:var(--text-color);">
+                    <input type="text" id="login-email" list="users-list" placeholder="Ingrese su nombre o correo..."
+                        required
+                        style="width:100%; padding:0.75rem 1rem; border:1px solid var(--border-color); border-radius:0.5rem; font-size:0.95rem; background:var(--surface-color); color:var(--text-color);">
                     <datalist id="users-list">
                         <!-- Senior Researchers -->
                         <option value="Mario Grágeda"></option>
@@ -66,17 +73,18 @@
                 </div>
 
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
                         <label for="login-pass" style="margin-bottom: 0;">Contraseña</label>
                         <a href="#" id="link-forgot-password" class="small-link">¿Olvidó su contraseña?</a>
                     </div>
                     <input type="password" id="login-pass" placeholder="••••••••" required>
                 </div>
-                
+
                 <button type="submit" class="btn btn-primary login-btn">
                     <i class="fas fa-sign-in-alt"></i> Ingresar al Sistema
                 </button>
-                
+
 
             </form>
 
@@ -88,11 +96,12 @@
 
     <!-- CONTENEDOR PRINCIPAL (DASHBOARD) -->
     <div id="app-container" class="app-layout hidden">
-        
+
         <!-- BARRA LATERAL (SIDEBAR) -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <img src="logo.png" alt="Logo" class="logo-img" onerror="this.src='https://via.placeholder.com/44?text=C'">
+                <img src="logo.png" alt="Logo" class="logo-img"
+                    onerror="this.src='https://via.placeholder.com/44?text=C'">
                 <div class="logo-text">
                     <span class="logo-main">CELIMIN</span>
                     <span class="logo-sub">Centro de Investigación Avanzada del Litio y minerales industriales</span>
@@ -192,7 +201,7 @@
                             <span>Vencimientos</span>
                         </a>
                     </li>
-                    
+
                     <li class="nav-header">Operaciones</li>
                     <li class="nav-item">
                         <a class="nav-link" data-view="requests">
@@ -295,16 +304,17 @@
 
         <!-- CONTENIDO PRINCIPAL -->
         <main class="main-content">
-            
+
             <!-- CABECERA DE LA VISTA -->
             <header class="content-header">
                 <div class="header-title">
                     <h1 id="view-title">Dashboard General</h1>
                     <p class="text-muted">Resumen del estado del laboratorio</p>
                 </div>
-                
+
                 <div class="header-right">
-                    <button class="btn btn-outline" onclick="switchView('calendar')" style="margin-right: 15px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
+                    <button class="btn btn-outline" onclick="switchView('calendar')"
+                        style="margin-right: 15px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
                         <i class="fas fa-calendar-alt" style="color: var(--primary);"></i> Calendario
                     </button>
                     <div id="live-clock" class="clock-display">
@@ -395,7 +405,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="table-container">
                     <table>
                         <thead>
@@ -430,7 +440,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="table-container">
                     <table>
                         <thead>
@@ -457,7 +467,7 @@
                         <i class="fas fa-user-plus"></i> Registrar Usuario
                     </button>
                 </div>
-                
+
                 <div class="table-container">
                     <table>
                         <thead>
@@ -482,7 +492,7 @@
                 <div class="action-bar">
                     <h3>Historial de Movimientos</h3>
                 </div>
-                
+
                 <div class="table-container">
                     <table>
                         <thead>
@@ -510,7 +520,7 @@
                         <i class="fas fa-plus-circle"></i> Nuevo Laboratorio
                     </button>
                 </div>
-                
+
                 <div class="table-container">
                     <table>
                         <thead>
@@ -588,55 +598,56 @@
                         </button>
                     </div>
                 </div>
-        
-        <!-- TABLA DE ACTIVIDADES UNIFICADA -->
-        <div class="card" style="margin-top: 2rem;">
-            <header class="card-header">
-                <div class="header-info">
-                    <i class="fas fa-list-check" style="color: var(--primary);"></i>
-                    <div>
-                        <h2 class="card-title">Panel de Actividades Unificado</h2>
-                        <p class="card-subtitle">Gestión de trabajos, movimientos y solicitudes</p>
+
+                <!-- TABLA DE ACTIVIDADES UNIFICADA -->
+                <div class="card" style="margin-top: 2rem;">
+                    <header class="card-header">
+                        <div class="header-info">
+                            <i class="fas fa-list-check" style="color: var(--primary);"></i>
+                            <div>
+                                <h2 class="card-title">Panel de Actividades Unificado</h2>
+                                <p class="card-subtitle">Gestión de trabajos, movimientos y solicitudes</p>
+                            </div>
+                        </div>
+                    </header>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo / Título</th>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Insumos / Detalle</th>
+                                    <th>Equipo / Responsable</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agendar-trabajos-table-body">
+                                <!-- Generado por JS -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </header>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tipo / Título</th>
-                            <th>Fecha</th>
-                            <th>Hora</th>
-                            <th>Insumos / Detalle</th>
-                            <th>Equipo / Responsable</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="agendar-trabajos-table-body">
+
+                <!-- VERIFICACIÓN DE INSUMOS EN USO -->
+                <div class="card" style="margin-top: 2rem;">
+                    <header class="card-header">
+                        <div class="header-info">
+                            <i class="fas fa-vial" style="color: var(--primary);"></i>
+                            <div>
+                                <h2 class="card-title">Verificación de Insumos en Uso</h2>
+                                <p class="card-subtitle">Listado de reactivos y consumibles asignados a trabajos hoy</p>
+                            </div>
+                        </div>
+                    </header>
+                    <div id="insumos-uso-list"
+                        style="padding: 1rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
                         <!-- Generado por JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- VERIFICACIÓN DE INSUMOS EN USO -->
-        <div class="card" style="margin-top: 2rem;">
-            <header class="card-header">
-                <div class="header-info">
-                    <i class="fas fa-vial" style="color: var(--primary);"></i>
-                    <div>
-                        <h2 class="card-title">Verificación de Insumos en Uso</h2>
-                        <p class="card-subtitle">Listado de reactivos y consumibles asignados a trabajos hoy</p>
                     </div>
                 </div>
-            </header>
-            <div id="insumos-uso-list" style="padding: 1rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
-                <!-- Generado por JS -->
-            </div>
-        </div>
 
 
-    </section>
+            </section>
 
             <!-- SECCIÓN: TURNOS Y JEFATURAS -->
             <section id="turnos-view" class="view-section hidden">
@@ -702,10 +713,13 @@
                     <h3>Biblioteca de Documentos</h3>
                     <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                         <div class="search-box" style="position: relative;">
-                            <i class="fas fa-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-                            <input type="text" id="library-search" placeholder="Buscar documento..." style="padding: 0.5rem 1rem 0.5rem 2rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem;">
+                            <i class="fas fa-search"
+                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                            <input type="text" id="library-search" placeholder="Buscar documento..."
+                                style="padding: 0.5rem 1rem 0.5rem 2rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem;">
                         </div>
-                        <select id="library-category-filter" style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); font-size: 0.9rem; cursor: pointer;">
+                        <select id="library-category-filter"
+                            style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); font-size: 0.9rem; cursor: pointer;">
                             <option value="all">Todas las Categorías</option>
                             <option value="Protocolo">Protocolo</option>
                             <option value="Documentos">Documentos</option>
@@ -716,11 +730,12 @@
                         </button>
                     </div>
                 </div>
-                <div class="stats-grid" id="library-docs-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <div class="stats-grid" id="library-docs-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
                     <!-- Cargado por JS -->
                 </div>
             </section>
- 
+
             <!-- SECCIÓN: PLANO INTERACTIVO -->
             <section id="plano-view" class="view-section hidden">
                 <style>
@@ -731,6 +746,7 @@
                         margin-top: 1.5rem;
                         height: calc(100vh - 200px);
                     }
+
                     .plano-map-card {
                         background: var(--card-bg);
                         border-radius: var(--radius);
@@ -742,6 +758,7 @@
                         justify-content: center;
                         overflow: auto;
                     }
+
                     .plano-details-card {
                         background: var(--card-bg);
                         border-radius: var(--radius);
@@ -753,12 +770,14 @@
                         justify-content: space-between;
                         overflow-y: auto;
                     }
+
                     .map-svg-element {
                         width: 100%;
                         max-width: 750px;
                         height: auto;
                         border-radius: 8px;
                     }
+
                     .map-interactive-zone {
                         fill: #f8fafc;
                         stroke: #cbd5e1;
@@ -766,18 +785,21 @@
                         cursor: pointer;
                         transition: all 0.25s ease;
                     }
+
                     .map-interactive-zone:hover {
                         fill: rgba(0, 207, 193, 0.12);
                         stroke: var(--accent);
                         stroke-width: 2.5;
                         filter: drop-shadow(0 0 6px rgba(0, 207, 193, 0.5));
                     }
+
                     .map-interactive-zone.active {
                         fill: rgba(0, 207, 193, 0.25);
                         stroke: var(--accent);
                         stroke-width: 3;
                         filter: drop-shadow(0 0 8px rgba(0, 207, 193, 0.8));
                     }
+
                     .map-text-label {
                         font-family: 'Outfit', sans-serif;
                         font-size: 11px;
@@ -786,6 +808,7 @@
                         pointer-events: none;
                         text-anchor: middle;
                     }
+
                     .map-title-label {
                         font-family: 'Outfit', sans-serif;
                         font-size: 14px;
@@ -794,6 +817,7 @@
                         pointer-events: none;
                         text-anchor: middle;
                     }
+
                     .plano-item-row {
                         display: flex;
                         align-items: center;
@@ -805,6 +829,7 @@
                         background: #f8fafc;
                         transition: transform 0.15s ease;
                     }
+
                     .plano-item-row:hover {
                         transform: translateX(4px);
                         border-color: #cbd5e1;
@@ -813,102 +838,137 @@
                 <div class="action-bar">
                     <div>
                         <h3>Plano Interactivo de Laboratorios</h3>
-                        <p class="text-muted" style="margin: 0.25rem 0 0 0; font-size: 0.9rem;">Selecciona cualquier zona/cuadrado del mapa para ver los insumos y reactivos ubicados allí.</p>
+                        <p class="text-muted" style="margin: 0.25rem 0 0 0; font-size: 0.9rem;">Selecciona cualquier
+                            zona/cuadrado del mapa para ver los insumos y reactivos ubicados allí.</p>
                     </div>
                 </div>
-                
+
                 <div class="plano-container">
                     <!-- Mapa SVG interactivo -->
                     <div class="plano-map-card">
                         <svg viewBox="0 0 800 600" class="map-svg-element" id="labs-map-svg">
-    <rect x="10" y="10" width="780" height="580" fill="#ffffff" stroke="#1e293b" stroke-width="2" />
-    <rect x="15" y="15" width="770" height="570" fill="none" stroke="#1e293b" stroke-width="1" />
+                            <rect x="10" y="10" width="780" height="580" fill="#ffffff" stroke="#1e293b"
+                                stroke-width="2" />
+                            <rect x="15" y="15" width="770" height="570" fill="none" stroke="#1e293b"
+                                stroke-width="1" />
 
-    <text x="210" y="45" font-family="'Outfit', sans-serif" font-size="20" font-weight="700" fill="#000" text-anchor="middle">LABORATORIO EN PROCESOS</text>
-    <text x="590" y="45" font-family="'Outfit', sans-serif" font-size="20" font-weight="700" fill="#000" text-anchor="middle">LABORATORIO DE BATERÍAS DE ION LITIO</text>
+                            <text x="210" y="45" font-family="'Outfit', sans-serif" font-size="20" font-weight="700"
+                                fill="#000" text-anchor="middle">LABORATORIO EN PROCESOS</text>
+                            <text x="590" y="45" font-family="'Outfit', sans-serif" font-size="20" font-weight="700"
+                                fill="#000" text-anchor="middle">LABORATORIO DE BATERÍAS DE ION LITIO</text>
 
-    <!-- ZONAS: LABORATORIO EN PROCESOS -->
-    <rect class="map-interactive-zone" id="zone-E" x="50" y="60" width="75" height="75" rx="2" data-zone="E" />
-    <text class="map-title-label" x="87.5" y="105">E</text>
+                            <!-- ZONAS: LABORATORIO EN PROCESOS -->
+                            <rect class="map-interactive-zone" id="zone-E" x="50" y="60" width="75" height="75" rx="2"
+                                data-zone="E" />
+                            <text class="map-title-label" x="87.5" y="105">E</text>
 
-    <rect class="map-interactive-zone" id="zone-F" x="125" y="60" width="75" height="75" rx="2" data-zone="F" />
-    <text class="map-title-label" x="162.5" y="105">F</text>
+                            <rect class="map-interactive-zone" id="zone-F" x="125" y="60" width="75" height="75" rx="2"
+                                data-zone="F" />
+                            <text class="map-title-label" x="162.5" y="105">F</text>
 
-    <rect class="map-interactive-zone" id="zone-G" x="200" y="60" width="75" height="75" rx="2" data-zone="G" />
-    <text class="map-title-label" x="237.5" y="105">G</text>
+                            <rect class="map-interactive-zone" id="zone-G" x="200" y="60" width="75" height="75" rx="2"
+                                data-zone="G" />
+                            <text class="map-title-label" x="237.5" y="105">G</text>
 
-    <rect class="map-interactive-zone" id="zone-H" x="275" y="60" width="75" height="75" rx="2" data-zone="H" />
-    <text class="map-title-label" x="312.5" y="105">H</text>
+                            <rect class="map-interactive-zone" id="zone-H" x="275" y="60" width="75" height="75" rx="2"
+                                data-zone="H" />
+                            <text class="map-title-label" x="312.5" y="105">H</text>
 
-    <rect class="map-interactive-zone" id="zone-D" x="50" y="135" width="75" height="75" rx="2" data-zone="D" />
-    <text class="map-title-label" x="87.5" y="180">D</text>
+                            <rect class="map-interactive-zone" id="zone-D" x="50" y="135" width="75" height="75" rx="2"
+                                data-zone="D" />
+                            <text class="map-title-label" x="87.5" y="180">D</text>
 
-    <rect class="map-interactive-zone" id="zone-C" x="50" y="210" width="75" height="75" rx="2" data-zone="C" />
-    <text class="map-title-label" x="87.5" y="255">C</text>
+                            <rect class="map-interactive-zone" id="zone-C" x="50" y="210" width="75" height="75" rx="2"
+                                data-zone="C" />
+                            <text class="map-title-label" x="87.5" y="255">C</text>
 
-    <rect class="map-interactive-zone" id="zone-B" x="50" y="285" width="75" height="75" rx="2" data-zone="B" />
-    <text class="map-title-label" x="87.5" y="330">B</text>
+                            <rect class="map-interactive-zone" id="zone-B" x="50" y="285" width="75" height="75" rx="2"
+                                data-zone="B" />
+                            <text class="map-title-label" x="87.5" y="330">B</text>
 
-    <rect class="map-interactive-zone" id="zone-A" x="50" y="360" width="75" height="75" rx="2" data-zone="A" />
-    <text class="map-title-label" x="87.5" y="405">A</text>
+                            <rect class="map-interactive-zone" id="zone-A" x="50" y="360" width="75" height="75" rx="2"
+                                data-zone="A" />
+                            <text class="map-title-label" x="87.5" y="405">A</text>
 
-    <rect class="map-interactive-zone" id="zone-I" x="275" y="180" width="60" height="90" rx="2" data-zone="I" />
-    <text class="map-title-label" x="305" y="230">I</text>
+                            <rect class="map-interactive-zone" id="zone-I" x="275" y="180" width="60" height="90" rx="2"
+                                data-zone="I" />
+                            <text class="map-title-label" x="305" y="230">I</text>
 
-    <rect class="map-interactive-zone" id="zone-J" x="275" y="270" width="60" height="90" rx="2" data-zone="J" />
-    <text class="map-title-label" x="305" y="320">J</text>
+                            <rect class="map-interactive-zone" id="zone-J" x="275" y="270" width="60" height="90" rx="2"
+                                data-zone="J" />
+                            <text class="map-title-label" x="305" y="320">J</text>
 
-    <rect class="map-interactive-zone" id="zone-K" x="360" y="380" width="90" height="65" rx="2" data-zone="K" />
-    <text class="map-title-label" x="405" y="417.5">K</text>
+                            <rect class="map-interactive-zone" id="zone-K" x="360" y="380" width="90" height="65" rx="2"
+                                data-zone="K" />
+                            <text class="map-title-label" x="405" y="417.5">K</text>
 
-    <rect class="map-interactive-zone" id="zone-L" x="450" y="380" width="90" height="65" rx="2" data-zone="L" />
-    <text class="map-title-label" x="495" y="417.5">L</text>
+                            <rect class="map-interactive-zone" id="zone-L" x="450" y="380" width="90" height="65" rx="2"
+                                data-zone="L" />
+                            <text class="map-title-label" x="495" y="417.5">L</text>
 
-    <!-- ZONAS: LABORATORIO DE BATERÍAS DE ION LITIO -->
-    <rect class="map-interactive-zone" id="zone-M" x="510" y="60" width="110" height="75" rx="2" data-zone="M" />
-    <text class="map-title-label" x="565" y="105">M</text>
+                            <!-- ZONAS: LABORATORIO DE BATERÍAS DE ION LITIO -->
+                            <rect class="map-interactive-zone" id="zone-M" x="510" y="60" width="110" height="75" rx="2"
+                                data-zone="M" />
+                            <text class="map-title-label" x="565" y="105">M</text>
 
-    <rect class="map-interactive-zone" id="zone-N" x="620" y="60" width="110" height="75" rx="2" data-zone="N" />
-    <text class="map-title-label" x="675" y="105">N</text>
+                            <rect class="map-interactive-zone" id="zone-N" x="620" y="60" width="110" height="75" rx="2"
+                                data-zone="N" />
+                            <text class="map-title-label" x="675" y="105">N</text>
 
-    <rect class="map-interactive-zone" id="zone-O" x="655" y="135" width="75" height="75" rx="2" data-zone="O" />
-    <text class="map-title-label" x="692.5" y="180">O</text>
+                            <rect class="map-interactive-zone" id="zone-O" x="655" y="135" width="75" height="75" rx="2"
+                                data-zone="O" />
+                            <text class="map-title-label" x="692.5" y="180">O</text>
 
-    <rect class="map-interactive-zone" id="zone-P" x="655" y="210" width="75" height="75" rx="2" data-zone="P" />
-    <text class="map-title-label" x="692.5" y="255">P</text>
+                            <rect class="map-interactive-zone" id="zone-P" x="655" y="210" width="75" height="75" rx="2"
+                                data-zone="P" />
+                            <text class="map-title-label" x="692.5" y="255">P</text>
 
-    <rect class="map-interactive-zone" id="zone-Q" x="655" y="285" width="75" height="75" rx="2" data-zone="Q" />
-    <text class="map-title-label" x="692.5" y="330">Q</text>
+                            <rect class="map-interactive-zone" id="zone-Q" x="655" y="285" width="75" height="75" rx="2"
+                                data-zone="Q" />
+                            <text class="map-title-label" x="692.5" y="330">Q</text>
 
-    <rect class="map-interactive-zone" id="zone-R" x="655" y="360" width="75" height="75" rx="2" data-zone="R" />
-    <text class="map-title-label" x="692.5" y="405">R</text>
+                            <rect class="map-interactive-zone" id="zone-R" x="655" y="360" width="75" height="75" rx="2"
+                                data-zone="R" />
+                            <text class="map-title-label" x="692.5" y="405">R</text>
 
-    <!-- Puertas (Bottom Center) -->
-    <path d="M 330 580 A 60 60 0 0 0 390 580" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="4,4" />
-    <line x1="330" y1="580" x2="330" y2="520" stroke="#1e293b" stroke-width="3" />
-    
-    <path d="M 470 580 A 60 60 0 0 0 410 580" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="4,4" />
-    <line x1="470" y1="580" x2="470" y2="520" stroke="#1e293b" stroke-width="3" />
+                            <!-- Puertas (Bottom Center) -->
+                            <path d="M 330 580 A 60 60 0 0 0 390 580" fill="none" stroke="#64748b" stroke-width="2"
+                                stroke-dasharray="4,4" />
+                            <line x1="330" y1="580" x2="330" y2="520" stroke="#1e293b" stroke-width="3" />
+
+                            <path d="M 470 580 A 60 60 0 0 0 410 580" fill="none" stroke="#64748b" stroke-width="2"
+                                stroke-dasharray="4,4" />
+                            <line x1="470" y1="580" x2="470" y2="520" stroke="#1e293b" stroke-width="3" />
                         </svg>
                     </div>
 
                     <!-- Panel de detalles lateral -->
                     <div class="plano-details-card" id="plano-info-sidebar">
                         <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-                            <div style="text-align: center; padding: 1.5rem 0; border-bottom: 1px solid var(--border);" id="plano-sidebar-placeholder">
-                                <i class="fas fa-hand-pointer fa-3x" style="color: var(--text-muted); margin-bottom: 1rem;"></i>
+                            <div style="text-align: center; padding: 1.5rem 0; border-bottom: 1px solid var(--border);"
+                                id="plano-sidebar-placeholder">
+                                <i class="fas fa-hand-pointer fa-3x"
+                                    style="color: var(--text-muted); margin-bottom: 1rem;"></i>
                                 <h4 style="margin: 0; color: var(--text-main);">Sin Selección</h4>
-                                <p class="text-muted" style="font-size: 0.85rem; margin: 0.5rem 0 0 0;">Haz click en cualquier cuadrado del plano para ver el inventario disponible.</p>
+                                <p class="text-muted" style="font-size: 0.85rem; margin: 0.5rem 0 0 0;">Haz click en
+                                    cualquier cuadrado del plano para ver el inventario disponible.</p>
                             </div>
-                            
-                            <div id="plano-sidebar-content" class="hidden" style="display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 1rem;">
+
+                            <div id="plano-sidebar-content" class="hidden"
+                                style="display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 1rem;">
                                 <div style="margin-bottom: 1rem;">
-                                    <span id="plano-area-lab" class="status-badge status-ok" style="font-size: 0.7rem; text-transform: uppercase;">Laboratorio</span>
-                                    <h4 id="plano-area-name" style="margin: 0.25rem 0 0.5rem 0; font-size: 1.25rem; font-weight: 700; color: var(--primary-light);">Nombre de Zona</h4>
-                                    <p id="plano-area-desc" class="text-muted" style="font-size: 0.85rem; margin: 0;"></p>
+                                    <span id="plano-area-lab" class="status-badge status-ok"
+                                        style="font-size: 0.7rem; text-transform: uppercase;">Laboratorio</span>
+                                    <h4 id="plano-area-name"
+                                        style="margin: 0.25rem 0 0.5rem 0; font-size: 1.25rem; font-weight: 700; color: var(--primary-light);">
+                                        Nombre de Zona</h4>
+                                    <p id="plano-area-desc" class="text-muted" style="font-size: 0.85rem; margin: 0;">
+                                    </p>
                                 </div>
-                                
-                                <h5 style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem;">Elementos Detectados:</h5>
+
+                                <h5
+                                    style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.75rem;">
+                                    Elementos Detectados:</h5>
                                 <div id="plano-items-list" style="flex: 1; overflow-y: auto; padding-right: 0.25rem;">
                                     <!-- Insumos y Reactivos -->
                                 </div>
@@ -916,29 +976,35 @@
                         </div>
 
                         <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
-                            <button id="btn-plano-full-details" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" disabled>
+                            <button id="btn-plano-full-details" class="btn btn-primary"
+                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
+                                disabled>
                                 <i class="fas fa-list-ul"></i> Ver detalles completos
                             </button>
                         </div>
                     </div>
                 </div>
             </section>
- 
- 
- 
+
+
+
             <!-- MODAL: DETALLES COMPLETOS DE ZONA EN PLANO -->
             <div id="modal-plano-details" class="modal hidden">
                 <div class="modal-content" style="width: 850px; max-width: 95%;">
                     <header class="modal-header">
                         <div>
                             <h3 id="plano-details-title">Detalles de la Zona</h3>
-                            <p class="text-muted" id="plano-details-subtitle" style="margin: 0.2rem 0 0 0; font-size: 0.85rem;"></p>
+                            <p class="text-muted" id="plano-details-subtitle"
+                                style="margin: 0.2rem 0 0 0; font-size: 0.85rem;"></p>
                         </div>
                         <button class="btn-close" id="close-modal-plano-details">&times;</button>
                     </header>
-                    <div style="margin: 1rem 0; display: flex; gap: 1rem; align-items: center; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid var(--border);">
+                    <div
+                        style="margin: 1rem 0; display: flex; gap: 1rem; align-items: center; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid var(--border);">
                         <i class="fas fa-search text-muted"></i>
-                        <input type="text" id="plano-details-search" placeholder="Filtrar por nombre, categoría o código..." style="flex: 1; border: none; background: transparent; outline: none; font-family: inherit; font-size: 0.9rem;">
+                        <input type="text" id="plano-details-search"
+                            placeholder="Filtrar por nombre, categoría o código..."
+                            style="flex: 1; border: none; background: transparent; outline: none; font-family: inherit; font-size: 0.9rem;">
                     </div>
                     <div class="table-container" style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
                         <table>
@@ -958,8 +1024,10 @@
                             </tbody>
                         </table>
                     </div>
-                    <div style="margin-top: 1.5rem; text-align: right; display: flex; justify-content: space-between; align-items: center;">
-                        <span id="plano-details-counter" class="text-muted" style="font-size: 0.85rem;">Mostrando 0 elementos</span>
+                    <div
+                        style="margin-top: 1.5rem; text-align: right; display: flex; justify-content: space-between; align-items: center;">
+                        <span id="plano-details-counter" class="text-muted" style="font-size: 0.85rem;">Mostrando 0
+                            elementos</span>
                         <button class="btn" id="btn-close-plano-details">Cerrar</button>
                     </div>
                 </div>
@@ -971,7 +1039,8 @@
             <section id="somos-view" class="view-section hidden">
                 <div class="hero-card">
                     <h2>¿Quiénes Somos?</h2>
-                    <p>Somos el Centro de Investigación Avanzada del Litio y minerales industriales (CELIMIN), dedicados a la excelencia científica y tecnológica en el corazón de la minería.</p>
+                    <p>Somos el Centro de Investigación Avanzada del Litio y minerales industriales (CELIMIN), dedicados
+                        a la excelencia científica y tecnológica en el corazón de la minería.</p>
                 </div>
             </section>
 
@@ -988,16 +1057,29 @@
             </section>
 
             <section id="linea-trabajo-view" class="view-section hidden">
-                <div class="action-bar"><h3>Líneas de Trabajo</h3></div>
+                <div class="action-bar">
+                    <h3>Líneas de Trabajo</h3>
+                </div>
                 <div class="stats-grid">
-                    <div class="card"><h4>Procesos Químicos</h4><p>Optimización de la extracción de litio.</p></div>
-                    <div class="card"><h4>Materiales Avanzados</h4><p>Desarrollo de baterías de nueva generación.</p></div>
-                    <div class="card"><h4>Sustentabilidad</h4><p>Gestión hídrica en procesos mineros.</p></div>
+                    <div class="card">
+                        <h4>Procesos Químicos</h4>
+                        <p>Optimización de la extracción de litio.</p>
+                    </div>
+                    <div class="card">
+                        <h4>Materiales Avanzados</h4>
+                        <p>Desarrollo de baterías de nueva generación.</p>
+                    </div>
+                    <div class="card">
+                        <h4>Sustentabilidad</h4>
+                        <p>Gestión hídrica en procesos mineros.</p>
+                    </div>
                 </div>
             </section>
 
             <section id="asesorias-view" class="view-section hidden">
-                <div class="action-bar"><h3>Asesorías Técnicas</h3></div>
+                <div class="action-bar">
+                    <h3>Asesorías Técnicas</h3>
+                </div>
                 <div class="info-placeholder">
                     <i class="fas fa-briefcase fa-3x"></i>
                     <p>Servicios de consultoría experta para la industria minera y energética.</p>
@@ -1005,30 +1087,57 @@
             </section>
 
             <section id="proyectos-view" class="view-section hidden">
-                <div class="action-bar"><h3>Proyectos en Curso</h3></div>
+                <div class="action-bar">
+                    <h3>Proyectos en Curso</h3>
+                </div>
                 <div class="stats-grid">
-                    <div class="card"><h4>Proyecto FONDEF 2026</h4><p>Estado: 75% completado</p></div>
-                    <div class="card"><h4>Alianza Estratégica SQM</h4><p>Estado: Iniciado</p></div>
+                    <div class="card">
+                        <h4>Proyecto FONDEF 2026</h4>
+                        <p>Estado: 75% completado</p>
+                    </div>
+                    <div class="card">
+                        <h4>Alianza Estratégica SQM</h4>
+                        <p>Estado: Iniciado</p>
+                    </div>
                 </div>
             </section>
 
             <section id="publicaciones-view" class="view-section hidden">
-                <div class="action-bar"><h3>Publicaciones Científicas</h3></div>
+                <div class="action-bar">
+                    <h3>Publicaciones Científicas</h3>
+                </div>
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th>Año</th><th>Título</th><th>Revista</th><th>Impacto</th></tr>
+                            <tr>
+                                <th>Año</th>
+                                <th>Título</th>
+                                <th>Revista</th>
+                                <th>Impacto</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            <tr><td>2026</td><td>Lithium Extraction Trends</td><td>Nature Energy</td><td>High</td></tr>
-                            <tr><td>2025</td><td>Solid State Batteries</td><td>Advanced Materials</td><td>High</td></tr>
+                            <tr>
+                                <td>2026</td>
+                                <td>Lithium Extraction Trends</td>
+                                <td>Nature Energy</td>
+                                <td>High</td>
+                            </tr>
+                            <tr>
+                                <td>2025</td>
+                                <td>Solid State Batteries</td>
+                                <td>Advanced Materials</td>
+                                <td>High</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
             <section id="infraestructura-view" class="view-section hidden">
-                <div class="action-bar"><h3>Infraestructura Laboratorial</h3></div>
+                <div class="action-bar">
+                    <h3>Infraestructura Laboratorial</h3>
+                </div>
                 <div class="info-placeholder">
                     <i class="fas fa-microscope fa-3x"></i>
                     <p>Contamos con 3 laboratorios de alta tecnología y equipamiento de última generación.</p>
@@ -1036,16 +1145,29 @@
             </section>
 
             <section id="capital-humano-view" class="view-section hidden">
-                <div class="action-bar"><h3>Capital Humano</h3></div>
+                <div class="action-bar">
+                    <h3>Capital Humano</h3>
+                </div>
                 <div class="stats-grid">
-                    <div class="card"><p class="card-title">Investigadores</p><p class="card-value">12</p></div>
-                    <div class="card"><p class="card-title">Doctorandos</p><p class="card-value">5</p></div>
-                    <div class="card"><p class="card-title">Técnicos</p><p class="card-value">8</p></div>
+                    <div class="card">
+                        <p class="card-title">Investigadores</p>
+                        <p class="card-value">12</p>
+                    </div>
+                    <div class="card">
+                        <p class="card-title">Doctorandos</p>
+                        <p class="card-value">5</p>
+                    </div>
+                    <div class="card">
+                        <p class="card-title">Técnicos</p>
+                        <p class="card-value">8</p>
+                    </div>
                 </div>
             </section>
 
             <section id="novedades-view" class="view-section hidden">
-                <div class="action-bar"><h3>Novedades y Noticias</h3></div>
+                <div class="action-bar">
+                    <h3>Novedades y Noticias</h3>
+                </div>
                 <div class="stats-grid">
                     <article class="card">
                         <p class="card-title">24 de Abril, 2026</p>
@@ -1056,14 +1178,17 @@
             </section>
 
             <section id="congreso-view" class="view-section hidden">
-                <div class="hero-card" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white;">
+                <div class="hero-card"
+                    style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white;">
                     <h2>I Congreso Internacional del Litio</h2>
                     <p>Antofagasta, Octubre 2026. Próximamente más información sobre el envío de resúmenes.</p>
                 </div>
             </section>
 
             <section id="contactos-view" class="view-section hidden">
-                <div class="action-bar"><h3>Contacto</h3></div>
+                <div class="action-bar">
+                    <h3>Contacto</h3>
+                </div>
                 <div class="card" style="max-width: 500px;">
                     <p><i class="fas fa-envelope"></i> contacto@celimin.cl</p>
                     <p><i class="fas fa-phone"></i> +56 55 2 123456</p>
@@ -1113,7 +1238,8 @@
                 <div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label for="item-format-unit">Formato / Unidad</label>
-                        <input type="text" id="item-format-unit" placeholder="Ej: Botella 1L, Caja 100u, L, Kg" required>
+                        <input type="text" id="item-format-unit" placeholder="Ej: Botella 1L, Caja 100u, L, Kg"
+                            required>
                     </div>
                 </div>
 
@@ -1153,8 +1279,10 @@
                 </div>
 
                 <!-- Campos Solo para Reactivos -->
-                <div id="reagent-only-fields" class="hidden" style="background: var(--surface-hover); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary);">
-                    <p style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--primary);">Información de Reactivo</p>
+                <div id="reagent-only-fields" class="hidden"
+                    style="background: var(--surface-hover); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary);">
+                    <p style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--primary);">
+                        Información de Reactivo</p>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label for="item-state">Estado del Reactivo</label>
@@ -1171,7 +1299,9 @@
                     </div>
                     <div class="form-group" style="margin-top: 1rem;">
                         <label for="item-comments">Comentarios / Observaciones</label>
-                        <textarea id="item-comments" rows="2" placeholder="Notas adicionales del reactivo en inventario..." style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: inherit;"></textarea>
+                        <textarea id="item-comments" rows="2"
+                            placeholder="Notas adicionales del reactivo en inventario..."
+                            style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: inherit;"></textarea>
                     </div>
                 </div>
 
@@ -1365,8 +1495,10 @@
                 </div>
 
                 <!-- Campos Solo para Reactivos Edición -->
-                <div id="edit-reagent-only-fields" class="hidden" style="background: var(--surface-hover); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary);">
-                    <p style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--primary);">Información de Reactivo</p>
+                <div id="edit-reagent-only-fields" class="hidden"
+                    style="background: var(--surface-hover); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary);">
+                    <p style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--primary);">
+                        Información de Reactivo</p>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label for="edit-item-state">Estado del Reactivo</label>
@@ -1383,7 +1515,8 @@
                     </div>
                     <div class="form-group" style="margin-top: 1rem;">
                         <label for="edit-item-comments">Comentarios / Observaciones</label>
-                        <textarea id="edit-item-comments" rows="2" style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: inherit;"></textarea>
+                        <textarea id="edit-item-comments" rows="2"
+                            style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: inherit;"></textarea>
                     </div>
                 </div>
 
@@ -1477,7 +1610,8 @@
                 <h3>Recuperar Acceso</h3>
                 <button class="btn-close" id="close-modal-forgot">&times;</button>
             </header>
-            <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Ingrese su correo electrónico (Gmail) para recibir las instrucciones de recuperación.</p>
+            <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Ingrese su correo electrónico
+                (Gmail) para recibir las instrucciones de recuperación.</p>
             <form id="form-forgot">
                 <div class="form-group">
                     <label for="forgot-email">Correo Electrónico (Gmail)</label>
@@ -1498,7 +1632,8 @@
                 <h3>Solicitud de Acceso</h3>
                 <button class="btn-close" id="close-modal-signup">&times;</button>
             </header>
-            <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Complete sus datos para solicitar una cuenta al administrador.</p>
+            <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Complete sus datos para
+                solicitar una cuenta al administrador.</p>
             <form id="form-signup">
                 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
                     <div class="form-group">
@@ -1546,7 +1681,7 @@
             <form id="form-movement">
                 <input type="hidden" id="mv-item-index">
                 <input type="hidden" id="mv-type">
-                
+
                 <div class="form-group">
                     <label>Ítem Seleccionado</label>
                     <p id="mv-item-name" style="font-weight: 700; color: var(--primary); font-size: 1.1rem;"></p>
@@ -1564,7 +1699,8 @@
 
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                     <button type="button" class="btn" id="btn-cancel-mv" style="flex: 1;">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="btn-confirm-mv" style="flex: 1;">Confirmar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-confirm-mv"
+                        style="flex: 1;">Confirmar</button>
                 </div>
             </form>
         </div>
@@ -1626,15 +1762,18 @@
                 </div>
                 <div class="form-group">
                     <label for="agenda-insumos">Uso de Insumos</label>
-                    <textarea id="agenda-insumos" rows="2" placeholder="Detalle de insumos necesarios..." style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border);"></textarea>
+                    <textarea id="agenda-insumos" rows="2" placeholder="Detalle de insumos necesarios..."
+                        style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border);"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="agenda-equipo">Uso de Equipo</label>
-                    <textarea id="agenda-equipo" rows="2" placeholder="Detalle del equipo requerido..." style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border);"></textarea>
+                    <textarea id="agenda-equipo" rows="2" placeholder="Detalle del equipo requerido..."
+                        style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border);"></textarea>
                 </div>
-                 <div class="form-group">
+                <div class="form-group">
                     <label for="agenda-responsable">Responsable</label>
-                    <input type="text" id="agenda-responsable" placeholder="Ej: Dr. Juan Pérez" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <input type="text" id="agenda-responsable" placeholder="Ej: Dr. Juan Pérez"
+                        style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border);">
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                     <button type="button" class="btn" id="btn-cancel-agendar" style="flex: 1;">Cancelar</button>
@@ -1779,7 +1918,8 @@
                 </div>
                 <div class="form-group">
                     <label for="uso-comentario">Comentario / Observación</label>
-                    <textarea id="uso-comentario" placeholder="Escriba comentarios u observaciones aquí..." rows="2" style="width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:#f8fafc; font-family:inherit;"></textarea>
+                    <textarea id="uso-comentario" placeholder="Escriba comentarios u observaciones aquí..." rows="2"
+                        style="width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:#f8fafc; font-family:inherit;"></textarea>
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                     <button type="button" class="btn" id="btn-cancel-uso" style="flex: 1;">Cancelar</button>
@@ -1794,13 +1934,15 @@
         <div class="modal-content" style="width: 600px;">
             <header class="modal-header">
                 <h3 id="calendar-day-title">Actividades del Día</h3>
-                <button class="btn-close" id="close-modal-calendar-day" onclick="document.getElementById('modal-calendar-day').classList.add('hidden')">&times;</button>
+                <button class="btn-close" id="close-modal-calendar-day"
+                    onclick="document.getElementById('modal-calendar-day').classList.add('hidden')">&times;</button>
             </header>
             <div id="calendar-day-content" class="table-container" style="max-height: 400px; overflow-y: auto;">
                 <!-- Lista de actividades generada por JS -->
             </div>
             <div style="margin-top: 1.5rem; text-align: right;">
-                <button class="btn" id="btn-close-day-details" onclick="document.getElementById('modal-calendar-day').classList.add('hidden')">Cerrar</button>
+                <button class="btn" id="btn-close-day-details"
+                    onclick="document.getElementById('modal-calendar-day').classList.add('hidden')">Cerrar</button>
             </div>
         </div>
     </div>
@@ -1815,15 +1957,18 @@
             <form id="form-new-doc">
                 <div class="form-group">
                     <label for="doc-title">Título del Documento</label>
-                    <input type="text" id="doc-title" placeholder="Ej: Manual de Espectrómetro, Protocolo A1..." required>
+                    <input type="text" id="doc-title" placeholder="Ej: Manual de Espectrómetro, Protocolo A1..."
+                        required>
                 </div>
                 <div class="form-group">
                     <label for="doc-desc">Descripción / Observación</label>
-                    <textarea id="doc-desc" placeholder="Breve descripción del documento..." rows="2" style="width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:#f8fafc; font-family:inherit;"></textarea>
+                    <textarea id="doc-desc" placeholder="Breve descripción del documento..." rows="2"
+                        style="width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:#f8fafc; font-family:inherit;"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="doc-category">Categoría</label>
-                    <select id="doc-category" required style="width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:#f8fafc;">
+                    <select id="doc-category" required
+                        style="width:100%; padding:0.85rem 1rem; border-radius:12px; border:1px solid var(--border); background:#f8fafc;">
                         <option value="Protocolo">Protocolo</option>
                         <option value="Documentos">Documentos</option>
                         <option value="Informacion">Información</option>
@@ -1843,16 +1988,17 @@
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="supabaseClient.js?v=9"></script>
+    <script src="supabaseClient.js?v=11"></script>
     <script>
-      if (typeof window.dbSync === 'undefined') {
-          alert("¡ADVERTENCIA! Tu navegador de Chrome sigue usando una versión vieja de los archivos guardada en memoria caché. Por favor, presiona 'Ctrl + F5' o 'Shift + F5' para forzar una recarga completa y borrar la caché.");
-      }
+        if (typeof window.dbSync === 'undefined') {
+            alert("¡ADVERTENCIA! Tu navegador de Chrome sigue usando una versión vieja de los archivos guardada en memoria caché. Por favor, presiona 'Ctrl + F5' o 'Shift + F5' para forzar una recarga completa y borrar la caché.");
+        }
     </script>
-    <script src="core.js?v=10"></script>
-    <script src="inventory.js?v=10"></script>
-    <script src="users.js?v=10"></script>
-    <script src="plano.js?v=10"></script>
-    <script src="app.js?v=10"></script>
+    <script src="core.js?v=11"></script>
+    <script src="inventory.js?v=11"></script>
+    <script src="users.js?v=11"></script>
+    <script src="plano.js?v=11"></script>
+    <script src="app.js?v=11"></script>
 </body>
+
 </html>
