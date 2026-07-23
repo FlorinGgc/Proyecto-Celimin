@@ -7,7 +7,7 @@ let selectedPlanoZone = null;
 const planoZones = {};
 const letters = 'ABCDEFGHIJKLMNOPQR'.split('');
 letters.forEach(letter => {
-    let lab = letter >= 'M' ? 'Laboratorio de Baterías de Ion Litio' : 'Laboratorio en Procesos';
+    let lab = letter >= 'K' ? 'Laboratorio de Materiales Avanzado de Litio y Baterias' : 'Laboratorio de Procesos Sustentables de Litio y Minerales Industriales';
     planoZones[letter] = {
         name: `Zona ${letter}`,
         lab: lab,

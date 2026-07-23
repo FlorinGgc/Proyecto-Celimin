@@ -172,11 +172,11 @@ window.editEquipmentDetails = function (index) {
                     <label style="display:block; margin-bottom: 0.3rem; font-weight: 700; font-size: 0.85rem;">Ubicación en Laboratorio</label>
                     <select id="swal-eq-loc" class="swal2-select" style="width: 100%; margin: 0; border-radius: 8px; height: 45px; font-size: 14px;">
                         <option value="">— Seleccione una Zona —</option>
-                        <optgroup label="Laboratorio en Procesos">
-                            ${['Zona A', 'Zona B', 'Zona C', 'Zona D', 'Zona E', 'Zona F', 'Zona G', 'Zona H', 'Zona I', 'Zona J', 'Zona K', 'Zona L'].map(z => `<option value="${z}" ${eq.locationDetail === z ? 'selected' : ''}>${z}</option>`).join('')}
+                        <optgroup label="Laboratorio de Procesos Sustentables de Litio y Minerales Industriales">
+                            ${['Zona A', 'Zona B', 'Zona C', 'Zona D', 'Zona E', 'Zona F', 'Zona G', 'Zona H', 'Zona I', 'Zona J'].map(z => `<option value="${z}" ${eq.locationDetail === z ? 'selected' : ''}>${z}</option>`).join('')}
                         </optgroup>
-                        <optgroup label="Laboratorio de Baterías de Ion Litio">
-                            ${['Zona M', 'Zona N', 'Zona O', 'Zona P', 'Zona Q', 'Zona R'].map(z => `<option value="${z}" ${eq.locationDetail === z ? 'selected' : ''}>${z}</option>`).join('')}
+                        <optgroup label="Laboratorio de Materiales Avanzado de Litio y Baterias">
+                            ${['Zona K', 'Zona L', 'Zona M', 'Zona N', 'Zona O', 'Zona P', 'Zona Q', 'Zona R'].map(z => `<option value="${z}" ${eq.locationDetail === z ? 'selected' : ''}>${z}</option>`).join('')}
                         </optgroup>
                     </select>
                 </div>

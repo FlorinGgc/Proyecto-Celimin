@@ -140,20 +140,22 @@ window.dbSync = {
 
     // ---- USERS ----
     async saveUser(user, isNew = false) {
+        const payload = {
+            name: user.name,
+            role: user.role,
+            permissions: user.permissions,
+            last_access: user.lastAccess,
+            active: user.active
+        };
+        if (user.password) payload.password = user.password;
+        if (user.email) payload.email = user.email;
+
         if (isNew) {
-            return await supabaseClient.from('users').insert([{
-                name: user.name,
-                role: user.role,
-                permissions: user.permissions,
-                last_access: user.lastAccess,
-                active: user.active
-            }]);
+            return await supabaseClient.from('users').insert([payload]);
+        } else if (user.id) {
+            return await supabaseClient.from('users').update(payload).eq('id', user.id);
         } else {
-            return await supabaseClient.from('users').update({
-                name: user.name,
-                role: user.role,
-                permissions: user.permissions
-            }).eq('id', user.id);
+            return await supabaseClient.from('users').update(payload).eq('name', user.name);
         }
     },
     async deleteUser(id) {
@@ -278,6 +280,35 @@ window.dbSync = {
             semana: turno.semana,
             mes: turno.mes
         }]);
+    },
+    async updateTurno(turno) {
+        const payload = {
+            laboratorio: turno.laboratorio,
+            jefe: turno.jefe,
+            semana: turno.semana,
+            mes: turno.mes
+        };
+        if (turno.id) {
+            return await supabaseClient.from('turnos').update(payload).eq('id', turno.id);
+        } else {
+            return await supabaseClient.from('turnos').update(payload).match({
+                laboratorio: turno.laboratorio,
+                semana: turno.semana,
+                mes: turno.mes
+            });
+        }
+    },
+    async deleteTurno(turno) {
+        if (turno.id) {
+            return await supabaseClient.from('turnos').delete().eq('id', turno.id);
+        } else {
+            return await supabaseClient.from('turnos').delete().match({
+                laboratorio: turno.laboratorio,
+                jefe: turno.jefe,
+                semana: turno.semana,
+                mes: turno.mes
+            });
+        }
     },
 
     // ---- AUDITORIA ----

@@ -55,7 +55,7 @@ async function run() {
 
     const labLinks = insertedItems.map(item => ({
         inventory_id: item.id,
-        lab_id: 'L2'
+        lab_id: 'LPSL'
     }));
 
     const { error: linkError } = await supabase

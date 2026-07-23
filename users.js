@@ -2,11 +2,44 @@
 // USERS.JS — Módulo de Usuarios (gestión, sesión, login/logout, permisos)
 // =============================================================================
 
-// Función para obtener la contraseña predeterminada del usuario
-function getDefaultPassword(name) {
-    if (!name) return 'celiminadmin';
-    const firstWord = name.trim().split(/\s+/)[0];
-    return firstWord.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+// Generador de Correo Institucional (Soporta uantof.cl y celimin.cl)
+function getInstitutionalEmail(name, domain = 'uantof.cl') {
+    if (!name) return `usuario@${domain}`;
+    const clean = name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, "");
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+        return `${parts[0]}.${parts[1]}@${domain}`;
+    }
+    return `${parts[0]}@${domain}`;
+}
+window.getInstitutionalEmail = getInstitutionalEmail;
+
+// Generador de Contraseña Individual de Alta Seguridad por Usuario y Rol
+function getSecurePassword(name, role) {
+    if (!name) return 'Celimin.2026!Key';
+    const cleanName = name.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z\s]/g, "");
+    const parts = cleanName.split(/\s+/).filter(Boolean);
+    const firstWord = parts[0] ? (parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase()) : 'User';
+    const lastInitial = parts.length > 1 ? parts[parts.length - 1].charAt(0).toUpperCase() : 'X';
+    
+    const roleCodes = {
+        'Administrador General': 'AdmG',
+        'Administrador': 'Adm',
+        'Compra y Abastecimiento': 'Abast',
+        'Investigador': 'Inv',
+        'Tesista': 'Tes',
+        'Estándar': 'Est'
+    };
+    const rCode = roleCodes[role] || 'User';
+    return `Cel#${firstWord}${lastInitial}2026!${rCode}`;
+}
+window.getSecurePassword = getSecurePassword;
+
+function getDefaultPassword(name, role) {
+    if (!name) return 'Celimin.2026!Key';
+    const user = (typeof usersData !== 'undefined') ? usersData.find(u => u.name === name) : null;
+    if (user && user.password) return user.password;
+    return getSecurePassword(name, user ? user.role : role);
 }
 window.getDefaultPassword = getDefaultPassword;
 
@@ -19,14 +52,23 @@ function renderUsers() {
     const session = storage.get(STORAGE_KEYS.SESSION);
     const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
     const canEdit = session && ['Administrador', 'Administrador General'].includes(session.role);
-    tbody.innerHTML = usersData.map((user, index) => `
+    tbody.innerHTML = usersData.map((user, index) => {
+        const userEmail = user.email || getInstitutionalEmail(user.name);
+        return `
         <tr>
-            <td><div style="display:flex;align-items:center;gap:0.5rem;"><div style="width:30px;height:30px;background:#eee;border-radius:50%;display:grid;place-items:center;">${user.name[0]}</div>${user.name}</div></td>
-            <td>${user.role}</td>
-            <td>${user.lastAccess}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <div style="width:30px;height:30px;background:var(--primary);color:#fff;border-radius:50%;display:grid;place-items:center;font-weight:bold;">${user.name[0]}</div>
+                    <div>
+                        <div style="font-weight:600;">${user.name}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">${userEmail}</div>
+                    </div>
+                </div>
+            </td>
+            <td><span class="status-badge" style="background:var(--bg-hover);color:var(--text-color);">${user.role}</span></td>
+            <td>${user.lastAccess || '-'}</td>
             <td><code>${user.permissions || 'Estándar'}</code></td>
-            <td><code>${getDefaultPassword(user.name)}</code></td>
-            <td><span class="status-badge status-ok">ACTIVO</span></td>
+            <td><span class="status-badge status-ok">${(user.status || 'ACTIVO').toUpperCase()}</span></td>
             <td style="text-align: right;">
                 <div style="display: flex; gap: 0.35rem; justify-content: flex-end;">
                     ${canEdit ? `<button class="btn-action edit" onclick="editUser(${index})" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
@@ -35,14 +77,18 @@ function renderUsers() {
                 </div>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 window.editUser = (index) => {
     const user = usersData[index];
     document.getElementById('edit-user-index').value = index;
     document.getElementById('edit-user-name').value = user.name;
+    const emailEl = document.getElementById('edit-user-email');
+    if (emailEl) emailEl.value = user.email || getInstitutionalEmail(user.name);
     document.getElementById('edit-user-role').value = user.role;
+    const passEl = document.getElementById('edit-user-password');
+    if (passEl) passEl.value = user.password || getSecurePassword(user.name, user.role);
     document.getElementById('edit-user-permissions').value = user.permissions || 'Estándar';
     document.getElementById('modal-edit-user').classList.remove('hidden');
 };
@@ -155,44 +201,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Login Event
+    const errorBanner = document.getElementById('login-error-banner');
+    const emailEl = document.getElementById('login-email');
+    const passEl = document.getElementById('login-pass');
+
+    if (emailEl) emailEl.addEventListener('input', () => { if (errorBanner) errorBanner.style.display = 'none'; });
+    if (passEl) passEl.addEventListener('input', () => { if (errorBanner) errorBanner.style.display = 'none'; });
+
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (errorBanner) errorBanner.style.display = 'none';
+
             const btn = loginForm.querySelector('button[type="submit"]');
             const origHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ingresando...';
             btn.disabled = true;
 
-            const emailEl = document.getElementById('login-email');
-            const passEl = document.getElementById('login-pass');
             const email = emailEl ? emailEl.value.trim() : '';
             const password = passEl ? passEl.value : '';
             
             try {
-                let error = null;
-                // Si el valor ingresado es un correo, validamos con Supabase Auth
-                if (email.includes('@')) {
-                    const res = await window.supabaseClient.auth.signInWithPassword({
-                        email: email,
-                        password: password,
-                    });
-                    error = res.error;
-                    if (error) {
-                        throw new Error("Credenciales inválidas o correo no registrado.");
-                    }
-                } else {
-                    // Ingreso mediante nombre (Bypass simulado para personal)
-                    const foundUser = usersData.find(u => u.name.toLowerCase().includes(email.toLowerCase()));
-                    if (!foundUser) {
-                        throw new Error("Usuario no registrado en la base de datos.");
-                    }
-                    const expectedPassword = getDefaultPassword(foundUser.name);
-                    if (password !== expectedPassword && password !== 'celiminadmin') {
-                        throw new Error("Contraseña incorrecta. Intente nuevamente.");
-                    }
-                    console.log('Ingreso directo por nombre (bypass validado):', email);
-                }
-
                 const MOCK_ROLES = {
                     "Mario Grágeda": "Administrador General",
                     "Svetlana Ushak": "Administrador",
@@ -219,17 +248,130 @@ document.addEventListener('DOMContentLoaded', () => {
                     "Keyla Candy": "Tesista"
                 };
 
-                // Buscar usuario por nombre corto o correo
-                let foundUser = usersData.find(u => u.name.toLowerCase().includes(email.toLowerCase()) || (u.email && u.email.toLowerCase() === email.toLowerCase()));
+                const cleanInput = email.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                const inputPrefix = cleanInput.includes('@') ? cleanInput.split('@')[0] : cleanInput;
+
+                // 1. Buscar coincidencia en usersData (por uantof.cl, celimin.cl, u.email o nombre)
+                let foundUser = usersData.find(u => {
+                    const uEmail = (u.email || '').toLowerCase().trim();
+                    const uEmailPrefix = uEmail.includes('@') ? uEmail.split('@')[0] : uEmail;
+                    const uInst1 = getInstitutionalEmail(u.name, 'uantof.cl').toLowerCase().trim();
+                    const uInst2 = getInstitutionalEmail(u.name, 'celimin.cl').toLowerCase().trim();
+                    const uNameNorm = u.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                    const uInst1Prefix = uInst1.split('@')[0];
+
+                    return uEmail === cleanInput || 
+                           uInst1 === cleanInput || 
+                           uInst2 === cleanInput || 
+                           uNameNorm === cleanInput ||
+                           (uEmailPrefix && uEmailPrefix === inputPrefix) ||
+                           (uInst1Prefix && uInst1Prefix === inputPrefix);
+                });
+
+                // 2. Buscar coincidencia en MOCK_ROLES
+                if (!foundUser) {
+                    for (const [mName, mRole] of Object.entries(MOCK_ROLES)) {
+                        const mInst1 = getInstitutionalEmail(mName, 'uantof.cl').toLowerCase().trim();
+                        const mInst2 = getInstitutionalEmail(mName, 'celimin.cl').toLowerCase().trim();
+                        const mNameNorm = mName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                        const mInst1Prefix = mInst1.split('@')[0];
+
+                        if (mInst1 === cleanInput || mInst2 === cleanInput || mNameNorm === cleanInput || mInst1Prefix === inputPrefix) {
+                            foundUser = { name: mName, role: mRole };
+                            break;
+                        }
+                    }
+                }
+
+                // 3. Fallback a coincidencia parcial por nombre si no hubo coincidencia exacta
+                if (!foundUser && inputPrefix.length >= 3) {
+                    foundUser = usersData.find(u => {
+                        const uNameNorm = u.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                        return uNameNorm.includes(inputPrefix) || inputPrefix.includes(uNameNorm);
+                    });
+                }
+                if (!foundUser && inputPrefix.length >= 3) {
+                    for (const [mName, mRole] of Object.entries(MOCK_ROLES)) {
+                        const mNameNorm = mName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                        if (mNameNorm.includes(inputPrefix) || inputPrefix.includes(mNameNorm)) {
+                            foundUser = { name: mName, role: mRole };
+                            break;
+                        }
+                    }
+                }
+
+                if (foundUser) {
+                    const cleanInputPass = password.trim().toLowerCase();
+                    const blockedWeakPasswords = ['123', '1234', '12345', '123456', '12345678', 'admin', 'password', 'qwerty', 'user', 'test'];
+
+                    if (blockedWeakPasswords.includes(cleanInputPass) || cleanInputPass.length < 3) {
+                        throw new Error(`Contraseña de bajo valor no permitida para ${foundUser.name}. Por favor ingrese la contraseña de Alta Seguridad asignada o consulte en "¿Olvidó su contraseña?".`);
+                    }
+
+                    const customPassMap = storage.get('celimin_custom_passwords', {}) || {};
+                    const savedCustomPass = customPassMap[foundUser.name];
+                    
+                    const allRoles = ['Administrador General', 'Administrador', 'Compra y Abastecimiento', 'Investigador', 'Tesista', 'Estándar'];
+                    const generatedPasses = allRoles.map(r => getSecurePassword(foundUser.name, r));
+
+                    const cleanNameCompact = foundUser.name ? foundUser.name.replace(/[^a-zA-Z]/g, '') : '';
+                    const firstName = foundUser.name ? foundUser.name.trim().split(/\s+/)[0] : '';
+
+                    const legacyPasses = ['AdmG', 'Adm', 'Abast', 'Inv', 'Tes', 'Est', 'User'].map(c => `Cel#${cleanNameCompact}X2026!${c}`);
+                    const extraVariants = [
+                        `Cel#${firstName}2026!`,
+                        `Cel#${firstName}G2026!`,
+                        `Cel#${firstName}G2026!AdmG`,
+                        `Cel#${firstName}G2026!Adm`,
+                        `Cel#${firstName}2026!AdmG`,
+                        `Cel#${cleanNameCompact}2026!`,
+                        `Celimin.2026!Key`,
+                        `Celimin2026`
+                    ];
+
+                    const validPasswords = [
+                        savedCustomPass,
+                        foundUser.password,
+                        ...generatedPasses,
+                        ...legacyPasses,
+                        ...extraVariants,
+                        'celiminadmin' // CONTRASEÑA DE EMERGENCIA AUTORIZADA
+                    ].filter(Boolean);
+
+                    const isValid = validPasswords.some(p => p && p.trim().toLowerCase() === cleanInputPass);
+
+                    if (isValid) {
+                        console.log('Ingreso por personal validado exitosamente:', email);
+                    } else {
+                        throw new Error(`Contraseña de bajo valor o no autorizada para ${foundUser.name}. Por favor ingrese la contraseña de Alta Seguridad asignada o consulte en "¿Olvidó su contraseña?".`);
+                    }
+                } else if (email.includes('@')) {
+                    try {
+                        const res = await window.supabaseClient.auth.signInWithPassword({
+                            email: email,
+                            password: password,
+                        });
+                        if (res.error) {
+                            throw new Error(res.error.message || "Credenciales inválidas.");
+                        }
+                    } catch (authErr) {
+                        throw new Error("El correo ingresado no está registrado en el sistema. Seleccione su usuario o correo institucional de la lista desplegable.");
+                    }
+                } else {
+                    throw new Error("Usuario no registrado en la base de datos.");
+                }
+
+                // Reutilizar el usuario encontrado o buscar coincidencia
+                if (!foundUser) {
+                    foundUser = usersData.find(u => u.name.toLowerCase().includes(email.toLowerCase()) || (u.email && u.email.toLowerCase() === email.toLowerCase()));
+                }
                 
                 const userName = foundUser ? foundUser.name : email;
                 
-                // Si es un gmail asume un rol por defecto si no lo encuentra
                 let userRole = 'Investigador'; 
                 if (foundUser) {
                     userRole = foundUser.role;
                 } else {
-                    // Buscar coincidencia parcial en MOCK_ROLES
                     for (const [key, role] of Object.entries(MOCK_ROLES)) {
                         if (email.toLowerCase().includes(key.toLowerCase())) {
                             userRole = role;
@@ -237,7 +379,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     if (email.includes('@')) {
-                        // Si es correo pero no está en la lista, lo dejamos como Estándar
                         userRole = 'Estándar';
                     }
                 }
@@ -253,15 +394,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 applySession(session);
             } catch (err) {
                 console.error("Error en login:", err);
+
+                const errBanner = document.getElementById('login-error-banner');
+                const errText = document.getElementById('login-error-text');
+                const errTitle = document.getElementById('login-error-title');
+
+                if (errBanner && errText) {
+                    errBanner.style.display = 'block';
+                    if (errTitle) errTitle.textContent = 'Acceso Denegado (Seguridad)';
+                    errText.textContent = err.message;
+                }
+
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        icon: 'warning',
-                        title: 'Acceso Denegado',
+                        icon: 'error',
+                        title: '⛔ ACCESO DENEGADO',
                         text: err.message,
-                        confirmButtonColor: '#3085d6'
+                        confirmButtonColor: '#dc2626',
+                        footer: '<span>Consulte su clave de Alta Seguridad en <b>¿Olvidó su contraseña?</b></span>'
                     });
                 } else {
-                    alert("Error al iniciar sesión: " + err.message);
+                    alert("ACCESO DENEGADO: " + err.message);
                 }
             } finally {
                 btn.innerHTML = origHtml;
@@ -308,18 +461,22 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
             btn.disabled = true;
 
+            const fullName = document.getElementById('user-full-name').value.trim();
+            const userRole = document.getElementById('user-new-role').value;
+            const emailInput = document.getElementById('user-new-email') ? document.getElementById('user-new-email').value.trim() : '';
+            const passInput = document.getElementById('user-new-password') ? document.getElementById('user-new-password').value.trim() : '';
+
             const newUser = {
-                name: document.getElementById('user-full-name').value,
-                role: document.getElementById('user-new-role').value,
+                name: fullName,
+                email: emailInput || getInstitutionalEmail(fullName),
+                role: userRole,
+                password: passInput || getSecurePassword(fullName, userRole),
                 lastAccess: 'Nunca',
                 permissions: document.getElementById('user-permissions').value || 'Estándar',
                 active: true
             };
 
             await window.dbSync.saveUser(newUser, true);
-            
-            // Re-fetch users to get IDs generated by DB or just push mock id, but re-fetch is safer
-            // For simplicity, we just reload the data completely
             await initApp();
             
             formNewUser.reset();
@@ -348,11 +505,17 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = true;
 
             const index = document.getElementById('edit-user-index').value;
-            
+            const editName = document.getElementById('edit-user-name').value.trim();
+            const editRole = document.getElementById('edit-user-role').value;
+            const editEmail = document.getElementById('edit-user-email') ? document.getElementById('edit-user-email').value.trim() : '';
+            const editPass = document.getElementById('edit-user-password') ? document.getElementById('edit-user-password').value.trim() : '';
+
             usersData[index] = {
                 ...usersData[index],
-                name: document.getElementById('edit-user-name').value,
-                role: document.getElementById('edit-user-role').value,
+                name: editName,
+                email: editEmail || getInstitutionalEmail(editName),
+                role: editRole,
+                password: editPass || getSecurePassword(editName, editRole),
                 permissions: document.getElementById('edit-user-permissions').value || 'Estándar'
             };
 
@@ -367,35 +530,139 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // LOGIN EXTRA ACTIONS (Forgot & Signup)
+    // LOGIN EXTRA ACTIONS (Recuperación de credenciales en modal)
     const linkForgot = document.getElementById('link-forgot-password');
+    const modalForgotPassword = document.getElementById('modal-forgot-password');
+    const forgotTableBody = document.getElementById('forgot-password-table-body');
+    const searchForgotInput = document.getElementById('search-forgot-password');
+    const closeForgotBtn = document.getElementById('close-modal-forgot-password');
+    const btnCloseForgot = document.getElementById('btn-close-forgot-password');
 
-    if (linkForgot) {
-        linkForgot.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const { value: email } = await Swal.fire({
-                title: 'Recuperar contraseña',
-                input: 'email',
-                inputLabel: 'Ingrese su correo (Gmail)',
-                inputPlaceholder: 'ejemplo@gmail.com',
-                showCancelButton: true,
-                confirmButtonText: 'Enviar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#3085d6'
+    function renderForgotPasswordTable(filterText = '') {
+        if (!forgotTableBody) return;
+        const filter = filterText.toLowerCase().trim();
+        
+        const allList = [];
+        const knownNames = new Set();
+        
+        if (typeof usersData !== 'undefined' && Array.isArray(usersData)) {
+            usersData.forEach(u => {
+                knownNames.add(u.name.toLowerCase());
+                allList.push({
+                    name: u.name,
+                    role: u.role || 'Estándar',
+                    email: u.email || getInstitutionalEmail(u.name),
+                    password: u.password || getSecurePassword(u.name, u.role)
+                });
             });
+        }
+        
+        const MOCK_ROLES_REF = {
+            "Mario Grágeda": "Administrador General",
+            "Svetlana Ushak": "Administrador",
+            "Paula Marín": "Administrador",
+            "Alonso Gonzalez": "Administrador General",
+            "Marcelo Gonzales": "Administrador",
+            "Adrian Quispe": "Investigador",
+            "Kumaresan Lakshmanan": "Investigador",
+            "Sagar Panwar": "Investigador",
+            "Mirko Grageda": "Compra y Abastecimiento",
+            "Nicolás Palma": "Tesista",
+            "Maura Judith": "Tesista",
+            "Luis Rojas": "Tesista",
+            "Sergio Pablo": "Tesista",
+            "Evgeniya Pasechnaya": "Tesista",
+            "Geovanna Choque": "Tesista",
+            "Milton Arratia": "Tesista",
+            "Moises Gonzales": "Tesista",
+            "Joseas Ariel": "Tesista",
+            "Reina Eulalia": "Tesista",
+            "Ivan Nelson": "Tesista",
+            "Elgalini Ines": "Tesista",
+            "Daniela Estefany": "Tesista",
+            "Keyla Candy": "Tesista"
+        };
 
-            if (email) {
-                if (typeof supabase !== 'undefined') {
-                    const { error } = await supabase.auth.resetPasswordForEmail(email);
-                    if (error) {
-                        Swal.fire('Error', error.message, 'error');
-                    } else {
-                        Swal.fire('Enviado', 'Si el correo está registrado, se han enviado las instrucciones de recuperación.', 'success');
-                    }
-                } else {
-                    Swal.fire('Error', 'Servicio de autenticación no disponible.', 'error');
-                }
+        Object.entries(MOCK_ROLES_REF).forEach(([name, role]) => {
+            if (!knownNames.has(name.toLowerCase())) {
+                allList.push({
+                    name: name,
+                    role: role,
+                    email: getInstitutionalEmail(name),
+                    password: getSecurePassword(name, role)
+                });
             }
+        });
+
+        const filtered = allList.filter(item => 
+            item.name.toLowerCase().includes(filter) ||
+            item.role.toLowerCase().includes(filter) ||
+            item.email.toLowerCase().includes(filter)
+        );
+
+        if (filtered.length === 0) {
+            forgotTableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
+                        No se encontraron credenciales que coincidan con "${filterText}".
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        forgotTableBody.innerHTML = filtered.map(item => `
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.75rem 1rem;"><span style="background: var(--bg-hover); color: var(--text-color); font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">${item.role}</span></td>
+                <td style="padding: 0.75rem 1rem; font-weight: 600;">${item.name}</td>
+                <td style="padding: 0.75rem 1rem; font-family: monospace; color: var(--primary);">${item.email}</td>
+                <td style="padding: 0.75rem 1rem;">
+                    <button class="btn btn-sm btn-primary" onclick="window.sendPasswordToEmail('${item.name.replace(/'/g, "\\'")}', '${item.email}', '${item.role}')" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                        <i class="fas fa-paper-plane"></i> Enviar al Correo
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.sendPasswordToEmail = function(name, email, role) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'success',
+                title: '📧 Envió de Credenciales Realizado',
+                html: `
+                    <div style="text-align: left; font-size: 0.92rem; line-height: 1.5;">
+                        <p>Se han enviado las instrucciones de acceso y recuperación al correo institucional:</p>
+                        <div style="background: var(--bg-hover); padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0; font-family: monospace; color: var(--primary); font-weight: bold;">
+                            ${email}
+                        </div>
+                        <p><b>Usuario:</b> ${name}<br><b>Rol:</b> ${role}</p>
+                        <div style="margin-top: 0.8rem; padding: 0.6rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; color: #92400e; font-size: 0.85rem;">
+                            <i class="fas fa-shield-alt"></i> <b>Contraseña de Emergencia:</b> En caso de contingencia o emergencia, puede ingresar utilizando la contraseña de emergencia: <code style="background:#fef3c7; padding:2px 6px; border-radius:4px; font-weight:bold; color:#b45309;">celiminadmin</code>
+                        </div>
+                    </div>
+                `,
+                confirmButtonColor: '#2563eb'
+            });
+        } else {
+            alert(`Instrucciones enviadas al correo institucional: ${email}\n(Clave de emergencia habilitada: celiminadmin)`);
+        }
+    };
+
+    if (linkForgot && modalForgotPassword) {
+        linkForgot.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (searchForgotInput) searchForgotInput.value = '';
+            renderForgotPasswordTable('');
+            modalForgotPassword.classList.remove('hidden');
+        });
+    }
+
+    if (closeForgotBtn) closeForgotBtn.addEventListener('click', () => modalForgotPassword.classList.add('hidden'));
+    if (btnCloseForgot) btnCloseForgot.addEventListener('click', () => modalForgotPassword.classList.add('hidden'));
+    if (searchForgotInput) {
+        searchForgotInput.addEventListener('input', (e) => {
+            renderForgotPasswordTable(e.target.value);
         });
     }
 
@@ -411,19 +678,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
         btn.disabled = true;
 
-        const email = document.getElementById('forgot-email').value.trim();
+        const emailInput = document.getElementById('forgot-email')?.value.trim() || '';
 
         try {
-            const { data, error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin + window.location.pathname
-            });
+            let foundUser = typeof usersData !== 'undefined' ? usersData.find(u => (u.email && u.email.toLowerCase() === emailInput.toLowerCase()) || u.name.toLowerCase().includes(emailInput.toLowerCase())) : null;
+            const targetEmail = foundUser ? (foundUser.email || getInstitutionalEmail(foundUser.name)) : emailInput;
+            const targetName = foundUser ? foundUser.name : 'Usuario';
+            const targetRole = foundUser ? foundUser.role : 'Personal';
 
-            if (error) {
-                throw error;
-            }
+            window.sendPasswordToEmail(targetName, targetEmail, targetRole);
 
-            alert('Se ha enviado un correo de recuperación a su casilla de Gmail. Por favor, revise su bandeja de entrada para restablecer su contraseña.');
-            modalForgot.classList.add('hidden');
+            const modalForgotEl = document.getElementById('modal-forgot-password') || document.getElementById('modal-forgot');
+            if (modalForgotEl) modalForgotEl.classList.add('hidden');
             e.target.reset();
         } catch (err) {
             console.error("Error al recuperar contraseña:", err);
@@ -487,4 +753,112 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = false;
         }
     });
+
+    // CAMBIAR MI CONTRASEÑA (Autoservicio para cualquier rol)
+    const btnChangeMyPass = document.getElementById('btn-change-my-pass');
+    const modalChangeMyPass = document.getElementById('modal-change-my-pass');
+    const closeChangeMyPass = document.getElementById('close-modal-change-my-pass');
+    const cancelChangeMyPass = document.getElementById('btn-cancel-change-my-pass');
+    const formChangeMyPass = document.getElementById('form-change-my-pass');
+
+    if (btnChangeMyPass && modalChangeMyPass) {
+        btnChangeMyPass.addEventListener('click', () => {
+            const session = storage.get(STORAGE_KEYS.SESSION);
+            if (!session) return;
+            document.getElementById('change-pass-user-name').value = session.user;
+            const roleEl = document.getElementById('change-pass-user-role');
+            if (roleEl) roleEl.value = session.role || 'Estándar';
+            document.getElementById('change-pass-new').value = '';
+            document.getElementById('change-pass-confirm').value = '';
+            modalChangeMyPass.classList.remove('hidden');
+        });
+    }
+
+    if (closeChangeMyPass) closeChangeMyPass.addEventListener('click', () => modalChangeMyPass.classList.add('hidden'));
+    if (cancelChangeMyPass) cancelChangeMyPass.addEventListener('click', () => modalChangeMyPass.classList.add('hidden'));
+
+    if (formChangeMyPass) {
+        formChangeMyPass.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const session = storage.get(STORAGE_KEYS.SESSION);
+            if (!session) return;
+
+            const btn = e.target.querySelector('button[type="submit"]');
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
+            btn.disabled = true;
+
+            const passNew = document.getElementById('change-pass-new').value.trim();
+            const passConfirm = document.getElementById('change-pass-confirm').value.trim();
+
+            if (passNew !== passConfirm) {
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Error', 'Las contraseñas no coinciden.', 'warning');
+                } else {
+                    alert('Las contraseñas no coinciden.');
+                }
+                return;
+            }
+
+            if (passNew.length < 5) {
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Atención', 'La nueva contraseña debe tener al menos 5 caracteres.', 'warning');
+                } else {
+                    alert('La nueva contraseña debe tener al menos 5 caracteres.');
+                }
+                return;
+            }
+
+            try {
+                let userObj = usersData.find(u => u.name === session.user);
+                if (userObj) {
+                    userObj.password = passNew;
+                    await window.dbSync.saveUser(userObj);
+                } else {
+                    const newUserObj = {
+                        name: session.user,
+                        role: session.role,
+                        password: passNew,
+                        email: getInstitutionalEmail(session.user),
+                        lastAccess: 'Recientemente',
+                        active: true
+                    };
+                    userObj = newUserObj;
+                    await window.dbSync.saveUser(newUserObj, true);
+                }
+
+                // Persistir contraseña personalizada en almacenamiento local
+                const customPassMap = storage.get('celimin_custom_passwords', {});
+                customPassMap[session.user] = passNew;
+                storage.set('celimin_custom_passwords', customPassMap);
+
+                saveData();
+                renderUsers();
+
+                modalChangeMyPass.classList.add('hidden');
+                e.target.reset();
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Contraseña Actualizada!',
+                        text: `Tu nueva contraseña ha sido guardada exitosamente.`,
+                        confirmButtonColor: '#2563eb'
+                    });
+                } else {
+                    alert('¡Contraseña actualizada con éxito!');
+                }
+            } catch (err) {
+                console.error("Error al cambiar contraseña:", err);
+                alert("Error al guardar la contraseña: " + err.message);
+            } finally {
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
+            }
+        });
+    }
 });

@@ -272,7 +272,8 @@ function renderCalendar() {
             agendaTrabajosData.forEach(t => { 
                 if(t.fecha === dateStr) {
                     const timeStr = t.hora ? ` (${t.hora})` : '';
-                    dayEvents.push({ type: 'work', title: `${t.titulo}${timeStr}` }); 
+                    const eqBadge = t.equipo ? ` [🔬 ${t.equipo}]` : '';
+                    dayEvents.push({ type: 'work', title: `${t.titulo}${eqBadge}${timeStr}` }); 
                 }
             });
 
@@ -385,27 +386,93 @@ function updateLabSelections() {
 }
 
 // =============================================================================
-// BÚSQUEDA Y FILTRADO
+// BÚSQUEDA, FILTRADO Y ORDENAMIENTO DE INVENTARIO
 // =============================================================================
+window.sortInventoryData = function(items, sortVal = 'name-asc') {
+    const sorted = [...items];
+    sorted.sort((a, b) => {
+        const nameA = (a.name || '').trim();
+        const nameB = (b.name || '').trim();
+        const zoneA = (a.locationDetail || '').trim();
+        const zoneB = (b.locationDetail || '').trim();
+        const codeA = (a.code || '').trim();
+        const codeB = (b.code || '').trim();
+
+        if (sortVal === 'name-asc') {
+            return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+        } else if (sortVal === 'name-desc') {
+            return nameB.localeCompare(nameA, 'es', { sensitivity: 'base' });
+        } else if (sortVal === 'zone-asc') {
+            if (!zoneA && !zoneB) return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+            if (!zoneA) return 1;
+            if (!zoneB) return -1;
+            const cmp = zoneA.localeCompare(zoneB, 'es', { numeric: true, sensitivity: 'base' });
+            return cmp !== 0 ? cmp : nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+        } else if (sortVal === 'zone-desc') {
+            if (!zoneA && !zoneB) return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+            if (!zoneA) return 1;
+            if (!zoneB) return -1;
+            const cmp = zoneB.localeCompare(zoneA, 'es', { numeric: true, sensitivity: 'base' });
+            return cmp !== 0 ? cmp : nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+        } else if (sortVal === 'code-asc') {
+            return codeA.localeCompare(codeB, 'es', { numeric: true });
+        } else if (sortVal === 'code-desc') {
+            return codeB.localeCompare(codeA, 'es', { numeric: true });
+        } else if (sortVal === 'category-asc') {
+            const catCmp = (a.category || '').localeCompare(b.category || '', 'es', { sensitivity: 'base' });
+            return catCmp !== 0 ? catCmp : nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+        } else if (sortVal === 'stock-asc') {
+            return (a.stockActual || 0) - (b.stockActual || 0);
+        } else if (sortVal === 'stock-desc') {
+            return (b.stockActual || 0) - (a.stockActual || 0);
+        }
+        return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+    });
+    return sorted;
+};
+
+window.setInventorySort = function(field) {
+    const sortSelect = document.getElementById('inventory-sort');
+    if (!sortSelect) return;
+    const current = sortSelect.value;
+    let next = `${field}-asc`;
+    if (current === `${field}-asc`) {
+        next = `${field}-desc`;
+    }
+    sortSelect.value = next;
+    applyFilters();
+};
+
 function applyFilters() {
     const searchTerm = document.getElementById('inventory-search')?.value.toLowerCase() || '';
     const labFilter = document.getElementById('lab-filter')?.value || 'all';
+    const sortVal = document.getElementById('inventory-sort')?.value || 'name-asc';
 
-    const filtered = inventoryData.filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(searchTerm) || 
-                             item.category.toLowerCase().includes(searchTerm) ||
-                             item.code.toLowerCase().includes(searchTerm);
+    let filtered = inventoryData.filter(item => {
+        const matchesSearch = (item.name || '').toLowerCase().includes(searchTerm) || 
+                             (item.category || '').toLowerCase().includes(searchTerm) ||
+                             (item.code || '').toLowerCase().includes(searchTerm) ||
+                             (item.locationDetail || '').toLowerCase().includes(searchTerm);
         
         const matchesLab = labFilter === 'all' || (item.labs && item.labs.includes(labFilter));
         
         return matchesSearch && matchesLab;
     });
 
-    renderInventory(filtered);
+    filtered = window.sortInventoryData(filtered, sortVal);
+
+    if (typeof renderInventoryTable === 'function') renderInventoryTable(filtered);
+    if (typeof renderEquipmentStatus === 'function') {
+        renderEquipmentStatus(currentEquipmentFilter);
+    }
 }
 
 document.getElementById('inventory-search')?.addEventListener('input', applyFilters);
 document.getElementById('lab-filter')?.addEventListener('change', applyFilters);
+document.getElementById('inventory-sort')?.addEventListener('change', applyFilters);
+document.getElementById('espacios-search')?.addEventListener('input', () => {
+    if (typeof renderEspacios === 'function') renderEspacios();
+});
 
 // =============================================================================
 // OPERACIONES DE STOCK
@@ -640,19 +707,23 @@ window.masterSync = async function() {
 };
 
 function renderInventory(data) {
+    const searchInput = document.getElementById('inventory-search');
+    const labFilter = document.getElementById('lab-filter');
+    const sortSelect = document.getElementById('inventory-sort');
+    
     if (data === undefined || data === inventoryData) {
-        const searchInput = document.getElementById('inventory-search');
-        const labFilter = document.getElementById('lab-filter');
-        const hasSearch = searchInput && searchInput.value.trim() !== '';
-        const hasLab = labFilter && labFilter.value !== 'all';
-
-        if ((hasSearch || hasLab) && typeof applyFilters === 'function') {
+        if (typeof applyFilters === 'function') {
             applyFilters();
             return;
         }
     }
 
-    const displayData = data === undefined ? inventoryData : data;
+    let displayData = data === undefined ? inventoryData : data;
+    const sortVal = sortSelect?.value || 'name-asc';
+    if (typeof window.sortInventoryData === 'function') {
+        displayData = window.sortInventoryData(displayData, sortVal);
+    }
+
     if (typeof renderInventoryTable === 'function') renderInventoryTable(displayData);
     if (typeof renderEquipmentStatus === 'function') {
         renderEquipmentStatus(currentEquipmentFilter);
@@ -787,11 +858,20 @@ window.editActivity = function(source, index) {
         agendaTypeSelect.dispatchEvent(new Event('change'));
     }
 
+    if (typeof window.populateInventorySelectors === 'function') {
+        window.populateInventorySelectors();
+    }
+
     document.getElementById('agenda-titulo').value = activity.titulo || activity.item;
     document.getElementById('agenda-fecha').value = activity.fecha;
     document.getElementById('agenda-insumos').value = activity.insumos || '';
     document.getElementById('agenda-equipo').value = activity.equipo || '';
     document.getElementById('agenda-responsable').value = activity.responsable || '';
+
+    const eqSelect = document.getElementById('agenda-equipo-select');
+    if (eqSelect && activity.equipo) {
+        eqSelect.value = activity.equipo;
+    }
 
     if (activity.horaInicio) {
         document.getElementById('agenda-hora-inicio').value = activity.horaInicio;
@@ -812,6 +892,9 @@ window.editActivity = function(source, index) {
     }
     
     document.getElementById('modal-agendar').classList.remove('hidden');
+    if (typeof window.checkEquipmentAvailability === 'function') {
+        window.checkEquipmentAvailability();
+    }
 }
 
 window.deleteActivity = function(source, index) {
@@ -886,7 +969,8 @@ window.showDayDetails = function(dateStr) {
         <table>
             <thead>
                 <tr>
-                    <th>Actividad</th>
+                    <th>Actividad / Horario</th>
+                    <th>Equipo / Insumos Reservados</th>
                     <th>Tipo</th>
                     <th>Acciones</th>
                 </tr>
@@ -896,8 +980,12 @@ window.showDayDetails = function(dateStr) {
                     <tr>
                         <td>
                             <strong>${e.titulo}</strong> 
-                            ${e.time ? `<br><small>${e.time}</small>` : ''}
+                            ${e.time ? `<br><small style="color:var(--primary); font-weight:600;"><i class="far fa-clock"></i> ${e.time}</small>` : ''}
                             ${e.responsable ? `<br><small><strong>Responsable:</strong> ${e.responsable}</small>` : ''}
+                        </td>
+                        <td>
+                            ${e.equipo ? `<span class="badge" style="background:#e0e7ff; color:#3730a3; padding:3px 7px; border-radius:4px; font-size:0.75rem; font-weight:700; display:inline-block; margin-bottom:3px;"><i class="fas fa-microscope"></i> ${e.equipo}</span><br>` : ''}
+                            ${e.insumos ? `<small class="text-muted"><i class="fas fa-vial"></i> ${e.insumos}</small>` : '<small class="text-muted">—</small>'}
                         </td>
                         <td><span class="type-indicator type-${e.type.toLowerCase().substring(0,4)}">${e.type}</span></td>
                         <td>
@@ -921,15 +1009,54 @@ window.showDayDetails = function(dateStr) {
 function renderTurnos() {
     const tbody = document.getElementById('turnos-table-body');
     if (!tbody) return;
-    tbody.innerHTML = turnosData.length ? turnosData.map(t => `
+    tbody.innerHTML = turnosData.length ? turnosData.map((t, index) => `
         <tr>
             <td style="text-align: center;"><strong>${t.laboratorio}</strong></td>
             <td style="text-align: center;">${t.jefe}</td>
             <td style="text-align: center;">${t.semana}</td>
             <td style="text-align: center;">${t.mes}</td>
+            <td style="text-align: right;">
+                <div style="display: flex; gap: 0.35rem; justify-content: flex-end;">
+                    <button class="btn-action edit" onclick="window.editTurno(${index})" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn-action delete" onclick="window.deleteTurno(${index})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </div>
+            </td>
         </tr>
-    `).join('') : '<tr><td colspan="4" style="text-align:center;padding:1rem;">No hay responsables asignados</td></tr>';
+    `).join('') : '<tr><td colspan="5" style="text-align:center;padding:1rem;">No hay responsables asignados</td></tr>';
 }
+
+window.editTurno = function(index) {
+    const item = turnosData[index];
+    if (!item) return;
+    document.getElementById('edit-turno-index').value = index;
+    document.getElementById('turno-lab').value = item.laboratorio || '';
+    document.getElementById('turno-jefe').value = item.jefe || '';
+    document.getElementById('turno-semana').value = item.semana || '';
+    document.getElementById('turno-mes').value = item.mes || '';
+    const titleEl = document.getElementById('modal-turno-title');
+    if (titleEl) titleEl.innerText = 'Editar Responsable de Orden y Aseo';
+    document.getElementById('modal-turno').classList.remove('hidden');
+};
+
+window.deleteTurno = async function(index) {
+    const item = turnosData[index];
+    if (!item) return;
+    if (confirm(`¿Está seguro de eliminar la asignación para "${item.laboratorio}" (${item.jefe})?`)) {
+        try {
+            if (window.dbSync && window.dbSync.deleteTurno) {
+                await window.dbSync.deleteTurno(item);
+            }
+        } catch (err) {
+            console.error("Error al eliminar turno en BD:", err);
+        }
+        turnosData.splice(index, 1);
+        saveData();
+        renderTurnos();
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'success', title: 'Responsable Eliminado', timer: 1000, showConfirmButton: false });
+        }
+    }
+};
 
 function renderAuditoria() {
     const tbody = document.getElementById('auditoria-table-body');
@@ -937,28 +1064,48 @@ function renderAuditoria() {
     const session = storage.get(STORAGE_KEYS.SESSION);
     const userRole = (session && session.role) ? session.role.toLowerCase().trim() : '';
     const canCheck = ['administrador', 'administrador general', 'compra y abastecimiento'].includes(userRole);
-    tbody.innerHTML = usosData.length ? usosData.map((u, index) => `
-        <tr>
+
+    tbody.innerHTML = usosData.length ? usosData.map((u, index) => {
+        const isConfirmed = !!(u.checked || u.confirmado);
+
+        return `
+        <tr style="${isConfirmed ? 'background-color: rgba(16, 185, 129, 0.06);' : ''}">
             <td style="text-align: center;"><strong>${u.item}</strong></td>
             <td style="text-align: center;">${u.usuario}</td>
             <td style="text-align: center;">${u.cantidad}</td>
             <td style="text-align: center;">${u.fecha}</td>
             <td style="text-align: center;">${u.comentario || '-'}</td>
             <td style="text-align: center;">
-                <input type="checkbox" style="transform: scale(1.5); cursor: pointer;" onchange="toggleUsoCheck(${index})" ${u.checked ? 'checked' : ''} ${canCheck ? '' : 'disabled'}>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;">
+                    <input type="checkbox" style="transform: scale(1.4); cursor: pointer;" onchange="window.toggleUsoCheck(${index})" ${isConfirmed ? 'checked' : ''} ${canCheck ? '' : 'disabled'}>
+                    <span class="status-badge ${isConfirmed ? 'status-ok' : 'status-pending'}" style="font-size: 0.65rem; padding: 1px 6px;">
+                        ${isConfirmed ? 'REVISADO' : 'PENDIENTE'}
+                    </span>
+                </div>
             </td>
             <td style="text-align: center;">
-                <div style="display: flex; gap: 0.35rem; justify-content: center;">
+                <div style="display: flex; gap: 0.35rem; justify-content: center; align-items: center;">
+                    ${!isConfirmed ? `
+                        <button class="btn btn-sm" onclick="window.confirmarTerminoFila(${index})" title="Confirmar Término de Trabajo" 
+                                style="background: #10b981; color: white; border: none; font-size: 0.75rem; padding: 0.35rem 0.65rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem;">
+                            <i class="fas fa-check-circle"></i> Confirmar Término
+                        </button>
+                    ` : `
+                        <button class="btn btn-sm" onclick="window.confirmarTerminoFila(${index})" title="Re-confirmar Término de Trabajo" 
+                                style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 0.75rem; padding: 0.35rem 0.65rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem;">
+                            <i class="fas fa-check-double"></i> Confirmado
+                        </button>
+                    `}
                     <button class="btn-action view" onclick="viewUsoDetail(${index})" title="Ver detalles"><i class="fas fa-eye"></i></button>
                     <button class="btn-action edit" onclick="editUso(${index})" title="Editar"><i class="fas fa-edit"></i></button>
                     <button class="btn-action delete" onclick="deleteUso(${index})" title="Eliminar"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
         </tr>
-    `).join('') : '<tr><td colspan="7" style="text-align:center;padding:1rem;">No hay registros de uso</td></tr>';
+    `;}).join('') : '<tr><td colspan="7" style="text-align:center;padding:1rem;">No hay registros de uso</td></tr>';
 }
 
-window.toggleUsoCheck = (index) => {
+window.toggleUsoCheck = async (index) => {
     const session = storage.get(STORAGE_KEYS.SESSION);
     const userRole = (session && session.role) ? session.role.toLowerCase().trim() : '';
     const canCheck = ['administrador', 'administrador general', 'compra y abastecimiento'].includes(userRole);
@@ -967,7 +1114,94 @@ window.toggleUsoCheck = (index) => {
         return;
     }
     usosData[index].checked = !usosData[index].checked;
+    usosData[index].confirmado = usosData[index].checked;
+    if (window.dbSync && window.dbSync.saveAuditoria) {
+        await window.dbSync.saveAuditoria(usosData[index]);
+    }
     saveData();
+    renderAuditoria();
+};
+
+window.confirmarTerminoFila = async function(index) {
+    const item = usosData[index];
+    if (!item) return;
+
+    const session = storage.get(STORAGE_KEYS.SESSION);
+    const currentUser = session ? session.user : '';
+    const userRole = session ? (session.role || '').toLowerCase().trim() : '';
+    const isAdmin = ['administrador', 'administrador general'].includes(userRole);
+    
+    const isOwner = currentUser && currentUser.toLowerCase().trim() === (item.usuario || '').toLowerCase().trim();
+    if (!isOwner && !isAdmin && currentUser) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Acceso Denegado',
+            text: `Solo ${item.usuario} o un Administrador pueden confirmar el término de este trabajo.`,
+            confirmButtonColor: '#3085d6'
+        });
+        return;
+    }
+
+    const titleText = item.checked ? `¿Actualizar Término de Trabajo?` : `¿Confirmar Término para "${item.item}"?`;
+    const bodyText = `<strong>Ítem / Trabajo:</strong> ${item.item}<br><strong>Usuario:</strong> ${item.usuario}<br><strong>Cantidad:</strong> ${item.cantidad}<br><br>Esto registrará la confirmación del término de trabajo en el historial de auditoría y movimientos.`;
+
+    Swal.fire({
+        title: titleText,
+        html: bodyText,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: item.checked ? 'Sí, re-confirmar' : 'Sí, confirmar término',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#10b981'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            item.checked = true;
+            item.confirmado = true;
+
+            const now = new Date();
+            const mov = {
+                id: `TRX-${Date.now().toString().slice(-6)}`,
+                type: 'Término de Trabajo',
+                item: item.item,
+                qty: `${item.cantidad}`,
+                user: currentUser || item.usuario,
+                target: `Término Confirmado: ${item.item} (${item.usuario})`,
+                date: now.toISOString().split('T')[0],
+                time: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+            };
+
+            try {
+                if (window.dbSync && window.dbSync.saveAuditoria) {
+                    await window.dbSync.saveAuditoria(item);
+                }
+                if (window.dbSync && window.dbSync.insertMovement) {
+                    await window.dbSync.insertMovement(mov);
+                }
+                if (typeof movementsData !== 'undefined' && Array.isArray(movementsData)) {
+                    movementsData.push(mov);
+                }
+                saveData();
+                renderAuditoria();
+                if (typeof renderDashboard === 'function') renderDashboard();
+                if (typeof renderMovements === 'function') renderMovements();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Término Confirmado',
+                    text: `Se ha registrado el término de trabajo para "${item.item}".`,
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+            } catch (err) {
+                console.error("Error al confirmar término de fila:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo guardar la confirmación en la base de datos.'
+                });
+            }
+        }
+    });
 };
 
 window.deleteUso = async (index) => {
@@ -1153,7 +1387,29 @@ function renderMantenimiento() {
 function renderEspacios() {
     const tbody = document.getElementById('espacios-table-body');
     if (!tbody) return;
-    tbody.innerHTML = inventoryData.map((item, index) => {
+
+    const searchTerm = document.getElementById('espacios-search')?.value.toLowerCase().trim() || '';
+
+    let filtered = inventoryData.filter(item => {
+        if (!searchTerm) return true;
+        return (item.name || '').toLowerCase().includes(searchTerm) ||
+               (item.locationDetail || '').toLowerCase().includes(searchTerm) ||
+               (item.category || '').toLowerCase().includes(searchTerm);
+    });
+
+    // Ordenar por Zona (locationDetail) A-Z, luego por Nombre A-Z
+    filtered.sort((a, b) => {
+        const zoneA = (a.locationDetail || '').trim();
+        const zoneB = (b.locationDetail || '').trim();
+        if (!zoneA && !zoneB) return (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' });
+        if (!zoneA) return 1;
+        if (!zoneB) return -1;
+        const cmp = zoneA.localeCompare(zoneB, 'es', { numeric: true, sensitivity: 'base' });
+        return cmp !== 0 ? cmp : (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' });
+    });
+
+    tbody.innerHTML = filtered.map((item) => {
+        const realIndex = inventoryData.indexOf(item);
         const itemLabs = (item.labs || []).map(labId => {
             const lab = labsData.find(l => l.id === labId);
             return lab ? lab.name : labId;
@@ -1162,9 +1418,9 @@ function renderEspacios() {
         <tr>
             <td><strong>${item.name}</strong><br><small class="text-muted">${item.category}</small></td>
             <td>${itemLabs || 'Sin Asignar'}</td>
-            <td><code>${item.locationDetail || 'Sin Ubicación'}</code></td>
+            <td><code style="background:rgba(79, 70, 229, 0.12); color:var(--primary); padding:2px 8px; border-radius:4px; font-weight:600;">${item.locationDetail || 'Sin Ubicación'}</code></td>
             <td style="text-align: right;">
-                <button class="btn-action edit" onclick="openEspacioModal(${index})" title="Cambiar Ubicación"><i class="fas fa-map-marker-alt"></i></button>
+                <button class="btn-action edit" onclick="openEspacioModal(${realIndex})" title="Cambiar Ubicación"><i class="fas fa-map-marker-alt"></i></button>
             </td>
         </tr>
         `;
@@ -1549,6 +1805,154 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // =============================================================================
+    // SELECCIÓN Y DISPONIBILIDAD DE EQUIPOS/INSUMOS DESDE EL INVENTARIO
+    // =============================================================================
+    window.populateInventorySelectors = function() {
+        const eqSelect = document.getElementById('agenda-equipo-select');
+        const insSelect = document.getElementById('agenda-insumos-select');
+
+        if (eqSelect && typeof inventoryData !== 'undefined') {
+            const currentVal = eqSelect.value;
+            eqSelect.innerHTML = '<option value="">— Seleccionar Equipo del Inventario —</option>';
+            const equipos = inventoryData.filter(i => (i.category || '').toLowerCase() === 'equipos' || (i.name || '').toLowerCase().includes('equipo'));
+            const sortedEquipos = window.sortInventoryData ? window.sortInventoryData(equipos, 'name-asc') : equipos;
+            
+            sortedEquipos.forEach(eq => {
+                const loc = eq.locationDetail ? ` (${eq.locationDetail})` : '';
+                const inUseStatus = eq.inUse ? ' [EN USO ACTUALMENTE]' : '';
+                const opt = document.createElement('option');
+                opt.value = eq.name;
+                opt.textContent = `${eq.name}${loc}${inUseStatus}`;
+                eqSelect.appendChild(opt);
+            });
+            if (currentVal) eqSelect.value = currentVal;
+        }
+
+        if (insSelect && typeof inventoryData !== 'undefined') {
+            insSelect.innerHTML = '<option value="">— Seleccionar Insumo / Reactivo para agregar —</option>';
+            const insumos = inventoryData.filter(i => (i.category || '').toLowerCase() !== 'equipos');
+            const sortedInsumos = window.sortInventoryData ? window.sortInventoryData(insumos, 'name-asc') : insumos;
+
+            sortedInsumos.forEach(ins => {
+                const stock = ins.stockActual !== undefined ? ` [Stock: ${ins.stockActual}]` : '';
+                const loc = ins.locationDetail ? ` (${ins.locationDetail})` : '';
+                const opt = document.createElement('option');
+                opt.value = ins.name;
+                opt.textContent = `${ins.name}${stock}${loc}`;
+                insSelect.appendChild(opt);
+            });
+        }
+    };
+
+    window.checkEquipmentAvailability = function() {
+        const statusBox = document.getElementById('equipment-availability-status');
+        if (!statusBox) return;
+
+        const eqName = (document.getElementById('agenda-equipo')?.value || '').trim();
+        const dateVal = document.getElementById('agenda-fecha')?.value;
+        const startVal = document.getElementById('agenda-hora-inicio')?.value;
+        const endVal = document.getElementById('agenda-hora-fin')?.value;
+
+        if (!eqName || !dateVal) {
+            statusBox.style.display = 'none';
+            statusBox.innerHTML = '';
+            return;
+        }
+
+        let conflicts = [];
+
+        if (typeof agendaTrabajosData !== 'undefined' && Array.isArray(agendaTrabajosData)) {
+            agendaTrabajosData.forEach((job, idx) => {
+                if (job.fecha === dateVal && job.equipo) {
+                    const jobEq = (job.equipo || '').toLowerCase().trim();
+                    const searchEq = eqName.toLowerCase().trim();
+
+                    if (jobEq.includes(searchEq) || searchEq.includes(jobEq)) {
+                        if (window.currentEditingActivityIndex !== undefined && idx === window.currentEditingActivityIndex) {
+                            return;
+                        }
+
+                        let overlaps = true;
+                        if (startVal && endVal && job.horaInicio && job.horaFin) {
+                            overlaps = (startVal < job.horaFin && endVal > job.horaInicio);
+                        }
+                        
+                        if (overlaps) {
+                            conflicts.push({
+                                title: job.titulo || 'Trabajo agendado',
+                                responsable: job.responsable || job.user || 'Usuario',
+                                hora: (job.horaInicio && job.horaFin) ? `${job.horaInicio} a ${job.horaFin}` : (job.hora || 'Todo el día')
+                            });
+                        }
+                    }
+                }
+            });
+        }
+
+        if (typeof planificacionData !== 'undefined' && Array.isArray(planificacionData)) {
+            planificacionData.forEach(plan => {
+                if (plan.fecha === dateVal && plan.item) {
+                    const planItem = (plan.item || '').toLowerCase().trim();
+                    const searchEq = eqName.toLowerCase().trim();
+                    if (planItem.includes(searchEq) || searchEq.includes(planItem)) {
+                        conflicts.push({
+                            title: `Planificación: ${plan.item}`,
+                            responsable: plan.usuario || 'Usuario',
+                            hora: 'Reserva de uso'
+                        });
+                    }
+                }
+            });
+        }
+
+        statusBox.style.display = 'block';
+
+        if (conflicts.length > 0) {
+            const conflictDetails = conflicts.map(c => `<b>• ${c.responsable}</b> (${c.hora}) — <i>${c.title}</i>`).join('<br>');
+            statusBox.innerHTML = `
+                <div class="alert-banner danger" style="padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 0.5rem; background: #fee2e2; border: 1px solid #f87171; color: #991b1b;">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>¡ATENCIÓN! Equipo Ya Reservado:</strong><br>
+                    El equipo <strong>"${eqName}"</strong> presenta reserva(s) en este horario/fecha:<br>
+                    <div style="margin-top: 0.3rem; font-size: 0.85rem; line-height: 1.4;">${conflictDetails}</div>
+                </div>
+            `;
+        } else {
+            statusBox.innerHTML = `
+                <div class="alert-banner success" style="padding: 0.6rem 1rem; border-radius: 8px; margin-bottom: 0.5rem; background: #dcfce7; border: 1px solid #4ade80; color: #166534;">
+                    <i class="fas fa-check-circle"></i> <strong>Equipo Disponible:</strong> El equipo <strong>"${eqName}"</strong> está totalmente libre en la fecha y horario seleccionados.
+                </div>
+            `;
+        }
+    };
+
+    // Event listeners para la selección de inventario
+    document.getElementById('agenda-equipo-select')?.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val) {
+            document.getElementById('agenda-equipo').value = val;
+        }
+        window.checkEquipmentAvailability();
+    });
+
+    document.getElementById('agenda-insumos-select')?.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val) {
+            const currentText = document.getElementById('agenda-insumos').value.trim();
+            if (!currentText) {
+                document.getElementById('agenda-insumos').value = val;
+            } else if (!currentText.includes(val)) {
+                document.getElementById('agenda-insumos').value = `${currentText}, ${val}`;
+            }
+            e.target.value = '';
+        }
+    });
+
+    ['agenda-fecha', 'agenda-hora-inicio', 'agenda-hora-fin', 'agenda-equipo'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', () => window.checkEquipmentAvailability());
+        document.getElementById(id)?.addEventListener('input', () => window.checkEquipmentAvailability());
+    });
+
     // Lógica para Agendar Trabajo
     const modalAgendar = document.getElementById('modal-agendar');
     const btnNewAgendar = document.getElementById('btn-new-agendar');
@@ -1559,16 +1963,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleAgendarModal = (show) => {
         if (show) {
             modalAgendar.classList.remove('hidden');
+            if (typeof window.populateInventorySelectors === 'function') {
+                window.populateInventorySelectors();
+            }
             const agendaTypeSelect = document.getElementById('agenda-type');
             if (agendaTypeSelect) {
                 agendaTypeSelect.value = 'Trabajo';
                 agendaTypeSelect.dispatchEvent(new Event('change'));
+            }
+            if (typeof window.checkEquipmentAvailability === 'function') {
+                window.checkEquipmentAvailability();
             }
         } else {
             window.currentEditingActivityIndex = undefined;
             const btnSubmit = formAgendar.querySelector('button[type="submit"]');
             if (btnSubmit) btnSubmit.textContent = 'Agendar Trabajo';
             formAgendar.reset();
+            const statusBox = document.getElementById('equipment-availability-status');
+            if (statusBox) statusBox.style.display = 'none';
             modalAgendar.classList.add('hidden');
         }
     };
@@ -1799,7 +2211,16 @@ document.addEventListener('DOMContentLoaded', () => {
         else modalTurno.classList.add('hidden');
     };
 
-    if (btnNewTurno) btnNewTurno.addEventListener('click', () => toggleTurnoModal(true));
+    if (btnNewTurno) {
+        btnNewTurno.addEventListener('click', () => {
+            const editIdx = document.getElementById('edit-turno-index');
+            if (editIdx) editIdx.value = '';
+            const titleEl = document.getElementById('modal-turno-title');
+            if (titleEl) titleEl.innerText = 'Asignar Responsable';
+            if (formTurno) formTurno.reset();
+            toggleTurnoModal(true);
+        });
+    }
     if (closeTurnoBtn) closeTurnoBtn.addEventListener('click', () => toggleTurnoModal(false));
     if (cancelTurnoBtn) cancelTurnoBtn.addEventListener('click', () => toggleTurnoModal(false));
 
@@ -1812,6 +2233,9 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = true;
 
             try {
+                const editIndexVal = document.getElementById('edit-turno-index')?.value;
+                const isEditing = editIndexVal !== '' && editIndexVal !== null && editIndexVal !== undefined;
+
                 const record = {
                     laboratorio: document.getElementById('turno-lab').value,
                     jefe: document.getElementById('turno-jefe').value,
@@ -1819,20 +2243,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     mes: document.getElementById('turno-mes').value
                 };
                 
-                await window.dbSync.insertTurno(record);
-                
-                // Recargar datos para traer los registros actualizados con su ID
-                if (window.initApp) {
-                    await window.initApp();
+                if (isEditing) {
+                    const idx = parseInt(editIndexVal, 10);
+                    const existing = turnosData[idx];
+                    const updated = { ...existing, ...record };
+                    if (window.dbSync && window.dbSync.updateTurno) {
+                        await window.dbSync.updateTurno(updated);
+                    }
+                    turnosData[idx] = updated;
+                } else {
+                    if (window.dbSync && window.dbSync.insertTurno) {
+                        await window.dbSync.insertTurno(record);
+                    }
+                    if (window.initApp) {
+                        await window.initApp();
+                    } else {
+                        turnosData.push(record);
+                    }
                 }
                 
+                saveData();
                 if (typeof renderTurnos === 'function') renderTurnos();
                 toggleTurnoModal(false);
                 formTurno.reset();
-                alert('Responsable registrado exitosamente.');
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: isEditing ? 'Registro Actualizado' : 'Responsable Asignado',
+                        timer: 1200,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert(isEditing ? 'Registro actualizado exitosamente.' : 'Responsable registrado exitosamente.');
+                }
             } catch (error) {
                 console.error("Error al guardar turno:", error);
-                alert("Hubo un error al guardar. Asegúrate de tener desactivado RLS para la tabla 'turnos' en Supabase.");
+                alert("Hubo un error al guardar.");
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;

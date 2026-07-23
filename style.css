@@ -525,14 +525,16 @@ body.login-active {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     margin-bottom: 2rem;
     gap: 1rem;
 }
 
 .search-box {
     position: relative;
-    flex-grow: 0;
-    width: 320px;
+    flex: 1 1 280px;
+    min-width: 260px;
+    max-width: 380px;
 }
 
 .search-box i {
@@ -541,6 +543,9 @@ body.login-active {
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
+    font-size: 0.95rem;
+    pointer-events: none;
+    z-index: 2;
 }
 
 .search-box input {
@@ -550,11 +555,37 @@ body.login-active {
     border: 1px solid var(--border);
     background: white;
     font-size: 0.9rem;
-    transition: all 0.2s;
+    font-family: inherit;
+    color: var(--text-main);
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .search-box input:focus {
     outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.filter-box {
+    flex: 0 0 auto;
+}
+
+.form-select {
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: white;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--text-main);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.form-select:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-glow);
 }
@@ -955,6 +986,29 @@ tr:hover td {
     margin-bottom: 0.75rem;
     font-size: 2rem;
     font-weight: 800;
+}
+
+.login-warning-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: rgba(234, 179, 8, 0.12);
+    border: 1px solid rgba(234, 179, 8, 0.4);
+    border-left: 4px solid #eab308;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    margin: 1.25rem 0;
+    text-align: left;
+    font-size: 0.82rem;
+    color: #854d0e;
+    line-height: 1.4;
+}
+
+.login-warning-box i {
+    font-size: 1.2rem;
+    color: #d97706;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
 }
 
 .login-header p {
