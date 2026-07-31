@@ -150,13 +150,20 @@ window.dbSync = {
         if (user.password) payload.password = user.password;
         if (user.email) payload.email = user.email;
 
+        let res;
         if (isNew) {
-            return await supabaseClient.from('users').insert([payload]);
+            res = await supabaseClient.from('users').insert([payload]);
         } else if (user.id) {
-            return await supabaseClient.from('users').update(payload).eq('id', user.id);
+            res = await supabaseClient.from('users').update(payload).eq('id', user.id);
         } else {
-            return await supabaseClient.from('users').update(payload).eq('name', user.name);
+            res = await supabaseClient.from('users').update(payload).eq('name', user.name);
         }
+        
+        if (res.error) {
+            console.error("Supabase saveUser error:", res.error);
+            throw new Error(res.error.message);
+        }
+        return res;
     },
     async deleteUser(id) {
         return await supabaseClient.from('users').delete().eq('id', id);
