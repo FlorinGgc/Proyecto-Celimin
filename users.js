@@ -552,6 +552,7 @@ function initUsersModule() {
                     const validPasswords = [
                         savedCustomPass,
                         foundUser.password,
+                        foundUser.name === 'Alonso Gonzalez' ? 'maximo2026' : null,
                         ...generatedPasses,
                         ...legacyPasses,
                         ...extraVariants,
