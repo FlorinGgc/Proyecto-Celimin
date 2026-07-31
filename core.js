@@ -842,16 +842,17 @@ function renderInsumosUso() {
 }
 
 window.editActivity = function(source, index) {
-    let activity;
-    if (source === 'agenda') activity = agendaTrabajosData[index];
-    else if (source === 'planificacion') activity = { 
-        titulo: planificacionData[index].item, 
-        fecha: planificacionData[index].fecha, 
-        insumos: 'Reserva de uso', 
-        type: 'Trabajo' 
-    };
-    
-    if (!activity) return;
+    console.log("CLIC EN EDITAR ACTIVIDAD:", source, index);
+    try {
+        let activity;
+        if (source === 'agenda') activity = agendaTrabajosData[index];
+        else if (source === 'planificacion') activity = { 
+            titulo: planificacionData[index].item, 
+            fecha: planificacionData[index].fecha, 
+            insumos: 'Reserva de uso', 
+            type: 'Trabajo' 
+        };
+
 
     window.currentEditingActivityIndex = index;
     window.currentEditingActivitySource = source;
@@ -900,9 +901,14 @@ window.editActivity = function(source, index) {
     if (typeof window.checkEquipmentAvailability === 'function') {
         window.checkEquipmentAvailability();
     }
+    } catch(e) {
+        console.error("ERROR EN EDIT ACTIVITY:", e);
+        alert("Error al editar: " + e.message);
+    }
 }
 
 window.deleteActivity = function(source, index) {
+    console.log("CLIC EN ELIMINAR:", source, index);
     const session = storage.get(STORAGE_KEYS.SESSION);
     const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
     if (!canDelete) {
@@ -941,6 +947,7 @@ window.deleteActivity = function(source, index) {
 }
 
 window.showDayDetails = function(dateStr) {
+    console.log("CLIC EN VER DETALLES DIA:", dateStr);
     const dayEvents = [];
     agendaTrabajosData.forEach((t, index) => { if(t.fecha === dateStr) dayEvents.push({ ...t, source: 'agenda', originalIndex: index, type: t.type || 'Trabajo', time: t.hora }); });
     movementsData.forEach((m, index) => { if(m.date === dateStr) dayEvents.push({ titulo: `${m.type}: ${m.item}`, source: 'movements', originalIndex: index, type: 'Movimiento', time: m.time }); });
@@ -958,8 +965,6 @@ window.showDayDetails = function(dateStr) {
 
     planificacionData.forEach((p, index) => { if(p.fecha === dateStr) dayEvents.push({ titulo: `Planificación: ${p.item}`, source: 'planificacion', originalIndex: index, type: 'Trabajo' }); });
 
-    if (dayEvents.length === 0) return;
-
     const modal = document.getElementById('modal-calendar-day');
     const content = document.getElementById('calendar-day-content');
     const title = document.getElementById('calendar-day-title');
@@ -969,6 +974,15 @@ window.showDayDetails = function(dateStr) {
     
     const session = storage.get(STORAGE_KEYS.SESSION);
     const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
+
+    if (dayEvents.length === 0) {
+        content.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+            <i class="fas fa-calendar-times" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+            <p>No hay actividades programadas para este día.</p>
+        </div>`;
+        if (modal) modal.classList.remove('hidden');
+        return;
+    }
 
     content.innerHTML = `
         <table>
@@ -992,7 +1006,7 @@ window.showDayDetails = function(dateStr) {
                             ${e.equipo ? `<span class="badge" style="background:#e0e7ff; color:#3730a3; padding:3px 7px; border-radius:4px; font-size:0.75rem; font-weight:700; display:inline-block; margin-bottom:3px;"><i class="fas fa-microscope"></i> ${e.equipo}</span><br>` : ''}
                             ${e.insumos ? `<small class="text-muted"><i class="fas fa-vial"></i> ${e.insumos}</small>` : '<small class="text-muted">—</small>'}
                         </td>
-                        <td><span class="type-indicator type-${e.type.toLowerCase().substring(0,4)}">${e.type}</span></td>
+                        <td><span class="type-indicator type-${e.type ? e.type.toLowerCase().substring(0,4) : 'trab'}">${e.type || 'Trabajo'}</span></td>
                         <td>
                             <div style="display: flex; gap: 0.5rem;">
                                 ${(e.source === 'agenda' || e.source === 'planificacion') ? `<button class="btn-action edit" onclick="window.editActivity('${e.source}', ${e.originalIndex}); document.getElementById('modal-calendar-day').classList.add('hidden');" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
@@ -1005,7 +1019,7 @@ window.showDayDetails = function(dateStr) {
         </table>
     `;
     
-    modal.classList.remove('hidden');
+    if (modal) modal.classList.remove('hidden');
 }
 
 // =============================================================================
@@ -1989,8 +2003,16 @@ document.addEventListener('DOMContentLoaded', () => {
             modalAgendar.classList.add('hidden');
         }
     };
-
-    if (btnNewAgendar) btnNewAgendar.addEventListener('click', () => toggleAgendarModal(true));
+    if (btnNewAgendar) {
+        btnNewAgendar.addEventListener('click', () => {
+            try {
+                toggleAgendarModal(true);
+            } catch(e) {
+                console.error("Error en toggleAgendarModal:", e);
+                alert("Error al abrir modal: " + e.message);
+            }
+        });
+    }
     if (closeAgendarBtn) closeAgendarBtn.addEventListener('click', () => toggleAgendarModal(false));
     if (cancelAgendarBtn) cancelAgendarBtn.addEventListener('click', () => toggleAgendarModal(false));
 
