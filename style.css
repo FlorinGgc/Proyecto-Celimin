@@ -1048,15 +1048,15 @@ tr:hover td {
 }
 
 .small-link {
-    font-size: 0.75rem;
-    color: var(--accent);
+    font-size: 0.8rem;
+    color: #2563eb;
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
     transition: all 0.2s;
 }
 
 .small-link:hover {
-    color: var(--primary);
+    color: #1d4ed8;
     text-decoration: underline;
 }
 

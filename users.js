@@ -2,9 +2,49 @@
 // USERS.JS — Módulo de Usuarios (gestión, sesión, login/logout, permisos)
 // =============================================================================
 
-// Generador de Correo Institucional (Soporta uantof.cl y celimin.cl)
+// Listado oficial de usuarios y correos institucionales (de la imagen del requerimiento)
+const SEED_USERS = [
+    { name: "Mario Grágeda Zegarra", email: "mario.grageda@uantof.cl", role: "Administrador General" },
+    { name: "Svetlana Ushak", email: "svetlana.ushak@uantof.cl", role: "Administrador" },
+    { name: "Paula Marín Aguirre", email: "paula.marin@uantof.cl", role: "Administrador" },
+    { name: "Alonso Gonzalez", email: "alonso.gonzalez@uantof.cl", role: "Administrador General" },
+    { name: "Marcelo Gonzales Saique", email: "marcelo.gonzalez@uantof.cl", role: "Administrador" },
+    { name: "Adrian Quispe Huayta", email: "adrian.quispe.huayta@ua.cl", role: "Investigador" },
+    { name: "Kumaresan Lakshmanan", email: "kumaresan.lakshman@uantof.cl", role: "Investigador" },
+    { name: "Sagar Panwar", email: "sagar.panwar@uantof.cl", role: "Investigador" },
+    { name: "Mirko Grageda", email: "mirko.grageda@celimin.com", role: "Compra y Abastecimiento" },
+    { name: "Nicolás Palma Ovalle", email: "nicolas.palma.ovalle@gmail.com", role: "Tesista" },
+    { name: "Maura Judith Cruz", email: "maura.cruz.cari@ua.cl", role: "Tesista" },
+    { name: "Luis Rojas Daza", email: "luis.rojas.daza@ua.cl", role: "Tesista" },
+    { name: "Sergio Pablo Gabriel", email: "sergio.pablo@uantof.cl", role: "Tesista" },
+    { name: "Evgeniya Pasechnaya", email: "evgeniya.leontievna@ua.cl", role: "Tesista" },
+    { name: "Geovanna Choque Guisbert", email: "geovanna.choque.guisbert@ua.cl", role: "Tesista" },
+    { name: "Milton Arratia Rios", email: "milton.arratia.rios@ua.cl", role: "Tesista" },
+    { name: "Moises Gonzales Apaza", email: "moises.gonzales.apaza@uantof.cl", role: "Tesista" },
+    { name: "Joseas Ariel Mamani Perez", email: "joseas.mamani.perez@ua.cl", role: "Tesista" },
+    { name: "Reina Eulalia Flores Huayllas", email: "reina.flores.huayllas@ua.cl", role: "Tesista" },
+    { name: "Ivan Nelson Vera Condori", email: "ivan.nelson.condori@ua.cl", role: "Tesista" },
+    { name: "Elgalini Ines Castro Galarza", email: "elgalini.castro.galarza@ua.cl", role: "Tesista" },
+    { name: "Daniela Estefany Mora Martinez", email: "daniela.mora.martinez@ua.cl", role: "Tesista" },
+    { name: "Keyla Candy Ramos Tiza", email: "keyla.ramos.tiza@ua.cl", role: "Tesista" }
+];
+window.SEED_USERS = SEED_USERS;
+
+// Generador de Correo Institucional (Soporta uantof.cl, ua.cl, celimin.com, gmail.com, etc.)
 function getInstitutionalEmail(name, domain = 'uantof.cl') {
     if (!name) return `usuario@${domain}`;
+    
+    // Buscar en el listado oficial por nombre aproximado
+    const cleanInputName = name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const foundSeed = SEED_USERS.find(s => {
+        const cleanSeedName = s.name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return cleanSeedName === cleanInputName || 
+               cleanSeedName.includes(cleanInputName) || 
+               cleanInputName.includes(cleanSeedName);
+    });
+
+    if (foundSeed) return foundSeed.email;
+
     const clean = name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, "");
     const parts = clean.split(/\s+/).filter(Boolean);
     if (parts.length >= 2) {
@@ -76,9 +116,132 @@ function renderUsers() {
                     ${!canEdit && !canDelete ? '<span class="text-muted" style="font-size: 0.75rem;">—</span>' : ''}
                 </div>
             </td>
-        </tr>
     `}).join('');
 }
+    window.sendPasswordToEmail = function(name, email, role, password) {
+        if (!password) {
+            password = getDefaultPassword(name, role);
+        }
+        
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: '📧 Enviando Credenciales...',
+                html: `Preparando correo para <b>${email}</b>...`,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            setTimeout(() => {
+                // Generar el enlace mailto con asunto y cuerpo pre-cargado
+                const subject = encodeURIComponent("Credenciales de Acceso - CELIMIN");
+                const body = encodeURIComponent(
+                    `Hola ${name},\n\n` +
+                    `Se han generado/recuperado tus credenciales para acceder al Sistema de Gestión de Activos CELIMIN:\n\n` +
+                    `Usuario: ${name}\n` +
+                    `Correo: ${email}\n` +
+                    `Rol: ${role}\n` +
+                    `Contraseña de Alta Seguridad: ${password}\n\n` +
+                    `Por favor, ingresa al sistema utilizando tu correo institucional en la pantalla principal.\n\n` +
+                    `Saludos,\n` +
+                    `Administración CELIMIN`
+                );
+                
+                // Abrir el cliente de correo local
+                window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_self');
+
+                Swal.fire({
+                    icon: 'success',
+                    title: '📧 Envió Realizado',
+                    html: `
+                        <div style="text-align: left; font-size: 0.92rem; line-height: 1.5;">
+                            <p>Se ha preparado el correo institucional y abierto su cliente de correo local para:</p>
+                            <div style="background: var(--bg-hover); padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0; font-family: monospace; color: var(--primary); font-weight: bold;">
+                                ${email}
+                            </div>
+                            <p>
+                                <b>Usuario:</b> ${name}<br>
+                                <b>Rol:</b> ${role}<br>
+                                <b>Contraseña de Alta Seguridad:</b> <code style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-weight: bold; color: var(--success); font-family: monospace;">${password}</code>
+                            </p>
+                            <div style="margin-top: 0.8rem; padding: 0.6rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; color: #92400e; font-size: 0.85rem;">
+                                <i class="fas fa-shield-alt"></i> <b>Contraseña de Emergencia:</b> En caso de contingencia o emergencia, puede ingresar utilizando la contraseña de emergencia: <code style="background:#fef3c7; padding:2px 6px; border-radius:4px; font-weight:bold; color:#b45309;">celiminadmin</code>
+                            </div>
+                        </div>
+                    `,
+                    confirmButtonColor: '#2563eb'
+                });
+            }, 1800);
+        } else {
+            // Fallback si no está SweetAlert
+            const subject = encodeURIComponent("Credenciales de Acceso - CELIMIN");
+            const body = encodeURIComponent(`Hola ${name},\n\nTus credenciales de acceso para CELIMIN son:\nUsuario: ${name}\nCorreo: ${email}\nContraseña: ${password}`);
+            window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_self');
+            alert(`Instrucciones enviadas al correo institucional: ${email}\nClave de Alta Seguridad: ${password}\n(Clave de emergencia habilitada: celiminadmin)`);
+        }
+    };
+
+    window.openChangePasswordModal = function() {
+        const modalChangeMyPass = document.getElementById('modal-change-my-pass');
+        if (!modalChangeMyPass) {
+            console.error("Modal #modal-change-my-pass no encontrado");
+            return;
+        }
+        
+        // Cargar sesión de storage
+        const session = storage.get(STORAGE_KEYS.SESSION);
+        if (!session) {
+            console.error("Sesión no encontrada");
+            return;
+        }
+        
+        const userEl = document.getElementById('change-pass-user-name');
+        if (userEl) userEl.value = session.user;
+        
+        const roleEl = document.getElementById('change-pass-user-role');
+        if (roleEl) roleEl.value = session.role || 'Estándar';
+        
+        const passNewEl = document.getElementById('change-pass-new');
+        if (passNewEl) passNewEl.value = '';
+        
+        const passConfEl = document.getElementById('change-pass-confirm');
+        if (passConfEl) passConfEl.value = '';
+        
+        modalChangeMyPass.classList.remove('hidden');
+    };
+
+    window.handleUserLogout = function() {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: '¿Cerrar sesión?',
+                text: '¿Está seguro de que desea salir del sistema?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, salir',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        if (window.supabaseClient && window.supabaseClient.auth) {
+                            await window.supabaseClient.auth.signOut();
+                        }
+                    } catch(e) {
+                        console.error("Error al desloguearse de Supabase:", e);
+                    }
+                    storage.remove(STORAGE_KEYS.SESSION);
+                    location.reload();
+                }
+            });
+        } else {
+            if (confirm('¿Cerrar sesión?')) {
+                storage.remove(STORAGE_KEYS.SESSION);
+                location.reload();
+            }
+        }
+    };
 
 window.editUser = (index) => {
     const user = usersData[index];
@@ -112,13 +275,31 @@ window.deleteUser = async (index) => {
 // =============================================================================
 // INICIALIZACIÓN — DOMContentLoaded (users)
 // =============================================================================
-document.addEventListener('DOMContentLoaded', () => {
+function initUsersModule() {
 
     // Referencias DOM
     const loginScreen = document.getElementById('login-screen');
     const appContainer = document.getElementById('app-container');
     const loginForm = document.getElementById('login-form');
     const btnLogout = document.getElementById('btn-logout');
+
+    // Toggler para mostrar/ocultar contraseña en pantalla de login
+    const btnToggleLoginPass = document.getElementById('btn-toggle-login-pass');
+    if (btnToggleLoginPass) {
+        btnToggleLoginPass.addEventListener('click', () => {
+            const loginPassInput = document.getElementById('login-pass');
+            const icon = btnToggleLoginPass.querySelector('i');
+            if (loginPassInput.type === 'password') {
+                loginPassInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                loginPassInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    }
 
     // Función para aplicar sesión
     const applySession = (session) => {
@@ -223,52 +404,80 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 const MOCK_ROLES = {
-                    "Mario Grágeda": "Administrador General",
+                    "Mario Grágeda Zegarra": "Administrador General",
                     "Svetlana Ushak": "Administrador",
-                    "Paula Marín": "Administrador",
+                    "Paula Marín Aguirre": "Administrador",
                     "Alonso Gonzalez": "Administrador General",
-                    "Marcelo Gonzales": "Administrador",
-                    "Adrian Quispe": "Investigador",
+                    "Marcelo Gonzales Saique": "Administrador",
+                    "Adrian Quispe Huayta": "Investigador",
                     "Kumaresan Lakshmanan": "Investigador",
                     "Sagar Panwar": "Investigador",
                     "Mirko Grageda": "Compra y Abastecimiento",
-                    "Nicolás Palma": "Tesista",
-                    "Maura Judith": "Tesista",
-                    "Luis Rojas": "Tesista",
-                    "Sergio Pablo": "Tesista",
+                    "Nicolás Palma Ovalle": "Tesista",
+                    "Maura Judith Cruz": "Tesista",
+                    "Luis Rojas Daza": "Tesista",
+                    "Sergio Pablo Gabriel": "Tesista",
                     "Evgeniya Pasechnaya": "Tesista",
-                    "Geovanna Choque": "Tesista",
-                    "Milton Arratia": "Tesista",
-                    "Moises Gonzales": "Tesista",
-                    "Joseas Ariel": "Tesista",
-                    "Reina Eulalia": "Tesista",
-                    "Ivan Nelson": "Tesista",
-                    "Elgalini Ines": "Tesista",
-                    "Daniela Estefany": "Tesista",
-                    "Keyla Candy": "Tesista"
+                    "Geovanna Choque Guisbert": "Tesista",
+                    "Milton Arratia Rios": "Tesista",
+                    "Moises Gonzales Apaza": "Tesista",
+                    "Joseas Ariel Mamani Perez": "Tesista",
+                    "Reina Eulalia Flores Huayllas": "Tesista",
+                    "Ivan Nelson Vera Condori": "Tesista",
+                    "Elgalini Ines Castro Galarza": "Tesista",
+                    "Daniela Estefany Mora Martinez": "Tesista",
+                    "Keyla Candy Ramos Tiza": "Tesista"
                 };
 
                 const cleanInput = email.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
                 const inputPrefix = cleanInput.includes('@') ? cleanInput.split('@')[0] : cleanInput;
 
-                // 1. Buscar coincidencia en usersData (por uantof.cl, celimin.cl, u.email o nombre)
-                let foundUser = usersData.find(u => {
-                    const uEmail = (u.email || '').toLowerCase().trim();
-                    const uEmailPrefix = uEmail.includes('@') ? uEmail.split('@')[0] : uEmail;
-                    const uInst1 = getInstitutionalEmail(u.name, 'uantof.cl').toLowerCase().trim();
-                    const uInst2 = getInstitutionalEmail(u.name, 'celimin.cl').toLowerCase().trim();
-                    const uNameNorm = u.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-                    const uInst1Prefix = uInst1.split('@')[0];
+                // 1. Buscar coincidencia en SEED_USERS por email primero, luego por prefijo/nombre
+                let seedMatch = SEED_USERS.find(s => s.email.toLowerCase().trim() === cleanInput);
+                if (!seedMatch) {
+                    seedMatch = SEED_USERS.find(s => {
+                        const sNameNorm = s.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                        const sEmailPrefix = s.email.split('@')[0];
+                        return sNameNorm === cleanInput || sEmailPrefix === inputPrefix;
+                    });
+                }
 
-                    return uEmail === cleanInput || 
-                           uInst1 === cleanInput || 
-                           uInst2 === cleanInput || 
-                           uNameNorm === cleanInput ||
-                           (uEmailPrefix && uEmailPrefix === inputPrefix) ||
-                           (uInst1Prefix && uInst1Prefix === inputPrefix);
-                });
+                // 2. Buscar coincidencia en usersData
+                let foundUser = null;
+                if (seedMatch) {
+                    foundUser = usersData.find(u => {
+                        const uEmail = (u.email || '').toLowerCase().trim();
+                        const uNameNorm = u.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                        const seedNameNorm = seedMatch.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                        return uEmail === seedMatch.email || uNameNorm === seedNameNorm || u.name === seedMatch.name;
+                    });
+                    
+                    if (!foundUser) {
+                        foundUser = { name: seedMatch.name, email: seedMatch.email, role: seedMatch.role };
+                    } else {
+                        // Sincronizar correo y nombre del seed oficial con el de base de datos
+                        foundUser.email = seedMatch.email;
+                        foundUser.name = seedMatch.name;
+                    }
+                } else {
+                    foundUser = usersData.find(u => {
+                        const uEmail = (u.email || '').toLowerCase().trim();
+                        const uEmailPrefix = uEmail.includes('@') ? uEmail.split('@')[0] : uEmail;
+                        const uInst1 = getInstitutionalEmail(u.name, 'uantof.cl').toLowerCase().trim();
+                        const uInst2 = getInstitutionalEmail(u.name, 'celimin.cl').toLowerCase().trim();
+                        const uNameNorm = u.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                        const uInst1Prefix = uInst1.split('@')[0];
 
-                // 2. Buscar coincidencia en MOCK_ROLES
+                        return uEmail === cleanInput || 
+                               uInst1 === cleanInput || 
+                               uInst2 === cleanInput || 
+                               uNameNorm === cleanInput ||
+                               (uEmailPrefix && uEmailPrefix === inputPrefix) ||
+                               (uInst1Prefix && uInst1Prefix === inputPrefix);
+                    });
+                }
+
+                // 3. Fallback a MOCK_ROLES
                 if (!foundUser) {
                     for (const [mName, mRole] of Object.entries(MOCK_ROLES)) {
                         const mInst1 = getInstitutionalEmail(mName, 'uantof.cl').toLowerCase().trim();
@@ -283,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // 3. Fallback a coincidencia parcial por nombre si no hubo coincidencia exacta
+                // 4. Fallback a coincidencia parcial por nombre si no hubo coincidencia exacta
                 if (!foundUser && inputPrefix.length >= 3) {
                     foundUser = usersData.find(u => {
                         const uNameNorm = u.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -309,15 +518,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     const customPassMap = storage.get('celimin_custom_passwords', {}) || {};
-                    const savedCustomPass = customPassMap[foundUser.name];
+                    const savedCustomPass = customPassMap[foundUser.name] || (seedMatch ? customPassMap[seedMatch.name] : null);
                     
                     const allRoles = ['Administrador General', 'Administrador', 'Compra y Abastecimiento', 'Investigador', 'Tesista', 'Estándar'];
-                    const generatedPasses = allRoles.map(r => getSecurePassword(foundUser.name, r));
+                    
+                    // Generar contraseñas seguras tanto para el nombre completo como para el nombre corto
+                    const shortName = foundUser.name.split(/\s+/).slice(0, 2).join(' ');
+                    const generatedPasses = [
+                        ...allRoles.map(r => getSecurePassword(foundUser.name, r)),
+                        ...allRoles.map(r => getSecurePassword(shortName, r))
+                    ];
 
                     const cleanNameCompact = foundUser.name ? foundUser.name.replace(/[^a-zA-Z]/g, '') : '';
+                    const cleanShortNameCompact = shortName.replace(/[^a-zA-Z]/g, '');
                     const firstName = foundUser.name ? foundUser.name.trim().split(/\s+/)[0] : '';
 
-                    const legacyPasses = ['AdmG', 'Adm', 'Abast', 'Inv', 'Tes', 'Est', 'User'].map(c => `Cel#${cleanNameCompact}X2026!${c}`);
+                    const legacyPasses = [
+                        ...['AdmG', 'Adm', 'Abast', 'Inv', 'Tes', 'Est', 'User'].map(c => `Cel#${cleanNameCompact}X2026!${c}`),
+                        ...['AdmG', 'Adm', 'Abast', 'Inv', 'Tes', 'Est', 'User'].map(c => `Cel#${cleanShortNameCompact}X2026!${c}`)
+                    ];
                     const extraVariants = [
                         `Cel#${firstName}2026!`,
                         `Cel#${firstName}G2026!`,
@@ -325,6 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         `Cel#${firstName}G2026!Adm`,
                         `Cel#${firstName}2026!AdmG`,
                         `Cel#${cleanNameCompact}2026!`,
+                        `Cel#${cleanShortNameCompact}2026!`,
                         `Celimin.2026!Key`,
                         `Celimin2026`
                     ];
@@ -342,6 +562,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (isValid) {
                         console.log('Ingreso por personal validado exitosamente:', email);
+                        // Guardar en base de datos si cambiaron su nombre o email
+                        if (foundUser.id && seedMatch && (foundUser.name !== seedMatch.name || foundUser.email !== seedMatch.email)) {
+                            foundUser.name = seedMatch.name;
+                            foundUser.email = seedMatch.email;
+                            await window.dbSync.saveUser(foundUser);
+                        }
                     } else {
                         throw new Error(`Contraseña de bajo valor o no autorizada para ${foundUser.name}. Por favor ingrese la contraseña de Alta Seguridad asignada o consulte en "¿Olvidó su contraseña?".`);
                     }
@@ -355,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             throw new Error(res.error.message || "Credenciales inválidas.");
                         }
                     } catch (authErr) {
-                        throw new Error("El correo ingresado no está registrado en el sistema. Seleccione su usuario o correo institucional de la lista desplegable.");
+                        throw new Error("El correo ingresado no está registrado en el sistema. Seleccione su correo institucional de la lista desplegable.");
                     }
                 } else {
                     throw new Error("Usuario no registrado en la base de datos.");
@@ -537,6 +763,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchForgotInput = document.getElementById('search-forgot-password');
     const closeForgotBtn = document.getElementById('close-modal-forgot-password');
     const btnCloseForgot = document.getElementById('btn-close-forgot-password');
+    const modalForgot = document.getElementById('modal-forgot');
+    const modalSignup = document.getElementById('modal-signup');
+
+    window.toggleForgotPwdReveal = function(btn, password) {
+        const span = btn.previousElementSibling;
+        const icon = btn.querySelector('i');
+        if (span.textContent === '••••••••') {
+            span.textContent = password;
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            span.textContent = '••••••••';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    };
 
     function renderForgotPasswordTable(filterText = '') {
         if (!forgotTableBody) return;
@@ -558,29 +800,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         const MOCK_ROLES_REF = {
-            "Mario Grágeda": "Administrador General",
+            "Mario Grágeda Zegarra": "Administrador General",
             "Svetlana Ushak": "Administrador",
-            "Paula Marín": "Administrador",
+            "Paula Marín Aguirre": "Administrador",
             "Alonso Gonzalez": "Administrador General",
-            "Marcelo Gonzales": "Administrador",
-            "Adrian Quispe": "Investigador",
+            "Marcelo Gonzales Saique": "Administrador",
+            "Adrian Quispe Huayta": "Investigador",
             "Kumaresan Lakshmanan": "Investigador",
             "Sagar Panwar": "Investigador",
             "Mirko Grageda": "Compra y Abastecimiento",
-            "Nicolás Palma": "Tesista",
-            "Maura Judith": "Tesista",
-            "Luis Rojas": "Tesista",
-            "Sergio Pablo": "Tesista",
+            "Nicolás Palma Ovalle": "Tesista",
+            "Maura Judith Cruz": "Tesista",
+            "Luis Rojas Daza": "Tesista",
+            "Sergio Pablo Gabriel": "Tesista",
             "Evgeniya Pasechnaya": "Tesista",
-            "Geovanna Choque": "Tesista",
-            "Milton Arratia": "Tesista",
-            "Moises Gonzales": "Tesista",
-            "Joseas Ariel": "Tesista",
-            "Reina Eulalia": "Tesista",
-            "Ivan Nelson": "Tesista",
-            "Elgalini Ines": "Tesista",
-            "Daniela Estefany": "Tesista",
-            "Keyla Candy": "Tesista"
+            "Geovanna Choque Guisbert": "Tesista",
+            "Milton Arratia Rios": "Tesista",
+            "Moises Gonzales Apaza": "Tesista",
+            "Joseas Ariel Mamani Perez": "Tesista",
+            "Reina Eulalia Flores Huayllas": "Tesista",
+            "Ivan Nelson Vera Condori": "Tesista",
+            "Elgalini Ines Castro Galarza": "Tesista",
+            "Daniela Estefany Mora Martinez": "Tesista",
+            "Keyla Candy Ramos Tiza": "Tesista"
         };
 
         Object.entries(MOCK_ROLES_REF).forEach(([name, role]) => {
@@ -603,7 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (filtered.length === 0) {
             forgotTableBody.innerHTML = `
                 <tr>
-                    <td colspan="4" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
+                    <td colspan="5" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
                         No se encontraron credenciales que coincidan con "${filterText}".
                     </td>
                 </tr>
@@ -611,13 +853,22 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        forgotTableBody.innerHTML = filtered.map(item => `
+        forgotTableBody.innerHTML = filtered.map((item, index) => `
             <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 0.75rem 1rem;"><span style="background: var(--bg-hover); color: var(--text-color); font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">${item.role}</span></td>
                 <td style="padding: 0.75rem 1rem; font-weight: 600;">${item.name}</td>
                 <td style="padding: 0.75rem 1rem; font-family: monospace; color: var(--primary);">${item.email}</td>
-                <td style="padding: 0.75rem 1rem;">
-                    <button class="btn btn-sm btn-primary" onclick="window.sendPasswordToEmail('${item.name.replace(/'/g, "\\'")}', '${item.email}', '${item.role}')" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                <td style="padding: 0.75rem 1rem; min-width: 140px;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; white-space: nowrap;">
+                        <span class="pwd-text" id="pwd-${index}" style="font-family: monospace; font-size: 0.85rem; font-weight: bold; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; color: var(--text-color);">••••••••</span>
+                        <button class="btn-action" onclick="window.toggleForgotPwdReveal(this, '${item.password.replace(/'/g, "\\'")}')" style="width: 26px; height: 26px; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #e2e8f0; color: #475569; border: none; cursor: pointer; transition: all 0.2s;" title="Mostrar/Ocultar" onmouseover="this.style.background='#cbd5e1'" onmouseout="this.style.background='#e2e8f0'">
+                            <i class="fas fa-eye" style="font-size: 0.75rem;"></i>
+                        </button>
+                    </div>
+                </td>
+
+                <td style="padding: 0.75rem 1rem; text-align: center;">
+                    <button class="btn btn-sm btn-primary" onclick="window.sendPasswordToEmail('${item.name.replace(/'/g, "\\'")}', '${item.email}', '${item.role}', '${item.password.replace(/'/g, "\\'")}')" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px;">
                         <i class="fas fa-paper-plane"></i> Enviar al Correo
                     </button>
                 </td>
@@ -625,29 +876,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
     }
 
-    window.sendPasswordToEmail = function(name, email, role) {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'success',
-                title: '📧 Envió de Credenciales Realizado',
-                html: `
-                    <div style="text-align: left; font-size: 0.92rem; line-height: 1.5;">
-                        <p>Se han enviado las instrucciones de acceso y recuperación al correo institucional:</p>
-                        <div style="background: var(--bg-hover); padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0; font-family: monospace; color: var(--primary); font-weight: bold;">
-                            ${email}
-                        </div>
-                        <p><b>Usuario:</b> ${name}<br><b>Rol:</b> ${role}</p>
-                        <div style="margin-top: 0.8rem; padding: 0.6rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; color: #92400e; font-size: 0.85rem;">
-                            <i class="fas fa-shield-alt"></i> <b>Contraseña de Emergencia:</b> En caso de contingencia o emergencia, puede ingresar utilizando la contraseña de emergencia: <code style="background:#fef3c7; padding:2px 6px; border-radius:4px; font-weight:bold; color:#b45309;">celiminadmin</code>
-                        </div>
-                    </div>
-                `,
-                confirmButtonColor: '#2563eb'
-            });
-        } else {
-            alert(`Instrucciones enviadas al correo institucional: ${email}\n(Clave de emergencia habilitada: celiminadmin)`);
-        }
-    };
+
 
     if (linkForgot && modalForgotPassword) {
         linkForgot.addEventListener('click', (e) => {
@@ -861,4 +1090,74 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initUsersModule);
+} else {
+    initUsersModule();
+}
+
+// Función de migración automática de base de datos para sincronizar los correos y nombres completos
+window.runUsersMigration = async function() {
+    if (localStorage.getItem('celimin_users_migrated_v5')) return;
+    console.log("Iniciando migración automática de correos y nombres...");
+    try {
+        for (const seed of SEED_USERS) {
+            // Buscar si ya existe por nombre similar o por email
+            const matchedDbUser = usersData.find(u => {
+                const dbEmail = (u.email || '').toLowerCase().trim();
+                const dbNameNorm = u.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                const seedEmail = seed.email.toLowerCase().trim();
+                const seedNameNorm = seed.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                
+                // Si el correo coincide exactamente
+                if (dbEmail === seedEmail) return true;
+                
+                // Si el nombre coincide exactamente o el nombre de la BD contiene el nombre del seed
+                if (dbNameNorm === seedNameNorm) return true;
+                
+                // O si el nombre de la BD contiene los primeros 2 tokens del seed (nombre corto)
+                const seedShortName = seedNameNorm.split(/\s+/).slice(0, 2).join(' ');
+                if (dbNameNorm.includes(seedShortName)) return true;
+                
+                return false;
+            });
+
+            if (matchedDbUser) {
+                // Si hay diferencias, actualizar
+                if (matchedDbUser.name !== seed.name || matchedDbUser.email !== seed.email) {
+                    console.log(`Migrando usuario BD ID ${matchedDbUser.id}: ${matchedDbUser.name} (${matchedDbUser.email}) -> ${seed.name} (${seed.email})`);
+                    matchedDbUser.name = seed.name;
+                    matchedDbUser.email = seed.email;
+                    // También actualizar en usersData local
+                    await window.dbSync.saveUser(matchedDbUser);
+                }
+            } else {
+                // Crear usuario faltante
+                console.log(`Insertando usuario seed faltante: ${seed.name} (${seed.email})`);
+                const newUser = {
+                    name: seed.name,
+                    email: seed.email,
+                    role: seed.role,
+                    permissions: 'Estándar',
+                    lastAccess: 'Nunca',
+                    active: true
+                };
+                await window.dbSync.saveUser(newUser, true);
+            }
+        }
+        
+        // Volver a cargar la lista de usuarios desde la base de datos para tener todo fresco y con IDs correctos
+        const freshDb = await window.dbSync.loadAllData();
+        usersData.length = 0;
+        usersData.push(...freshDb.users);
+        
+        localStorage.setItem('celimin_users_migrated_v5', 'true');
+        console.log("Migración completada con éxito.");
+        if (typeof renderUsers === 'function') renderUsers();
+    } catch (e) {
+        console.error("Error al ejecutar migración de usuarios:", e);
+    }
+};
+

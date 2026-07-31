@@ -64,6 +64,11 @@ window.initApp = async function() {
         libraryDocsData = db.library_docs;
         
         console.log("Base de datos cargada exitosamente.");
+
+        // Ejecutar migración de usuarios si está disponible
+        if (typeof window.runUsersMigration === 'function') {
+            await window.runUsersMigration();
+        }
         
         // Render iniciales
         if (typeof renderDashboard === 'function') renderDashboard();
