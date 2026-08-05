@@ -55,14 +55,15 @@ body.login-active {
     margin-bottom: 3.5rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.75rem;
 }
 
 .logo-img {
-    width: 44px;
+    width: 180px;
     height: auto;
-    border-radius: 8px;
-    filter: drop-shadow(0 0 8px var(--accent-glow));
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .logo-text {
@@ -974,10 +975,10 @@ tr:hover td {
 }
 
 .login-logo {
-    width: 90px;
-    margin-bottom: 2rem;
+    width: 220px;
+    max-width: 100%;
+    margin-bottom: 1.5rem;
     border-radius: 16px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .login-header h2 {

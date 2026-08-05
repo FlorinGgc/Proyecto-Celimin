@@ -801,6 +801,7 @@ window.renderAgendaTrabajos = function() {
             <td style="text-align: center;">${t.equipo || 'N/A'}${t.responsable ? ` / ${t.responsable}` : ''}</td>
             <td style="text-align: center;">
                 <div style="display: flex; gap: 0.35rem; justify-content: center;">
+                    ${(t.source === 'agenda' || t.source === 'planificacion') ? `<button class="btn-action edit" onclick="window.duplicateActivity('${t.source}', ${t.originalIndex})" title="Duplicar"><i class="fas fa-copy"></i></button>` : ''}
                     ${(t.source === 'agenda' || t.source === 'planificacion') ? `<button class="btn-action edit" onclick="window.editActivity('${t.source}', ${t.originalIndex})" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
                     ${canDelete ? `<button class="btn-action delete" onclick="window.deleteActivity('${t.source}', ${t.originalIndex})" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
                 </div>
@@ -904,6 +905,75 @@ window.editActivity = function(source, index) {
     } catch(e) {
         console.error("ERROR EN EDIT ACTIVITY:", e);
         alert("Error al editar: " + e.message);
+    }
+}
+
+window.duplicateActivity = function(source, index) {
+    console.log("CLIC EN DUPLICAR ACTIVIDAD:", source, index);
+    try {
+        let activity;
+        if (source === 'agenda') activity = agendaTrabajosData[index];
+        else if (source === 'planificacion') activity = { 
+            titulo: planificacionData[index].item, 
+            fecha: planificacionData[index].fecha, 
+            insumos: 'Reserva de uso', 
+            type: 'Trabajo' 
+        };
+
+    window.currentEditingActivityIndex = undefined;
+    window.currentEditingActivitySource = undefined;
+
+    document.getElementById('agenda-type').value = activity.type || 'Trabajo';
+    
+    const agendaTypeSelect = document.getElementById('agenda-type');
+    if (agendaTypeSelect) {
+        agendaTypeSelect.dispatchEvent(new Event('change'));
+    }
+
+    if (typeof window.populateInventorySelectors === 'function') {
+        window.populateInventorySelectors();
+    }
+
+    document.getElementById('agenda-titulo').value = (activity.titulo || activity.item) + " (Copia)";
+    document.getElementById('agenda-fecha').value = activity.fecha;
+    document.getElementById('agenda-insumos').value = activity.insumos || '';
+    document.getElementById('agenda-equipo').value = activity.equipo || '';
+    document.getElementById('agenda-responsable').value = activity.responsable || '';
+
+    const eqSelect = document.getElementById('agenda-equipo-select');
+    if (eqSelect && activity.equipo) {
+        eqSelect.value = activity.equipo;
+    }
+
+    if (activity.horaInicio) {
+        document.getElementById('agenda-hora-inicio').value = activity.horaInicio;
+    } else if (activity.hora && activity.hora.includes(' - ')) {
+        const parts = activity.hora.split(' - ');
+        document.getElementById('agenda-hora-inicio').value = parts[0];
+    } else {
+        document.getElementById('agenda-hora-inicio').value = activity.hora || '';
+    }
+
+    if (activity.horaFin) {
+        document.getElementById('agenda-hora-fin').value = activity.horaFin;
+    } else if (activity.hora && activity.hora.includes(' - ')) {
+        const parts = activity.hora.split(' - ');
+        document.getElementById('agenda-hora-fin').value = parts[1];
+    } else {
+        document.getElementById('agenda-hora-fin').value = '';
+    }
+    
+    document.getElementById('modal-agendar').classList.remove('hidden');
+    
+    const btnSubmit = document.querySelector('#form-agendar button[type="submit"]');
+    if (btnSubmit) btnSubmit.textContent = 'Agendar Trabajo';
+
+    if (typeof window.checkEquipmentAvailability === 'function') {
+        window.checkEquipmentAvailability();
+    }
+    } catch(e) {
+        console.error("ERROR EN DUPLICAR ACTIVIDAD:", e);
+        alert("Error al duplicar: " + e.message);
     }
 }
 
@@ -1049,6 +1119,7 @@ window.showDayDetails = function(dateStr) {
                         <td><span class="type-indicator type-${e.type ? e.type.toLowerCase().substring(0,4) : 'trab'}">${e.type || 'Trabajo'}</span></td>
                         <td>
                             <div style="display: flex; gap: 0.5rem;">
+                                ${(e.source === 'agenda' || e.source === 'planificacion') ? `<button class="btn-action edit" onclick="window.duplicateActivity('${e.source}', ${e.originalIndex}); document.getElementById('modal-calendar-day').classList.add('hidden');" title="Duplicar"><i class="fas fa-copy"></i></button>` : ''}
                                 ${(e.source === 'agenda' || e.source === 'planificacion') ? `<button class="btn-action edit" onclick="window.editActivity('${e.source}', ${e.originalIndex}); document.getElementById('modal-calendar-day').classList.add('hidden');" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
                                 ${canDelete ? `<button class="btn-action delete" onclick="window.deleteActivity('${e.source}', ${e.originalIndex})" title="Eliminar"><i class="fas fa-trash"></i></button>` : ''}
                             </div>
