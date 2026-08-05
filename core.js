@@ -2647,6 +2647,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (formDoc) {
         formDoc.addEventListener('submit', (e) => {
             e.preventDefault();
+            
+            const submitBtn = formDoc.querySelector('button[type="submit"]');
+            let originalBtnText = 'Guardar Documento';
+            
+            if (submitBtn) {
+                if (submitBtn.disabled) return;
+                originalBtnText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+            }
+            
+            const restoreBtn = () => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            };
+
             const title = document.getElementById('doc-title').value.trim();
             const desc = document.getElementById('doc-desc').value.trim();
             const category = document.getElementById('doc-category').value;
@@ -2658,6 +2676,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: 'Archivo Requerido',
                     text: 'Por favor, selecciona un archivo PDF.'
                 });
+                restoreBtn();
                 return;
             }
 
@@ -2668,6 +2687,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: 'Formato Incorrecto',
                     text: 'Solo se permiten archivos en formato PDF.'
                 });
+                restoreBtn();
                 return;
             }
 
@@ -2677,6 +2697,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: 'Archivo Demasiado Grande',
                     text: 'El límite máximo de tamaño de archivo es de 1.5 MB para asegurar el rendimiento local.'
                 });
+                restoreBtn();
                 return;
             }
 
@@ -2726,6 +2747,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         title: 'Error de Guardado',
                         text: 'Hubo un problema al guardar en la base de datos. Verifica el RLS de la tabla library_docs.'
                     });
+                } finally {
+                    restoreBtn();
                 }
             };
             reader.onerror = function() {
@@ -2734,6 +2757,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: 'Error de Lectura',
                     text: 'No se pudo leer el archivo seleccionado.'
                 });
+                restoreBtn();
             };
             reader.readAsDataURL(file);
         });
