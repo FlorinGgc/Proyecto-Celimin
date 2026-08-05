@@ -23,6 +23,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="i18n.js"></script>
 </head>
 
 <body class="login-active">
@@ -175,14 +176,14 @@
                     <li class="nav-item">
                         <a class="nav-link active" data-view="dashboard">
                             <i class="fas fa-chart-pie"></i>
-                            <span>Dashboard</span>
+                            <span data-i18n="nav_dashboard">Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="#" class="nav-link submenu-toggle" id="btn-inventario-menu">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <i class="fas fa-vials"></i>
-                                <span>Inventario</span>
+                                <span data-i18n="nav_inventory">Inventario</span>
                             </div>
                             <i class="fas fa-chevron-down submenu-icon"></i>
                         </a>
@@ -196,7 +197,7 @@
                             <li class="nav-item">
                                 <a class="nav-link" data-view="agendar-trabajos" style="color: var(--success);">
                                     <i class="fas fa-calendar-plus"></i>
-                                    <span>Agendar Trabajo</span>
+                                    <span data-i18n="btn_add_work">Agendar Trabajo</span>
                                 </a>
                             </li>
                         </ul>
@@ -210,13 +211,13 @@
                     <li class="nav-item">
                         <a class="nav-link" data-view="movements">
                             <i class="fas fa-exchange-alt"></i>
-                            <span>Movimientos</span>
+                            <span data-i18n="nav_movements">Movimientos</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" data-view="calendar">
                             <i class="fas fa-calendar-alt"></i>
-                            <span>Calendario Anual</span>
+                            <span data-i18n="nav_agenda">Calendario Anual</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -228,7 +229,7 @@
                     <li class="nav-item">
                         <a class="nav-link" data-view="turnos">
                             <i class="fas fa-calendar-check"></i>
-                            <span>Orden y Aseo</span>
+                            <span data-i18n="nav_admin">Orden y Aseo</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -240,13 +241,13 @@
                     <li class="nav-item">
                         <a class="nav-link" data-view="library">
                             <i class="fas fa-book-open"></i>
-                            <span>Biblioteca</span>
+                            <span data-i18n="nav_library">Biblioteca</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" data-view="plano">
                             <i class="fas fa-map"></i>
-                            <span>Plano Interactivo</span>
+                            <span data-i18n="nav_map">Plano Interactivo</span>
                         </a>
                     </li>
                     <li class="nav-divider"></li>
@@ -370,14 +371,18 @@
             <!-- CABECERA DE LA VISTA -->
             <header class="content-header">
                 <div class="header-title">
-                    <h1 id="view-title">Dashboard General</h1>
-                    <p class="text-muted">Resumen del estado del laboratorio</p>
+                    <h1 id="view-title" data-i18n="header_title">Dashboard General</h1>
+                    <p class="text-muted" data-i18n="header_subtitle">Resumen del estado del laboratorio</p>
                 </div>
 
                 <div class="header-right">
+                    <button id="btn-toggle-lang" class="btn btn-outline" onclick="window.toggleLanguage()"
+                        style="margin-right: 15px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
+                        <i class="fas fa-globe" style="color: var(--primary);"></i> EN
+                    </button>
                     <button class="btn btn-outline" onclick="switchView('calendar')"
                         style="margin-right: 15px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
-                        <i class="fas fa-calendar-alt" style="color: var(--primary);"></i> Calendario
+                        <i class="fas fa-calendar-alt" style="color: var(--primary);"></i> <span data-i18n="nav_agenda">Calendario</span>
                     </button>
                     <div id="live-clock" class="clock-display">
                         <span id="clock-date">--/--/----</span>
@@ -410,19 +415,19 @@
             <!-- SECCIÓN: DASHBOARD -->
             <section id="dashboard-view" class="view-section">
                 <div class="action-bar" style="margin-bottom: 1.5rem;">
-                    <h3>Panel de Resumen</h3>
+                    <h3 data-i18n="summary_title">Panel de Resumen</h3>
                 </div>
                 <div class="stats-grid">
                     <article class="card">
-                        <p class="card-title">Ítems Totales</p>
+                        <p class="card-title" data-i18n="stat_total_items">Ítems Totales</p>
                         <p class="card-value" id="stat-items-total">1,284</p>
                     </article>
                     <article class="card">
-                        <p class="card-title">Alertas Stock</p>
+                        <p class="card-title" data-i18n="stat_stock_alerts">Alertas Stock</p>
                         <p class="card-value danger-text" id="stat-alerts">12</p>
                     </article>
                     <article class="card">
-                        <p class="card-title">Movimientos Hoy</p>
+                        <p class="card-title" data-i18n="stat_movements_today">Movimientos Hoy</p>
                         <p class="card-value" id="stat-movements">45</p>
                     </article>
                 </div>
@@ -482,13 +487,13 @@
                             <i class="fas fa-sync-alt"></i> Actualizar
                         </button>
                         <button class="btn" id="btn-export-inventory" title="Exportar a PDF">
-                            <i class="fas fa-file-pdf"></i> Descargar PDF
+                            <i class="fas fa-file-pdf"></i> <span data-i18n="btn_export_pdf">Exportar PDF</span>
                         </button>
                         <button class="btn btn-danger" id="btn-clear-inventory" title="Eliminar Todo el Inventario">
-                            <i class="fas fa-trash-alt"></i> Eliminar Todo
+                            <i class="fas fa-trash-alt"></i> <span data-i18n="btn_delete_all">Eliminar Todo</span>
                         </button>
                         <button class="btn btn-primary" id="btn-new-item">
-                            <i class="fas fa-plus"></i> Nuevo Registro
+                            <i class="fas fa-plus"></i> <span data-i18n="btn_new_record">Nuevo Registro</span>
                         </button>
                     </div>
                 </div>
@@ -563,7 +568,7 @@
                 <div class="action-bar">
                     <h3>Gestión de Personal</h3>
                     <button class="btn btn-primary" id="btn-new-user">
-                        <i class="fas fa-user-plus"></i> Registrar Usuario
+                        <i class="fas fa-user-plus"></i> <span data-i18n="btn_new_user">Registrar Usuario</span>
                     </button>
                 </div>
 
@@ -616,7 +621,7 @@
                 <div class="action-bar">
                     <h3>Gestión de Espacios Físicos</h3>
                     <button class="btn btn-primary" id="btn-new-lab">
-                        <i class="fas fa-plus-circle"></i> Nuevo Laboratorio
+                        <i class="fas fa-flask"></i> <span data-i18n="btn_new_lab">Nuevo Lab/Sede</span>
                     </button>
                 </div>
 
@@ -694,10 +699,10 @@
                     <h3>Trabajos Agendados</h3>
                     <div style="display: flex; gap: 0.75rem;">
                         <button class="btn btn-danger" id="btn-clear-agenda" title="Eliminar Todos los Trabajos">
-                            <i class="fas fa-trash-alt"></i> Eliminar Todo
+                            <i class="fas fa-trash-alt"></i> <span data-i18n="btn_delete_all">Eliminar Todo</span>
                         </button>
                         <button class="btn success-btn" id="btn-new-agendar" style="border: none;">
-                            <i class="fas fa-calendar-plus"></i> Nuevo Trabajo
+                            <i class="fas fa-calendar-plus"></i> <span data-i18n="btn_add_work">Agendar Trabajo</span>
                         </button>
                     </div>
                 </div>
@@ -708,8 +713,8 @@
                         <div class="header-info">
                             <i class="fas fa-list-check" style="color: var(--primary);"></i>
                             <div>
-                                <h2 class="card-title">Panel de Actividades Unificado</h2>
-                                <p class="card-subtitle">Gestión de trabajos, movimientos y solicitudes</p>
+                                <h2 class="card-title" data-i18n="nav_dashboard">Panel de Actividades Unificado</h2>
+                                <p class="card-subtitle" data-i18n="dashboard_title">Gestión de trabajos, movimientos y solicitudes</p>
                             </div>
                         </div>
                     </header>
@@ -717,12 +722,12 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Tipo / Título</th>
-                                    <th>Fecha</th>
-                                    <th>Hora</th>
-                                    <th>Insumos / Detalle</th>
-                                    <th>Equipo / Responsable</th>
-                                    <th>Acciones</th>
+                                    <th data-i18n="table_type_title">Tipo / Título</th>
+                                    <th data-i18n="table_date">Fecha</th>
+                                    <th data-i18n="table_time">Hora</th>
+                                    <th data-i18n="table_supplies">Insumos / Detalle</th>
+                                    <th data-i18n="table_equipment">Equipo / Responsable</th>
+                                    <th data-i18n="table_actions">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="agendar-trabajos-table-body">
@@ -757,7 +762,7 @@
                 <div class="action-bar">
                     <h3>Planificación de Orden y Aseo por Laboratorio</h3>
                     <button class="btn btn-primary" id="btn-new-turno" style="border: none;">
-                        <i class="fas fa-user-clock"></i> Asignar Responsable
+                        <i class="fas fa-calendar-plus"></i> <span data-i18n="btn_new_turn">Nuevo Turno</span>
                     </button>
                 </div>
                 <div class="table-container">
@@ -784,7 +789,7 @@
                     <h3>Checkeo General ( Insumos/Reactivos/Equipos)</h3>
                     <div style="display: flex; gap: 0.75rem;">
                         <button class="btn btn-primary" id="btn-new-uso" style="border: none;">
-                            <i class="fas fa-check-square"></i> Registrar Uso
+                            <i class="fas fa-plus"></i> <span data-i18n="btn_new_usage">Registrar Uso</span>
                         </button>
                         <button class="btn success-btn" id="btn-confirm-work" style="border: none;"
                             onclick="window.confirmarTerminoTrabajo()">
@@ -1881,28 +1886,72 @@
                         <input type="time" id="agenda-hora-fin" step="900" required>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="agenda-equipo-select">
-                        <i class="fas fa-microscope" style="color:var(--primary);"></i> Seleccionar Equipo (del Inventario)
+                <div class="form-group" style="background: var(--bg-color); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <label>
+                        <i class="fas fa-microscope" style="color:var(--primary);"></i> <span data-i18n="form_equipment">Seleccionar Equipos (del Inventario)</span>
                     </label>
-                    <select id="agenda-equipo-select" class="form-select" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border); font-weight: 600;">
-                        <option value="">— Cargar inventario... —</option>
-                    </select>
-                    <input type="text" id="agenda-equipo" placeholder="O ingresar nombre del equipo..."
-                        style="width: 100%; padding: 0.6rem 0.8rem; border-radius: 8px; border: 1px solid var(--border); margin-top: 0.4rem;">
+                    
+                    <div style="margin-top: 0.5rem;">
+                        <label style="font-size: 0.85rem; color: var(--text-muted);">Equipo 1</label>
+                        <select id="agenda-equipo-select" class="form-select" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); font-weight: 600;">
+                            <option value="">— Cargar inventario... —</option>
+                        </select>
+                        <input type="text" id="agenda-equipo" placeholder="O ingresar nombre del equipo 1..."
+                            style="width: 100%; padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border); margin-top: 0.2rem;">
+                    </div>
+
+                    <div style="margin-top: 0.5rem;">
+                        <label style="font-size: 0.85rem; color: var(--text-muted);">Equipo 2</label>
+                        <select id="agenda-equipo-select-2" class="form-select" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); font-weight: 600;">
+                            <option value="">— Cargar inventario... —</option>
+                        </select>
+                        <input type="text" id="agenda-equipo-2" placeholder="O ingresar nombre del equipo 2..."
+                            style="width: 100%; padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border); margin-top: 0.2rem;">
+                    </div>
+
+                    <div style="margin-top: 0.5rem;">
+                        <label style="font-size: 0.85rem; color: var(--text-muted);">Equipo 3</label>
+                        <select id="agenda-equipo-select-3" class="form-select" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); font-weight: 600;">
+                            <option value="">— Cargar inventario... —</option>
+                        </select>
+                        <input type="text" id="agenda-equipo-3" placeholder="O ingresar nombre del equipo 3..."
+                            style="width: 100%; padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border); margin-top: 0.2rem;">
+                    </div>
                 </div>
 
                 <div id="equipment-availability-status" style="display: none; margin-bottom: 1rem;"></div>
 
-                <div class="form-group">
-                    <label for="agenda-insumos-select">
-                        <i class="fas fa-flask" style="color:var(--primary);"></i> Seleccionar Insumos / Reactivos (del Inventario)
+                <div class="form-group" style="background: var(--bg-color); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <label>
+                        <i class="fas fa-flask" style="color:var(--primary);"></i> <span data-i18n="form_supplies">Seleccionar Insumos / Reactivos (del Inventario)</span>
                     </label>
-                    <select id="agenda-insumos-select" class="form-select" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);">
-                        <option value="">— Cargar inventario... —</option>
-                    </select>
-                    <textarea id="agenda-insumos" rows="2" placeholder="Detalle de insumos seleccionados o requeridos..."
-                        style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border); margin-top: 0.4rem;"></textarea>
+                    
+                    <div style="margin-top: 0.5rem;">
+                        <label style="font-size: 0.85rem; color: var(--text-muted);">Insumo/Reactivo 1</label>
+                        <select id="agenda-insumos-select" class="form-select" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border);">
+                            <option value="">— Cargar inventario... —</option>
+                        </select>
+                        <textarea id="agenda-insumos" rows="1" placeholder="Detalle 1..."
+                            style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); margin-top: 0.2rem;"></textarea>
+                    </div>
+
+                    <div style="margin-top: 0.5rem;">
+                        <label style="font-size: 0.85rem; color: var(--text-muted);">Insumo/Reactivo 2</label>
+                        <select id="agenda-insumos-select-2" class="form-select" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border);">
+                            <option value="">— Cargar inventario... —</option>
+                        </select>
+                        <textarea id="agenda-insumos-2" rows="1" placeholder="Detalle 2..."
+                            style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); margin-top: 0.2rem;"></textarea>
+                    </div>
+
+                    <div style="margin-top: 0.5rem;">
+                        <label style="font-size: 0.85rem; color: var(--text-muted);">Insumo/Reactivo 3</label>
+                        <select id="agenda-insumos-select-3" class="form-select" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border);">
+                            <option value="">— Cargar inventario... —</option>
+                        </select>
+                        <textarea id="agenda-insumos-3" rows="1" placeholder="Detalle 3..."
+                            style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); margin-top: 0.2rem;"></textarea>
+                    </div>
                 </div>
 
                 <div class="form-group">

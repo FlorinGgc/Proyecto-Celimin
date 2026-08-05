@@ -313,7 +313,7 @@ function renderLabs() {
     const tbody = document.getElementById('labs-table-body');
     if (!tbody) return;
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canModify = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
+    const canModify = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento', 'Investigador'].includes(session.role);
     tbody.innerHTML = labsData.map((lab, index) => `
         <tr>
             <td><code>${lab.id}</code></td>
@@ -344,7 +344,7 @@ window.editLab = (index) => {
 
 function deleteLab(index) {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento', 'Investigador'].includes(session.role);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
@@ -784,7 +784,7 @@ window.renderAgendaTrabajos = function() {
     });
 
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento', 'Investigador'].includes(session.role);
 
     tbody.innerHTML = combinedData.length ? combinedData.map(t => {
         const typeKey = (t.type || 'trab').toLowerCase().substring(0,4);
@@ -907,43 +907,83 @@ window.editActivity = function(source, index) {
     }
 }
 
-window.deleteActivity = function(source, index) {
+window.deleteActivity = async function(source, index) {
     console.log("CLIC EN ELIMINAR:", source, index);
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento', 'Investigador'].includes(session.role);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
     }
-    if (source === 'agenda') agendaTrabajosData.splice(index, 1);
-    else if (source === 'movements') movementsData.splice(index, 1);
-    else if (source === 'requests') requestsData.splice(index, 1);
-    else if (source === 'planificacion') planificacionData.splice(index, 1);
-    
-    if (typeof window.renderAgendaTrabajos === 'function') window.renderAgendaTrabajos();
-    if (typeof window.renderCalendar === 'function') window.renderCalendar();
-    
-    const dayModal = document.getElementById('modal-calendar-day');
-    if (dayModal && !dayModal.classList.contains('hidden')) {
-        const titleText = document.getElementById('calendar-day-title').textContent;
-        if (titleText.includes(': ')) {
-            const dateParts = titleText.split(': ')[1].split('/');
-            if (dateParts.length === 3) {
-                const dateStr = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-                if (typeof window.showDayDetails === 'function') window.showDayDetails(dateStr);
-            }
-        }
+
+    let idToDelete = null;
+    let arrayRef = null;
+
+    if (source === 'agenda') {
+        idToDelete = agendaTrabajosData[index]?.id;
+        arrayRef = agendaTrabajosData;
+    } else if (source === 'movements') {
+        idToDelete = movementsData[index]?.id;
+        arrayRef = movementsData;
+    } else if (source === 'requests') {
+        idToDelete = requestsData[index]?.id;
+        arrayRef = requestsData;
+    } else if (source === 'planificacion') {
+        idToDelete = planificacionData[index]?.id;
+        arrayRef = planificacionData;
     }
 
-    saveData();
-    
-    Swal.fire({
-        icon: 'success',
-        title: 'Registro Eliminado',
-        text: 'La tabla y el calendario se han actualizado.',
-        timer: 1000,
-        showConfirmButton: false
-    });
+    if (!idToDelete) {
+        console.error("No se encontró el ID para eliminar");
+        alert("No se puede eliminar: ID no encontrado.");
+        return;
+    }
+
+    try {
+        if (source === 'agenda' && window.dbSync && window.dbSync.deleteAgenda) {
+            await window.dbSync.deleteAgenda(idToDelete);
+        } else if (source === 'movements' && window.dbSync && window.dbSync.deleteMovement) {
+            await window.dbSync.deleteMovement(idToDelete);
+        } else if (source === 'requests' && window.dbSync && window.dbSync.deleteRequest) {
+            await window.dbSync.deleteRequest(idToDelete);
+        } else if (source === 'planificacion' && window.dbSync && window.dbSync.deletePlanificacion) {
+            await window.dbSync.deletePlanificacion(idToDelete);
+        }
+
+        arrayRef.splice(index, 1);
+        
+        if (typeof window.renderAgendaTrabajos === 'function') window.renderAgendaTrabajos();
+        if (typeof window.renderCalendar === 'function') window.renderCalendar();
+        
+        const dayModal = document.getElementById('modal-calendar-day');
+        if (dayModal && !dayModal.classList.contains('hidden')) {
+            const titleText = document.getElementById('calendar-day-title').textContent;
+            if (titleText.includes(': ')) {
+                const dateParts = titleText.split(': ')[1].split('/');
+                if (dateParts.length === 3) {
+                    const dateStr = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                    if (typeof window.showDayDetails === 'function') window.showDayDetails(dateStr);
+                }
+            }
+        }
+
+        saveData();
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Registro Eliminado',
+            text: 'La tabla y el calendario se han actualizado.',
+            timer: 1000,
+            showConfirmButton: false
+        });
+    } catch (error) {
+        console.error("Error al eliminar en la BD:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo eliminar el registro en la base de datos.',
+        });
+    }
 }
 
 window.showDayDetails = function(dateStr) {
@@ -973,7 +1013,7 @@ window.showDayDetails = function(dateStr) {
     title.textContent = `Actividades del Día: ${displayDate}`;
     
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento', 'Investigador'].includes(session.role);
 
     if (dayEvents.length === 0) {
         content.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--text-muted);">
@@ -1226,7 +1266,7 @@ window.confirmarTerminoFila = async function(index) {
 window.deleteUso = async (index) => {
     const session = storage.get(STORAGE_KEYS.SESSION);
     const userRole = (session && session.role) ? session.role.toLowerCase().trim() : '';
-    const canDelete = ['administrador', 'administrador general', 'compra y abastecimiento'].includes(userRole);
+    const canDelete = ['administrador', 'administrador general', 'compra y abastecimiento', 'investigador'].includes(userRole);
     if (!canDelete) {
         alert('No tiene permisos para eliminar.');
         return;
@@ -1490,7 +1530,7 @@ window.renderLibrary = function() {
     }
 
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento', 'Investigador'].includes(session.role);
 
     const searchInput = document.getElementById('library-search');
     const categorySelect = document.getElementById('library-category-filter');
@@ -1571,7 +1611,7 @@ window.downloadDocument = function(id) {
 
 window.deleteDocument = function(id) {
     const session = storage.get(STORAGE_KEYS.SESSION);
-    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento'].includes(session.role);
+    const canDelete = session && ['Administrador', 'Administrador General', 'Compra y Abastecimiento', 'Investigador'].includes(session.role);
     if (!canDelete) {
         Swal.fire({
             icon: 'error',
@@ -1828,38 +1868,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // SELECCIÓN Y DISPONIBILIDAD DE EQUIPOS/INSUMOS DESDE EL INVENTARIO
     // =============================================================================
     window.populateInventorySelectors = function() {
-        const eqSelect = document.getElementById('agenda-equipo-select');
-        const insSelect = document.getElementById('agenda-insumos-select');
+        const eqSelectors = [
+            document.getElementById('agenda-equipo-select'),
+            document.getElementById('agenda-equipo-select-2'),
+            document.getElementById('agenda-equipo-select-3')
+        ];
+        const insSelectors = [
+            document.getElementById('agenda-insumos-select'),
+            document.getElementById('agenda-insumos-select-2'),
+            document.getElementById('agenda-insumos-select-3')
+        ];
 
-        if (eqSelect && typeof inventoryData !== 'undefined') {
-            const currentVal = eqSelect.value;
-            eqSelect.innerHTML = '<option value="">— Seleccionar Equipo del Inventario —</option>';
+        if (typeof inventoryData !== 'undefined') {
             const equipos = inventoryData.filter(i => (i.category || '').toLowerCase() === 'equipos' || (i.name || '').toLowerCase().includes('equipo'));
             const sortedEquipos = window.sortInventoryData ? window.sortInventoryData(equipos, 'name-asc') : equipos;
-            
-            sortedEquipos.forEach(eq => {
-                const loc = eq.locationDetail ? ` (${eq.locationDetail})` : '';
-                const inUseStatus = eq.inUse ? ' [EN USO ACTUALMENTE]' : '';
-                const opt = document.createElement('option');
-                opt.value = eq.name;
-                opt.textContent = `${eq.name}${loc}${inUseStatus}`;
-                eqSelect.appendChild(opt);
-            });
-            if (currentVal) eqSelect.value = currentVal;
-        }
 
-        if (insSelect && typeof inventoryData !== 'undefined') {
-            insSelect.innerHTML = '<option value="">— Seleccionar Insumo / Reactivo para agregar —</option>';
+            eqSelectors.forEach(eqSelect => {
+                if (!eqSelect) return;
+                const currentVal = eqSelect.value;
+                eqSelect.innerHTML = '<option value="">— Seleccionar Equipo del Inventario —</option>';
+                
+                sortedEquipos.forEach(eq => {
+                    const loc = eq.locationDetail ? ` (${eq.locationDetail})` : '';
+                    const inUseStatus = eq.inUse ? ' [EN USO ACTUALMENTE]' : '';
+                    const opt = document.createElement('option');
+                    opt.value = eq.name;
+                    opt.textContent = `${eq.name}${loc}${inUseStatus}`;
+                    eqSelect.appendChild(opt);
+                });
+                if (currentVal) eqSelect.value = currentVal;
+            });
+
             const insumos = inventoryData.filter(i => (i.category || '').toLowerCase() !== 'equipos');
             const sortedInsumos = window.sortInventoryData ? window.sortInventoryData(insumos, 'name-asc') : insumos;
 
-            sortedInsumos.forEach(ins => {
-                const stock = ins.stockActual !== undefined ? ` [Stock: ${ins.stockActual}]` : '';
-                const loc = ins.locationDetail ? ` (${ins.locationDetail})` : '';
-                const opt = document.createElement('option');
-                opt.value = ins.name;
-                opt.textContent = `${ins.name}${stock}${loc}`;
-                insSelect.appendChild(opt);
+            insSelectors.forEach(insSelect => {
+                if (!insSelect) return;
+                insSelect.innerHTML = '<option value="">— Seleccionar Insumo / Reactivo para agregar —</option>';
+                sortedInsumos.forEach(ins => {
+                    const stock = ins.stockActual !== undefined ? ` [Stock: ${ins.stockActual}]` : '';
+                    const loc = ins.locationDetail ? ` (${ins.locationDetail})` : '';
+                    const opt = document.createElement('option');
+                    opt.value = ins.name;
+                    opt.textContent = `${ins.name}${stock}${loc}`;
+                    insSelect.appendChild(opt);
+                });
             });
         }
     };
@@ -1946,25 +1999,37 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Event listeners para la selección de inventario
-    document.getElementById('agenda-equipo-select')?.addEventListener('change', (e) => {
-        const val = e.target.value;
-        if (val) {
-            document.getElementById('agenda-equipo').value = val;
-        }
-        window.checkEquipmentAvailability();
+    [
+        { select: 'agenda-equipo-select', input: 'agenda-equipo' },
+        { select: 'agenda-equipo-select-2', input: 'agenda-equipo-2' },
+        { select: 'agenda-equipo-select-3', input: 'agenda-equipo-3' }
+    ].forEach(item => {
+        document.getElementById(item.select)?.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val) {
+                document.getElementById(item.input).value = val;
+            }
+            window.checkEquipmentAvailability();
+        });
     });
 
-    document.getElementById('agenda-insumos-select')?.addEventListener('change', (e) => {
-        const val = e.target.value;
-        if (val) {
-            const currentText = document.getElementById('agenda-insumos').value.trim();
-            if (!currentText) {
-                document.getElementById('agenda-insumos').value = val;
-            } else if (!currentText.includes(val)) {
-                document.getElementById('agenda-insumos').value = `${currentText}, ${val}`;
+    [
+        { select: 'agenda-insumos-select', input: 'agenda-insumos' },
+        { select: 'agenda-insumos-select-2', input: 'agenda-insumos-2' },
+        { select: 'agenda-insumos-select-3', input: 'agenda-insumos-3' }
+    ].forEach(item => {
+        document.getElementById(item.select)?.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val) {
+                const currentText = document.getElementById(item.input).value.trim();
+                if (!currentText) {
+                    document.getElementById(item.input).value = val;
+                } else if (!currentText.includes(val)) {
+                    document.getElementById(item.input).value = `${currentText}, ${val}`;
+                }
+                e.target.value = '';
             }
-            e.target.value = '';
-        }
+        });
     });
 
     ['agenda-fecha', 'agenda-hora-inicio', 'agenda-hora-fin', 'agenda-equipo'].forEach(id => {
@@ -2028,8 +2093,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tipo = document.getElementById('agenda-type').value;
                 const titulo = document.getElementById('agenda-titulo').value;
                 const fecha = document.getElementById('agenda-fecha').value;
-                const insumos = document.getElementById('agenda-insumos').value;
-                const equipo = document.getElementById('agenda-equipo').value;
+                
+                const insumos1 = document.getElementById('agenda-insumos').value;
+                const insumos2 = document.getElementById('agenda-insumos-2') ? document.getElementById('agenda-insumos-2').value : '';
+                const insumos3 = document.getElementById('agenda-insumos-3') ? document.getElementById('agenda-insumos-3').value : '';
+                const insumos = [insumos1, insumos2, insumos3].filter(Boolean).join(' | ');
+
+                const equipo1 = document.getElementById('agenda-equipo').value;
+                const equipo2 = document.getElementById('agenda-equipo-2') ? document.getElementById('agenda-equipo-2').value : '';
+                const equipo3 = document.getElementById('agenda-equipo-3') ? document.getElementById('agenda-equipo-3').value : '';
+                const equipo = [equipo1, equipo2, equipo3].filter(Boolean).join(' | ');
+                
                 const responsable = document.getElementById('agenda-responsable').value;
                 
                 const session = storage.get(STORAGE_KEYS.SESSION);

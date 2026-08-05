@@ -325,6 +325,11 @@ function initUsersModule() {
             'Administrador General'
         ];
 
+        const allowedRolesClear = [
+            'Administrador',
+            'Administrador General'
+        ];
+
         const btnNewItem = document.getElementById('btn-new-item');
         if (btnNewItem) {
             btnNewItem.style.display = allowedRolesInventory.includes(session.role) ? 'inline-flex' : 'none';
@@ -332,7 +337,12 @@ function initUsersModule() {
 
         const btnClearInventory = document.getElementById('btn-clear-inventory');
         if (btnClearInventory) {
-            btnClearInventory.style.display = allowedRolesInventory.includes(session.role) ? 'inline-flex' : 'none';
+            btnClearInventory.style.display = allowedRolesClear.includes(session.role) ? 'inline-flex' : 'none';
+        }
+
+        const btnClearAgenda = document.getElementById('btn-clear-agenda');
+        if (btnClearAgenda) {
+            btnClearAgenda.style.display = allowedRolesClear.includes(session.role) ? 'inline-flex' : 'none';
         }
 
         const btnNewUser = document.getElementById('btn-new-user');
