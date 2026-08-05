@@ -756,14 +756,46 @@ function initUsersModule() {
                 permissions: document.getElementById('edit-user-permissions').value || 'Estándar'
             };
 
-            await window.dbSync.saveUser(usersData[index]);
-            
-            saveData();
-            renderUsers();
-            modalEditUser.classList.add('hidden');
-            btn.innerHTML = origHtml;
-            btn.disabled = false;
-            alert('Usuario actualizado con éxito.');
+            try {
+                await window.dbSync.saveUser(usersData[index]);
+                
+                if (editPass) {
+                    const customPassMap = storage.get('celimin_custom_passwords', {}) || {};
+                    customPassMap[editName] = editPass;
+                    storage.set('celimin_custom_passwords', customPassMap);
+                }
+
+                saveData();
+                renderUsers();
+                modalEditUser.classList.add('hidden');
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Usuario Actualizado',
+                        text: 'Los cambios y contraseña se han guardado exitosamente.',
+                        confirmButtonColor: '#2563eb'
+                    });
+                } else {
+                    alert('Usuario actualizado con éxito.');
+                }
+            } catch (err) {
+                console.error("Error al actualizar usuario en DB:", err);
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de Actualización',
+                        text: 'Hubo un error al actualizar el usuario: ' + err.message,
+                        confirmButtonColor: '#dc2626'
+                    });
+                } else {
+                    alert('Error al actualizar usuario: ' + err.message);
+                }
+            }
         });
     }
 
