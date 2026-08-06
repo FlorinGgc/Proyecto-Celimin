@@ -1736,18 +1736,32 @@ window.deleteDocument = function(id) {
         cancelButtonColor: '#64748b',
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar'
-    }).then((result) => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
-            libraryDocsData = libraryDocsData.filter(d => d.id !== id);
-            saveData();
-            renderLibrary();
-            Swal.fire({
-                icon: 'success',
-                title: 'Documento Eliminado',
-                text: 'El documento se ha retirado de la biblioteca.',
-                timer: 1500,
-                showConfirmButton: false
-            });
+            try {
+                if (window.dbSync && window.dbSync.deleteLibraryDoc) {
+                    await window.dbSync.deleteLibraryDoc(id);
+                }
+                
+                libraryDocsData = libraryDocsData.filter(d => d.id !== id);
+                if (typeof saveData === 'function') saveData();
+                renderLibrary();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Documento Eliminado',
+                    text: 'El documento se ha retirado de la biblioteca.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                console.error("Error al eliminar documento de la BD:", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Eliminación',
+                    text: 'No se pudo eliminar el documento de la base de datos.'
+                });
+            }
         }
     });
 };
