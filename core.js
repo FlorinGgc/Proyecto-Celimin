@@ -1670,14 +1670,46 @@ window.renderLibrary = function() {
 
 window.downloadDocument = function(id) {
     const doc = libraryDocsData.find(d => d.id === id);
-    if (!doc) return;
+    if (!doc || !doc.fileData) return;
+
+    let url = doc.fileData;
+    let isObjectUrl = false;
+    
+    // Convert Data URI to Blob to avoid browser limits and 'Network Error' / 'File not found'
+    if (url.startsWith('data:')) {
+        try {
+            const arr = url.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            const blob = new Blob([u8arr], { type: mime });
+            url = URL.createObjectURL(blob);
+            isObjectUrl = true;
+        } catch (e) {
+            console.error('Error procesando el archivo PDF', e);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Descarga',
+                text: 'El archivo está corrupto o no se puede procesar.'
+            });
+            return;
+        }
+    }
 
     const link = document.createElement('a');
-    link.href = doc.fileData;
+    link.href = url;
     link.download = doc.fileName || `${doc.title}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    if (isObjectUrl) {
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+    }
 };
 
 window.deleteDocument = function(id) {

@@ -62,7 +62,13 @@ window.dbSync = {
                 mantenimiento: mantRes.data || [],
                 turnos: turnosRes.data || [],
                 auditoria: audRes.data || [],
-                library_docs: (libRes.data || []).map(d => ({ ...d, user: d.user_name }))
+                library_docs: (libRes.data || []).map(d => ({ 
+                    ...d, 
+                    user: d.user_name,
+                    fileName: d.file_name,
+                    fileData: d.file_url,
+                    desc: d.description
+                }))
             };
         } catch (error) {
             console.error("Error crítico cargando base de datos:", error);
