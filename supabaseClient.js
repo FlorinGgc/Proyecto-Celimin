@@ -347,7 +347,7 @@ window.dbSync = {
 
     // ---- LIBRARY ----
     async insertLibraryDoc(doc) {
-        return await supabaseClient.from('library_docs').insert([{
+        const res = await supabaseClient.from('library_docs').insert([{
             id: doc.id,
             title: doc.title,
             description: doc.desc,
@@ -357,6 +357,8 @@ window.dbSync = {
             size: doc.size,
             user_name: doc.user
         }]);
+        if (res.error) throw res.error;
+        return res;
     },
     async deleteLibraryDoc(id) {
         return await supabaseClient.from('library_docs').delete().eq('id', id);
