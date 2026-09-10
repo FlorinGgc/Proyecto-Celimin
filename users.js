@@ -34,6 +34,13 @@ window.SEED_USERS = SEED_USERS;
 function getInstitutionalEmail(name, domain = 'uantof.cl') {
     if (!name) return `usuario@${domain}`;
     
+    try {
+        if (typeof storage !== 'undefined') {
+            const customEmailMap = storage.get('celimin_custom_emails', {}) || {};
+            if (customEmailMap[name]) return customEmailMap[name];
+        }
+    } catch(e) {}
+    
     // Buscar en el listado oficial por nombre aproximado
     const cleanInputName = name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const foundSeed = SEED_USERS.find(s => {
@@ -713,6 +720,12 @@ function initUsersModule() {
                 active: true
             };
 
+            if (emailInput) {
+                const customEmailMap = storage.get('celimin_custom_emails', {}) || {};
+                customEmailMap[fullName] = emailInput;
+                storage.set('celimin_custom_emails', customEmailMap);
+            }
+
             await window.dbSync.saveUser(newUser, true);
             await initApp();
             
@@ -758,6 +771,12 @@ function initUsersModule() {
 
             try {
                 await window.dbSync.saveUser(usersData[index]);
+                
+                if (editEmail) {
+                    const customEmailMap = storage.get('celimin_custom_emails', {}) || {};
+                    customEmailMap[editName] = editEmail;
+                    storage.set('celimin_custom_emails', customEmailMap);
+                }
                 
                 if (editPass) {
                     const customPassMap = storage.get('celimin_custom_passwords', {}) || {};

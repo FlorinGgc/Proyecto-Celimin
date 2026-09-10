@@ -154,7 +154,7 @@ window.dbSync = {
             active: user.active
         };
         if (user.password) payload.password = user.password;
-        // if (user.email) payload.email = user.email; // Comentado para evitar error de columna faltante en Supabase
+        if (user.email) payload.email = user.email;
 
         let res;
         if (isNew) {
