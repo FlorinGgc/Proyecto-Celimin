@@ -54,6 +54,7 @@ window.dbSync = {
                 requests: (reqRes.data || []).map(r => ({ ...r, user: r.user_name })),
                 agenda: (agRes.data || []).map(a => ({
                     ...a,
+                    fechaFin: a.fecha_fin,
                     horaInicio: a.hora_inicio,
                     horaFin: a.hora_fin,
                     hora: (a.hora_inicio && a.hora_fin) ? `${a.hora_inicio.slice(0,5)} - ${a.hora_fin.slice(0,5)}` : ''
@@ -236,6 +237,9 @@ window.dbSync = {
             hora_inicio: item.horaInicio || null,
             hora_fin: item.horaFin || null
         };
+        if (item.fechaFin) {
+            payload.fecha_fin = item.fechaFin;
+        }
         
         if (isNew) {
             return await supabaseClient.from('agenda').insert([payload]);

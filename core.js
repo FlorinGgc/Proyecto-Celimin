@@ -788,7 +788,10 @@ window.renderAgendaTrabajos = function() {
 
     tbody.innerHTML = combinedData.length ? combinedData.map(t => {
         const typeKey = (t.type || 'trab').toLowerCase().substring(0,4);
-        const displayDate = t.fecha.includes('-') ? t.fecha.split('-').reverse().join('/') : t.fecha;
+        let displayDate = t.fecha.includes('-') ? t.fecha.split('-').reverse().join('/') : t.fecha;
+        if (t.fechaFin && t.fechaFin !== t.fecha) {
+            displayDate += '<br><small style="color:var(--text-muted)">al</small><br>' + (t.fechaFin.includes('-') ? t.fechaFin.split('-').reverse().join('/') : t.fechaFin);
+        }
         return `
         <tr class="row-${typeKey}">
             <td style="text-align: center;">
@@ -871,6 +874,8 @@ window.editActivity = function(source, index) {
 
     document.getElementById('agenda-titulo').value = activity.titulo || activity.item;
     document.getElementById('agenda-fecha').value = activity.fecha;
+    const fechaFinInput = document.getElementById('agenda-fecha-fin');
+    if (fechaFinInput) fechaFinInput.value = activity.fechaFin || activity.fecha; // default to same date
     document.getElementById('agenda-insumos').value = activity.insumos || '';
     document.getElementById('agenda-equipo').value = activity.equipo || '';
     document.getElementById('agenda-responsable').value = activity.responsable || '';
@@ -2040,6 +2045,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const eqName = (document.getElementById('agenda-equipo')?.value || '').trim();
         const dateVal = document.getElementById('agenda-fecha')?.value;
+        const endDateVal = document.getElementById('agenda-fecha-fin')?.value || dateVal;
         const startVal = document.getElementById('agenda-hora-inicio')?.value;
         const endVal = document.getElementById('agenda-hora-fin')?.value;
 
@@ -2053,7 +2059,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (typeof agendaTrabajosData !== 'undefined' && Array.isArray(agendaTrabajosData)) {
             agendaTrabajosData.forEach((job, idx) => {
-                if (job.fecha === dateVal && job.equipo) {
+                const jobStart = job.fecha;
+                const jobEnd = job.fechaFin || job.fecha;
+                const datesOverlap = dateVal <= jobEnd && endDateVal >= jobStart;
+                if (datesOverlap && job.equipo) {
                     const jobEq = (job.equipo || '').toLowerCase().trim();
                     const searchEq = eqName.toLowerCase().trim();
 
@@ -2081,7 +2090,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (typeof planificacionData !== 'undefined' && Array.isArray(planificacionData)) {
             planificacionData.forEach(plan => {
-                if (plan.fecha === dateVal && plan.item) {
+                const planStart = plan.fecha;
+                const planEnd = plan.fechaFin || plan.fecha;
+                const planDatesOverlap = dateVal <= planEnd && endDateVal >= planStart;
+                if (planDatesOverlap && plan.item) {
                     const planItem = (plan.item || '').toLowerCase().trim();
                     const searchEq = eqName.toLowerCase().trim();
                     if (planItem.includes(searchEq) || searchEq.includes(planItem)) {
@@ -2201,6 +2213,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (formAgendar) {
         formAgendar.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            if (typeof window.checkEquipmentAvailability === 'function') {
+                window.checkEquipmentAvailability();
+            }
+            const statusBox = document.getElementById('equipment-availability-status');
+            if (statusBox && statusBox.style.display !== 'none' && statusBox.querySelector('.danger')) {
+                alert('No se puede agendar: El equipo seleccionado ya se encuentra reservado en ese horario.');
+                return;
+            }
+
             const btn = e.target.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
@@ -2210,6 +2232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tipo = document.getElementById('agenda-type').value;
                 const titulo = document.getElementById('agenda-titulo').value;
                 const fecha = document.getElementById('agenda-fecha').value;
+                const fechaFin = document.getElementById('agenda-fecha-fin').value;
                 
                 const insumos1 = document.getElementById('agenda-insumos').value;
                 const insumos2 = document.getElementById('agenda-insumos-2') ? document.getElementById('agenda-insumos-2').value : '';
@@ -2258,7 +2281,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const horaInicio = document.getElementById('agenda-hora-inicio').value;
                     const horaFin = document.getElementById('agenda-hora-fin').value;
                     let activityItem = {
-                        titulo, fecha, insumos, equipo, responsable, type: 'Trabajo',
+                        titulo, fecha, fechaFin, insumos, equipo, responsable, type: 'Trabajo',
                         horaInicio, horaFin,
                         hora: `${horaInicio} - ${horaFin}`
                     };

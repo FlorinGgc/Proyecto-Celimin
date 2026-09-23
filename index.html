@@ -1840,9 +1840,15 @@
                     <label for="agenda-titulo" id="label-agenda-titulo">Título del Trabajo / Ítem</label>
                     <input type="text" id="agenda-titulo" placeholder="Ej: Análisis de muestra" required>
                 </div>
-                <div class="form-group">
-                    <label for="agenda-fecha">Fecha a Agendar</label>
-                    <input type="date" id="agenda-fecha" required>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="agenda-fecha">Fecha Inicio</label>
+                        <input type="date" id="agenda-fecha" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="agenda-fecha-fin">Fecha Término</label>
+                        <input type="date" id="agenda-fecha-fin" required>
+                    </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" id="agenda-time-range-container">
                     <div class="form-group">
