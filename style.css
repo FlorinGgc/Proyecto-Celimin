@@ -1131,3 +1131,54 @@ tr:hover td {
 ::-webkit-scrollbar-thumb:hover {
     background: #cbd5e1;
 }
+
+/* GLOBAL LOADER */
+.global-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 999999; /* Por encima de todo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+}
+
+.global-loader.hidden {
+    display: none !important;
+}
+
+.global-loader .loader-content {
+    text-align: center;
+    color: var(--primary);
+    background: var(--surface-color);
+    padding: 2.5rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+}
+
+.global-loader .loader-content i {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+}
+
+.global-loader .loader-content h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-color);
+    font-size: 1.4rem;
+}
+
+.global-loader .loader-content p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+body.dark-mode .global-loader {
+    background: rgba(15, 23, 42, 0.9);
+}

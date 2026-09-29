@@ -49,6 +49,9 @@ let libraryDocsData = [];
 
 // Función para sincronizar datos al inicio
 window.initApp = async function() {
+    const loader = document.getElementById('global-loader');
+    if (loader) loader.classList.remove('hidden');
+
     try {
         const db = await window.dbSync.loadAllData();
         labsData = db.labs;
@@ -78,6 +81,8 @@ window.initApp = async function() {
         
     } catch (error) {
         console.error("Fallo crítico en initApp", error);
+    } finally {
+        if (loader) loader.classList.add('hidden');
     }
 };
 
