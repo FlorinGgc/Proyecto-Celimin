@@ -280,14 +280,18 @@ function renderCalendar() {
             
             const dayEvents = [];
             agendaTrabajosData.forEach(t => { 
-                if(t.fecha === dateStr) {
+                const matchDate = (t.fechaFin && t.fechaFin !== t.fecha) ? (dateStr >= t.fecha && dateStr <= t.fechaFin) : (t.fecha === dateStr);
+                if(matchDate) {
                     const timeStr = t.hora ? ` (${t.hora})` : '';
                     const eqBadge = t.equipo ? ` [🔬 ${t.equipo}]` : '';
                     dayEvents.push({ type: 'work', title: `${t.titulo}${eqBadge}${timeStr}` }); 
                 }
             });
 
-            planificacionData.forEach(p => { if(p.fecha === dateStr) dayEvents.push({ type: 'work', title: `Planificación: ${p.item}` }); });
+            planificacionData.forEach(p => { 
+                const matchDate = (p.fechaFin && p.fechaFin !== p.fecha) ? (dateStr >= p.fecha && dateStr <= p.fechaFin) : (p.fecha === dateStr);
+                if(matchDate) dayEvents.push({ type: 'work', title: `Planificación: ${p.item}` }); 
+            });
 
             let eventDots = '';
             if (dayEvents.length > 0) {
@@ -1069,7 +1073,10 @@ window.deleteActivity = async function(source, index) {
 window.showDayDetails = function(dateStr) {
     console.log("CLIC EN VER DETALLES DIA:", dateStr);
     const dayEvents = [];
-    agendaTrabajosData.forEach((t, index) => { if(t.fecha === dateStr) dayEvents.push({ ...t, source: 'agenda', originalIndex: index, type: t.type || 'Trabajo', time: t.hora }); });
+    agendaTrabajosData.forEach((t, index) => { 
+        const matchDate = (t.fechaFin && t.fechaFin !== t.fecha) ? (dateStr >= t.fecha && dateStr <= t.fechaFin) : (t.fecha === dateStr);
+        if(matchDate) dayEvents.push({ ...t, source: 'agenda', originalIndex: index, type: t.type || 'Trabajo', time: t.hora }); 
+    });
     movementsData.forEach((m, index) => { if(m.date === dateStr) dayEvents.push({ titulo: `${m.type}: ${m.item}`, source: 'movements', originalIndex: index, type: 'Movimiento', time: m.time }); });
     requestsData.forEach((r, index) => { 
         const parts = r.date.split('/');
@@ -1083,7 +1090,10 @@ window.showDayDetails = function(dateStr) {
         }
     });
 
-    planificacionData.forEach((p, index) => { if(p.fecha === dateStr) dayEvents.push({ titulo: `Planificación: ${p.item}`, source: 'planificacion', originalIndex: index, type: 'Trabajo' }); });
+    planificacionData.forEach((p, index) => { 
+        const matchDate = (p.fechaFin && p.fechaFin !== p.fecha) ? (dateStr >= p.fecha && dateStr <= p.fechaFin) : (p.fecha === dateStr);
+        if(matchDate) dayEvents.push({ titulo: `Planificación: ${p.item}`, source: 'planificacion', originalIndex: index, type: 'Trabajo' }); 
+    });
 
     const modal = document.getElementById('modal-calendar-day');
     const content = document.getElementById('calendar-day-content');
